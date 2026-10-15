@@ -521,3 +521,146 @@ test("governance overviews are distinct from all actions and settings validate h
   expect(failedRequests).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test("row menus escape clipping, slow endpoints render as rows, and log filters align at responsive widths", async ({
+  page,
+}) => {
+  const name = "layout-menu-" + run;
+  const created = await admin.post(root + "/v1/servers", {
+    data: { server: { name, visibility: "private" } },
+  });
+  expect(created.status()).toBe(201);
+  servers.push((await created.json()).id);
+  await login(page);
+  await page
+    .locator("nav")
+    .getByRole("link", { name: "虚拟服务器", exact: true })
+    .click();
+  await page.getByLabel("Filter resources").fill(name);
+  const trigger = page.getByLabel("More actions", { exact: true });
+  await trigger.click();
+  const menu = page.getByRole("menu", { name: "Resource actions" });
+  await expect(menu).toBeVisible();
+  expect(await menu.evaluate((el) => el.parentElement === document.body)).toBe(
+    true,
+  );
+  const last = menu.getByRole("menuitem").last();
+  await last.scrollIntoViewIfNeeded();
+  expect(
+    await last.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        r.x + r.width / 2,
+        r.y + r.height / 2,
+      );
+      return el === hit || el.contains(hit);
+    }),
+  ).toBe(true);
+  await page.screenshot({ path: ".cache/reports/row-menu.png" });
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page
+    .getByRole("menuitem", { name: "删除虚拟服务器", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText(name);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "关闭", exact: true })
+    .click();
+  await trigger.click();
+  await page.getByRole("heading", { level: 1 }).click();
+  await expect(menu).toHaveCount(0);
+
+  const endpoint = "POST /servers/" + "a".repeat(180) + "/mcp";
+  await page.route("**/v1/observability/stats?*", (route) =>
+    route.fulfill({
+      json: {
+        time_window_hours: 24,
+        total_traces: 28,
+        success_count: 28,
+        error_count: 0,
+        error_rate: 0,
+        avg_duration_ms: 56.96,
+        slowest_endpoints: [
+          { name: endpoint, avg_duration_ms: 321.5, count: 12 },
+        ],
+      },
+    }),
+  );
+  await page
+    .locator("nav")
+    .getByRole("link", { name: "可观测性", exact: true })
+    .click();
+  const slow = page.locator(".slowest-endpoints");
+  await expect(slow.locator("tbody tr")).toHaveCount(1);
+  await expect(slow.locator("tbody")).toContainText(endpoint);
+  await expect(slow.locator("tbody")).toContainText("321.5");
+  await expect(
+    page.locator(".governance-stats .governance-stat-card"),
+  ).toHaveCount(6);
+  await expect(page.locator(".governance-stats")).not.toContainText(
+    "slowest_endpoints",
+  );
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: ".cache/reports/slow-endpoints.png" });
+
+  await page
+    .locator("nav")
+    .getByRole("link", { name: "日志与审计", exact: true })
+    .click();
+  const grid = page.locator(".logs-filter-grid");
+  for (const width of [1440, 960, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    if (width === 390)
+      await expect
+        .poll(() =>
+          page
+            .locator(".sidebar")
+            .evaluate((el) => el.getBoundingClientRect().right),
+        )
+        .toBeLessThanOrEqual(1);
+    const geometry = await grid.evaluate((el) => ({
+      columns: getComputedStyle(el).gridTemplateColumns.split(" ").length,
+      boxes: [
+        ...el.querySelectorAll(".log-search-text .search-field,.field > input"),
+      ].map((input) => {
+        const r = input.getBoundingClientRect();
+        return { x: r.x, y: r.y, right: r.right, height: r.height };
+      }),
+    }));
+    expect(geometry.columns).toBe(width === 1440 ? 4 : width === 960 ? 2 : 1);
+    expect(geometry.boxes.every((r) => Math.abs(r.height - 42) < 1)).toBe(true);
+    expect(geometry.boxes.every((r) => r.x >= 0 && r.right <= width)).toBe(
+      true,
+    );
+    if (width === 1440) {
+      expect(geometry.boxes[0].right - geometry.boxes[0].x).toBeGreaterThan(
+        (geometry.boxes[1].right - geometry.boxes[1].x) * 1.9,
+      );
+      expect(Math.abs(geometry.boxes[0].y - geometry.boxes[1].y)).toBeLessThan(
+        1,
+      );
+      expect(Math.abs(geometry.boxes[1].y - geometry.boxes[2].y)).toBeLessThan(
+        1,
+      );
+      expect(
+        Math.max(...geometry.boxes.slice(3).map((r) => r.y)) -
+          Math.min(...geometry.boxes.slice(3).map((r) => r.y)),
+      ).toBeLessThan(1);
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page
+      .locator(".governance-search-panel")
+      .screenshot({ path: ".cache/reports/log-filters-" + width + ".png" });
+  }
+});

@@ -517,38 +517,41 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
               busy={search.isFetching}
               en={en}
             />
-            <div className="toolbar governance-filter-bar">
-              <label className="search-field">
-                <Search size={16} />
-                <input
-                  aria-label="Search logs"
-                  placeholder={en ? "Search text…" : "搜索文本…"}
-                  value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                />
+            <div className="logs-filter-grid">
+              <label className="field log-search-text">
+                <span>{en ? "Search text" : "搜索文本"}</span>
+                <span className="search-field">
+                  <Search size={16} />
+                  <input
+                    aria-label="Search logs"
+                    placeholder={en ? "Search text…" : "搜索文本…"}
+                    value={searchText}
+                    onChange={(event) => setSearchText(event.target.value)}
+                  />
+                </span>
               </label>
-              <label className="field inline-field">
+              <label className="field inline-field log-correlation">
                 <span>{en ? "Correlation ID" : "关联 ID"}</span>
                 <input
                   value={correlation}
                   onChange={(event) => setCorrelation(event.target.value)}
                 />
               </label>
-              <label className="field inline-field">
+              <label className="field inline-field log-user">
                 <span>{en ? "User ID" : "用户 ID"}</span>
                 <input
                   value={userId}
                   onChange={(event) => setUserId(event.target.value)}
                 />
               </label>
-              <label className="field inline-field">
+              <label className="field inline-field log-component">
                 <span>{en ? "Component" : "组件"}</span>
                 <input
                   value={component}
                   onChange={(event) => setComponent(event.target.value)}
                 />
               </label>
-              <label className="field inline-field">
+              <label className="field inline-field log-category">
                 <span>{en ? "Category" : "类别"}</span>
                 <input
                   value={category}
@@ -600,7 +603,7 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   )}
                 </div>
               </fieldset>
-              <label className="field inline-field">
+              <label className="field inline-field log-start">
                 <span>{en ? "From" : "开始时间"}</span>
                 <input
                   type="datetime-local"
@@ -608,7 +611,7 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   onChange={(event) => setStartTime(event.target.value)}
                 />
               </label>
-              <label className="field inline-field">
+              <label className="field inline-field log-end">
                 <span>{en ? "To" : "结束时间"}</span>
                 <input
                   type="datetime-local"
@@ -617,7 +620,7 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                 />
               </label>
               <button
-                className="button primary"
+                className="button primary log-submit"
                 onClick={submitSearch}
                 disabled={!canLogs}
               >
@@ -1041,11 +1044,50 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
             <QueryState query={percentiles} en={en} />
             <div className="governance-stats">
               {Object.entries(statsRows)
+                .filter(
+                  ([, value]) =>
+                    value !== null &&
+                    ["number", "string", "boolean"].includes(typeof value),
+                )
                 .slice(0, 8)
                 .map(([key, value]) => (
-                  <MetricCard key={key} label={key} value={value} />
+                  <MetricCard
+                    key={key}
+                    label={
+                      en
+                        ? key
+                        : (
+                            {
+                              time_window_hours: "时间范围（小时）",
+                              total_traces: "追踪总数",
+                              success_count: "成功数",
+                              error_count: "错误数",
+                              error_rate: "错误率（%）",
+                              avg_duration_ms: "平均耗时（毫秒）",
+                            } as Record<string, string>
+                          )[key] || key
+                    }
+                    value={value}
+                  />
                 ))}
             </div>
+            {Array.isArray(statsRows.slowest_endpoints) && (
+              <section className="slowest-endpoints">
+                <h4>{en ? "Slowest endpoints" : "最慢端点"}</h4>
+                <Table
+                  en={en}
+                  rows={statsRows.slowest_endpoints}
+                  columns={[
+                    { key: "name", label: en ? "Endpoint" : "端点" },
+                    {
+                      key: "avg_duration_ms",
+                      label: en ? "Average duration (ms)" : "平均耗时（毫秒）",
+                    },
+                    { key: "count", label: en ? "Requests" : "请求数" },
+                  ]}
+                />
+              </section>
+            )}
             {timeseriesRows.length > 0 && (
               <Table
                 en={en}

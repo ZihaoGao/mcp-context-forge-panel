@@ -5,7 +5,6 @@ import {
   Search,
   Plus,
   RefreshCw,
-  MoreHorizontal,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
@@ -44,6 +43,7 @@ import { resourceProfiles, validateValue } from "../resource-model.mjs";
 import { SchemaForm } from "./SchemaForm";
 import { ConfigurationTransfer } from "./ConfigurationTransfer";
 import { ApiExplorer } from "./ApiExplorer";
+import { RowActionMenu } from "./RowActionMenu";
 
 export function findOperation(
   spec: JsonRecord,
@@ -854,49 +854,31 @@ export function DataPage({
                                 <Copy size={15} />
                               </button>
                             )}
-                            <details className="action-menu">
-                              <summary aria-label="More actions">
-                                <MoreHorizontal size={18} />
-                              </summary>
-                              <div>
-                                {detailOps
-                                  .filter(
-                                    (o) =>
-                                      o !== primaryDetail &&
-                                      o !== update &&
-                                      (!o["x-panel-admin"] ||
-                                        session.user?.is_admin) &&
-                                      permitted(
-                                        permissions,
-                                        o["x-panel-permission"],
-                                      ) &&
-                                      o["x-panel-available"] !== false,
-                                  )
-                                  .map((op) => (
-                                    <button
-                                      key={op.method + op.path}
-                                      onClick={(e) => {
-                                        (
-                                          e.currentTarget.closest(
-                                            "details",
-                                          ) as HTMLDetailsElement
-                                        ).open = false;
-                                        launch(op, item);
-                                      }}
-                                    >
-                                      {resourceActionName(
-                                        op,
-                                        (
-                                          resourceProfiles as Record<
-                                            string,
-                                            any
-                                          >
-                                        )[module.id]?.noun || "资源",
-                                      )}
-                                    </button>
-                                  ))}
-                              </div>
-                            </details>
+                            <RowActionMenu
+                              items={detailOps
+                                .filter(
+                                  (op) =>
+                                    op !== primaryDetail &&
+                                    op !== update &&
+                                    (!op["x-panel-admin"] ||
+                                      session.user?.is_admin) &&
+                                    permitted(
+                                      permissions,
+                                      op["x-panel-permission"],
+                                    ) &&
+                                    op["x-panel-available"] !== false,
+                                )
+                                .map((op) => ({
+                                  id: op.method + op.path,
+                                  label: resourceActionName(
+                                    op,
+                                    (resourceProfiles as Record<string, any>)[
+                                      module.id
+                                    ]?.noun || "资源",
+                                  ),
+                                  onSelect: () => launch(op, item),
+                                }))}
+                            />
                           </div>
                         </td>
                       </tr>
