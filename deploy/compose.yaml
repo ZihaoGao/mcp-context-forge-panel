@@ -1,0 +1,21 @@
+services:
+  panel:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: contextforge-panel:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      APP_ROOT_PATH: ${APP_ROOT_PATH:-/forge}
+      BACKEND_URL: ${BACKEND_URL:-http://host.docker.internal:4444}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    init: true

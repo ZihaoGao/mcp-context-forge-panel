@@ -1,0 +1,42 @@
+{
+  "name": "contextforge-panel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build-contract.mjs && tsc --noEmit && vite build --config apps/web/vite.config.ts --configLoader runner",
+    "start": "node --env-file-if-exists=.env apps/server/index.mjs",
+    "test": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "node scripts/playwright.mjs test",
+    "test:integration": "node tests/integration/backend.mjs",
+    "format": "prettier --write apps packages scripts tests docs *.json *.md --ignore-unknown",
+    "format:check": "prettier --check apps packages scripts tests docs *.json *.md --ignore-unknown",
+    "contracts:source": "python scripts/extract_contracts.py",
+    "contracts:live": "node scripts/capture-openapi.mjs",
+    "contracts:types": "openapi-typescript contracts/contextforge/web-contract.json -o packages/api-client/schema.d.ts",
+    "check": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.0",
+    "http-proxy": "^1.18.1",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/http-proxy": "^1.17.16",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "prettier": "^3.6.0",
+    "openapi-typescript": "^7.10.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0"
+  }
+}

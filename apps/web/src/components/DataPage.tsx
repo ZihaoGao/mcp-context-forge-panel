@@ -1,0 +1,963 @@
+import { useContext, useEffect, useMemo, useState } from "react";
+import { SessionContext } from "../session";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Search,
+  Plus,
+  RefreshCw,
+  MoreHorizontal,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  Power,
+  Check,
+  X,
+  Download,
+  List,
+  LayoutGrid,
+  KeyRound,
+  Copy,
+} from "lucide-react";
+import {
+  config,
+  request,
+  send,
+  displayError,
+  permitted,
+  type JsonRecord,
+} from "../../../../packages/api-client";
+import {
+  initialValue,
+  listItems,
+  operations,
+  recordId,
+  resolveSchema,
+  runBatch,
+} from "../../../../packages/api-client/contract.mjs";
+import { type Module } from "../modules";
+import { ActionDialog, type Operation } from "./ActionDialog";
+import { ApiExplorer } from "./ApiExplorer";
+
+export function findOperation(
+  spec: JsonRecord,
+  path: string,
+  method: string,
+): Operation | undefined {
+  const found =
+    spec.paths?.[path]?.[method.toLowerCase()] ||
+    spec.paths?.[path + "/"]?.[method.toLowerCase()];
+  if (!found) return undefined;
+  return {
+    ...found,
+    path: spec.paths[path]?.[method.toLowerCase()] ? path : path + "/",
+    method: method.toUpperCase(),
+  };
+}
+function status(item: JsonRecord) {
+  return item.is_active ?? item.enabled ?? item.isActive;
+}
+function title(item: JsonRecord) {
+  return item.name || item.full_name || item.email || item.uri || item.id;
+}
+function matches(item: JsonRecord, search: string) {
+  return `${title(item)} ${item.description || ""} ${item.id || ""}`
+    .toLowerCase()
+    .includes(search.toLowerCase());
+}
+
+export function DataPage({
+  module,
+  spec,
+  permissions,
+  team,
+  en = false,
+}: {
+  module: Module;
+  spec: JsonRecord;
+  permissions: string[];
+  team: string;
+  en?: boolean;
+}) {
+  const client = useQueryClient();
+  const session = useContext(SessionContext);
+  const [tab, setTab] = useState("list");
+  const [search, setSearch] = useState("");
+  const [cursor, setCursor] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<JsonRecord[]>([]);
+  const [operation, setOperation] = useState<Operation>();
+  const [initial, setInitial] = useState<JsonRecord>();
+  const [preset, setPreset] = useState<Record<string, string>>({});
+  const [grid, setGrid] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [batchAction, setBatchAction] = useState("");
+  const [batchResults, setBatchResults] = useState<JsonRecord[]>([]);
+  const [error, setError] = useState("");
+  const [patch, setPatch] = useState('{\n  "tags": []\n}');
+  const [connection, setConnection] = useState<JsonRecord>();
+  const list = findOperation(spec, module.path, "GET");
+  const create = findOperation(spec, module.path, "POST");
+  const ops = useMemo(() => operations(spec) as Operation[], [spec]);
+  const detailOps = ops.filter(
+    (o) =>
+      o.path.startsWith(module.path.replace(/\/$/, "") + "/{") &&
+      o.classification.kind !== "excluded",
+  );
+  const primaryDetail = detailOps.find(
+    (o) =>
+      o.method === "GET" &&
+      o.path.split("/").length === module.path.split("/").length + 1,
+  );
+  const update = detailOps.find(
+    (o) =>
+      ["PUT", "PATCH"].includes(o.method) &&
+      o.path.split("/").length === module.path.split("/").length + 1,
+  );
+  const remove = detailOps.find(
+    (o) =>
+      o.method === "DELETE" &&
+      o.path.split("/").length === module.path.split("/").length + 1,
+  );
+  const toggle = detailOps.find((o) => o.path.endsWith("/state"));
+  const can = (action: string) => {
+    const op =
+      action === "read"
+        ? list
+        : action === "create"
+          ? create
+          : action === "update"
+            ? update
+            : remove;
+    if (op?.["x-panel-admin"] && !session.user?.is_admin) return false;
+    if (op?.["x-panel-permission"])
+      return permitted(permissions, op["x-panel-permission"]);
+    return permitted(
+      permissions,
+      module.permission?.includes(".")
+        ? module.permission
+        : module.permission
+          ? `${module.permission}.${action}`
+          : undefined,
+    );
+  };
+  function listPath(nextCursor = "", nextPage = 0) {
+    const params = list?.parameters || [];
+    const names = params.map((p: any) => p.name);
+    const q = new URLSearchParams();
+    if (names.includes("include_pagination"))
+      q.set("include_pagination", "true");
+    if (names.includes("include_inactive")) q.set("include_inactive", "true");
+    if (names.includes("limit")) q.set("limit", "25");
+    if (names.includes("offset")) q.set("offset", String(nextPage * 25));
+    if (names.includes("page")) q.set("page", String(nextPage + 1));
+    if (names.includes("page_size")) q.set("page_size", "25");
+    if (team && names.includes("team_id")) q.set("team_id", team);
+    if (nextCursor) q.set("cursor", nextCursor);
+    return list!.path + (q.size ? "?" + q : "");
+  }
+  const query = useQuery({
+    queryKey: ["list", module.id, team, cursor, page],
+    queryFn: () => request(listPath(cursor, page)),
+    enabled: !!list && can("read") && !module.actionsOnly,
+    retry: false,
+  });
+  const items = listItems(query.data) as JsonRecord[];
+  const filtered = items.filter((item) => matches(item, search));
+  const nextCursor = query.data?.nextCursor || query.data?.next_cursor || "";
+  const total = query.data?.total ?? query.data?.pagination?.total;
+  const offsetPaging = list?.parameters?.some((p: any) =>
+    ["offset", "page"].includes(p.name),
+  );
+  const hasNext = Boolean(
+    nextCursor ||
+    (offsetPaging && (total ? (page + 1) * 25 < total : items.length === 25)),
+  );
+  useEffect(() => {
+    setCursor("");
+    setHistory([]);
+    setPage(0);
+    setSelected([]);
+  }, [team]);
+  function refresh() {
+    void client.invalidateQueries({ queryKey: ["list", module.id] });
+  }
+  function launch(op: Operation, item?: JsonRecord, edit = false) {
+    setError("");
+    setOperation(op);
+    setInitial(undefined);
+    setPreset(
+      Object.fromEntries(
+        (op.parameters || [])
+          .filter((p: any) => p.in === "path")
+          .map((p: any) => [
+            p.name,
+            String(
+              item
+                ? p.name === "user_email"
+                  ? item.email
+                  : recordId(item)
+                : "",
+            ),
+          ]),
+      ),
+    );
+    if (edit && item) {
+      const schema = resolveSchema(
+        op.requestBody?.content?.["application/json"]?.schema,
+        spec,
+      );
+      const wrapper = [
+        "tool",
+        "resource",
+        "prompt",
+        "gateway",
+        "server",
+        "agent",
+      ].find((k) => schema.properties?.[k]);
+      const fields =
+        resolveSchema(wrapper ? schema.properties[wrapper] : schema, spec)
+          .properties || {};
+      const value = Object.fromEntries(
+        Object.keys(fields)
+          .filter((k) => item[k] !== undefined)
+          .map((k) => [k, item[k]]),
+      );
+      setInitial(wrapper ? { [wrapper]: value } : value);
+    }
+    if (!edit && op === create && team)
+      setInitial({
+        ...initialValue(
+          op.requestBody?.content?.["application/json"]?.schema,
+          spec,
+        ),
+        team_id: team,
+      });
+  }
+  async function selectAll() {
+    setBusy(true);
+    setError("");
+    try {
+      let c = "";
+      let n = 0;
+      const all: JsonRecord[] = [];
+      const seen = new Set<string>();
+      while (true) {
+        const data = await request(listPath(c, n));
+        const values = listItems(data);
+        all.push(...values.filter((item: JsonRecord) => matches(item, search)));
+        if (all.length > 10000 || n > 400)
+          throw new Error(
+            en
+              ? "Too many matches; narrow the filter first."
+              : "匹配项过多，请先缩小范围。",
+          );
+        const next = data?.nextCursor || data?.next_cursor;
+        if (next) {
+          if (seen.has(next))
+            throw new Error("Backend returned repeated pagination cursor");
+          seen.add(next);
+          c = next;
+          n++;
+          continue;
+        }
+        if (
+          offsetPaging &&
+          values.length === 25 &&
+          (!data.total || (n + 1) * 25 < data.total)
+        ) {
+          n++;
+          continue;
+        }
+        break;
+      }
+      setSelected([
+        ...new Map(all.map((item) => [recordId(item), item])).values(),
+      ]);
+    } catch (err) {
+      setError(displayError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function executeBatch(targets = selected) {
+    setBusy(true);
+    setError("");
+    setBatchResults([]);
+    try {
+      const patchValue = batchAction === "update" ? JSON.parse(patch) : null;
+      if (
+        patchValue &&
+        (Array.isArray(patchValue) || typeof patchValue !== "object")
+      )
+        throw new Error("Patch must be a JSON object");
+      const op =
+        batchAction === "delete"
+          ? remove
+          : batchAction === "update"
+            ? update
+            : toggle;
+      if (!op) throw new Error("Operation not supported");
+      const results = await runBatch(
+        targets,
+        async (item: JsonRecord) => {
+          let path = op.path.replace(
+            /\{[^}]+\}/g,
+            encodeURIComponent(
+              String(module.id === "users" ? item.email : recordId(item)),
+            ),
+          );
+          let body: any;
+          if (batchAction === "update") {
+            const schema = resolveSchema(
+              op.requestBody?.content?.["application/json"]?.schema,
+              spec,
+            );
+            const wrapper = [
+              "tool",
+              "resource",
+              "prompt",
+              "gateway",
+              "server",
+              "agent",
+            ].find((k) => schema.properties?.[k]);
+            body = wrapper ? { [wrapper]: patchValue } : patchValue;
+          } else if (batchAction !== "delete") {
+            const active = batchAction === "enable";
+            if (op.parameters?.some((p: any) => p.name === "activate"))
+              path += "?activate=" + active;
+            else body = { enabled: active, is_active: active };
+          }
+          await send(path, op.method, body);
+        },
+        {
+          concurrency: 3,
+          onResult: (result: JsonRecord) =>
+            setBatchResults((prev) => [...prev, result]),
+        },
+      );
+      setSelected(results.filter((r: any) => !r.ok).map((r: any) => r.item));
+      refresh();
+    } catch (err) {
+      setError(displayError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  function exportSelected() {
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(selected, null, 2)], {
+        type: "application/json",
+      }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = module.id + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  return (
+    <>
+      <div className="tabs">
+        <button
+          className={tab === "list" ? "active" : ""}
+          onClick={() => setTab("list")}
+        >
+          {en ? "Overview" : "资源列表"}
+        </button>
+        <button
+          className={tab === "actions" ? "active" : ""}
+          onClick={() => setTab("actions")}
+        >
+          {en ? "All actions" : "全部操作"}
+          <span className="tab-count">
+            {
+              ops.filter(
+                (o) =>
+                  o.path.startsWith(module.path) &&
+                  o.classification.kind !== "excluded",
+              ).length
+            }
+          </span>
+        </button>
+      </div>
+      {tab === "actions" || module.actionsOnly ? (
+        <ApiExplorer spec={spec} filter={module.path} en={en} />
+      ) : (
+        <>
+          {module.id === "tokens" && (
+            <div className="info-banner">
+              <KeyRound size={20} />
+              <div>
+                <strong>
+                  {en
+                    ? "Give applications access within your permissions"
+                    : "让应用安全地使用你有权访问的工具"}
+                </strong>
+                <p>
+                  {en
+                    ? "Create a key scoped to your team or virtual server. Copy the key when it is created."
+                    : "选择团队和虚拟服务器，设置权限与有效期。Key 明文仅在创建时显示。"}
+                </p>
+              </div>
+            </div>
+          )}
+          <section className="panel">
+            <div className="toolbar">
+              <label className="search-field">
+                <Search size={17} />
+                <input
+                  aria-label="Filter resources"
+                  placeholder={
+                    en ? "Filter names on this page…" : "筛选当前页名称、描述…"
+                  }
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
+              <span className="muted">
+                {total ?? filtered.length} {en ? "items" : "项"}
+              </span>
+              <div className="toolbar-right">
+                <button
+                  className="icon-button"
+                  aria-label="Refresh"
+                  onClick={refresh}
+                >
+                  <RefreshCw
+                    size={17}
+                    className={query.isFetching ? "spinning" : ""}
+                  />
+                </button>
+                <button
+                  className="icon-button"
+                  aria-label="Toggle layout"
+                  onClick={() => setGrid(!grid)}
+                >
+                  {grid ? <List size={18} /> : <LayoutGrid size={18} />}
+                </button>
+                {create && can("create") && (
+                  <button
+                    className="button primary"
+                    onClick={() => launch(create)}
+                  >
+                    <Plus size={16} />
+                    {en
+                      ? "Create"
+                      : module.id === "tokens"
+                        ? "创建 API Key"
+                        : "新建"}
+                  </button>
+                )}
+              </div>
+            </div>
+            {error && (
+              <div className="alert error" role="alert">
+                {error}
+              </div>
+            )}
+            {query.error && (
+              <div className="alert error" role="alert">
+                {displayError(query.error)}
+                <button className="text-button" onClick={refresh}>
+                  {en ? "Retry" : "重试"}
+                </button>
+              </div>
+            )}
+            {!can("read") ? (
+              <div className="empty">
+                <h3>{en ? "Permission required" : "没有查看权限"}</h3>
+                <p>
+                  {en
+                    ? "Contact your team administrator."
+                    : "请联系团队管理员分配相应角色。"}
+                </p>
+              </div>
+            ) : !list ? (
+              <div className="empty">
+                <h3>{en ? "Feature unavailable" : "当前后端未启用此功能"}</h3>
+                <p>
+                  {en
+                    ? "Inspect all actions for available capabilities."
+                    : "可在全部操作中查看当前提供的能力。"}
+                </p>
+              </div>
+            ) : query.isPending ? (
+              <div className="empty">
+                <RefreshCw className="spinning" />
+                <p>{en ? "Loading…" : "正在加载…"}</p>
+              </div>
+            ) : !filtered.length ? (
+              <div className="empty">
+                <module.icon size={34} />
+                <h3>
+                  {en
+                    ? "No resources yet"
+                    : search
+                      ? "没有匹配的资源"
+                      : "还没有资源"}
+                </h3>
+                <p>
+                  {en
+                    ? "Create a resource or adjust your filters."
+                    : search
+                      ? "尝试调整筛选条件。"
+                      : "创建第一个资源，或切换团队查看已有资源。"}
+                </p>
+                {create && can("create") && (
+                  <button
+                    className="button secondary"
+                    onClick={() => launch(create)}
+                  >
+                    <Plus size={15} />
+                    {en ? "Create resource" : "创建资源"}
+                  </button>
+                )}
+              </div>
+            ) : grid ? (
+              <div className="resource-grid">
+                {filtered.map((item) => (
+                  <article className="resource-card" key={recordId(item)}>
+                    <div className="section-heading">
+                      <module.icon size={22} />
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${title(item)}`}
+                        checked={selected.some(
+                          (v) => recordId(v) === recordId(item),
+                        )}
+                        onChange={(e) =>
+                          setSelected((prev) =>
+                            e.target.checked
+                              ? [...prev, item]
+                              : prev.filter(
+                                  (v) => recordId(v) !== recordId(item),
+                                ),
+                          )
+                        }
+                      />
+                    </div>
+                    <h3>{title(item)}</h3>
+                    <p>{item.description || "—"}</p>
+                    <span
+                      className={`badge ${status(item) === false ? "neutral" : "success"}`}
+                    >
+                      {status(item) === false
+                        ? en
+                          ? "Disabled"
+                          : "已停用"
+                        : en
+                          ? "Available"
+                          : "可用"}
+                    </span>
+                    <div className="card-footer">
+                      {primaryDetail && (
+                        <button
+                          className="text-button"
+                          onClick={() => launch(primaryDetail, item)}
+                        >
+                          {en ? "Details" : "查看详情"}
+                          <ArrowUpRight size={14} />
+                        </button>
+                      )}
+                      {update && can("update") && (
+                        <button
+                          className="text-button"
+                          onClick={() => launch(update, item, true)}
+                        >
+                          {en ? "Edit" : "编辑"}
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th className="checkbox-cell">
+                        <input
+                          type="checkbox"
+                          aria-label="Select page"
+                          checked={
+                            !!filtered.length &&
+                            filtered.every((item) =>
+                              selected.some(
+                                (v) => recordId(v) === recordId(item),
+                              ),
+                            )
+                          }
+                          onChange={(e) =>
+                            setSelected(
+                              e.target.checked
+                                ? [
+                                    ...new Map(
+                                      [...selected, ...filtered].map((item) => [
+                                        recordId(item),
+                                        item,
+                                      ]),
+                                    ).values(),
+                                  ]
+                                : selected.filter(
+                                    (item) =>
+                                      !filtered.some(
+                                        (v) => recordId(item) === recordId(v),
+                                      ),
+                                  ),
+                            )
+                          }
+                        />
+                      </th>
+                      <th>{en ? "Name" : "名称"}</th>
+                      <th>{en ? "Status" : "状态"}</th>
+                      <th>{en ? "Visibility / scope" : "可见性 / 范围"}</th>
+                      <th>{en ? "Updated / created" : "更新 / 创建时间"}</th>
+                      <th>{en ? "Actions" : "操作"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((item) => (
+                      <tr key={recordId(item)}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${title(item)}`}
+                            checked={selected.some(
+                              (v) => recordId(v) === recordId(item),
+                            )}
+                            onChange={(e) =>
+                              setSelected((prev) =>
+                                e.target.checked
+                                  ? [...prev, item]
+                                  : prev.filter(
+                                      (v) => recordId(v) !== recordId(item),
+                                    ),
+                              )
+                            }
+                          />
+                        </td>
+                        <td>
+                          <div className="resource-name">
+                            <span className="resource-symbol">
+                              <module.icon size={17} />
+                            </span>
+                            <div>
+                              <button
+                                className="name-button"
+                                onClick={() =>
+                                  primaryDetail && launch(primaryDetail, item)
+                                }
+                              >
+                                {title(item)}
+                              </button>
+                              <small>
+                                {item.description ||
+                                  item.email ||
+                                  item.id ||
+                                  "—"}
+                              </small>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            className={`badge ${status(item) === false ? "neutral" : "success"}`}
+                          >
+                            <span className="status-dot" />
+                            {status(item) === false
+                              ? en
+                                ? "Disabled"
+                                : "已停用"
+                              : en
+                                ? "Available"
+                                : "可用"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="badge neutral">
+                            {item.visibility ||
+                              item.scope ||
+                              item.team_id ||
+                              (en ? "Personal" : "个人")}
+                          </span>
+                        </td>
+                        <td className="muted">
+                          {item.updated_at || item.created_at
+                            ? new Date(
+                                item.updated_at || item.created_at,
+                              ).toLocaleDateString()
+                            : "—"}
+                        </td>
+                        <td>
+                          <div className="row-actions">
+                            {update && can("update") && (
+                              <button
+                                className="text-button"
+                                onClick={() => launch(update, item, true)}
+                              >
+                                {en ? "Edit" : "编辑"}
+                              </button>
+                            )}
+                            {module.id === "servers" && (
+                              <button
+                                className="icon-button"
+                                aria-label="Connection"
+                                onClick={() => setConnection(item)}
+                              >
+                                <Copy size={15} />
+                              </button>
+                            )}
+                            <details className="action-menu">
+                              <summary aria-label="More actions">
+                                <MoreHorizontal size={18} />
+                              </summary>
+                              <div>
+                                {detailOps
+                                  .filter(
+                                    (o) =>
+                                      o.method !== "GET" || o !== primaryDetail,
+                                  )
+                                  .map((op) => (
+                                    <button
+                                      key={op.method + op.path}
+                                      onClick={(e) => {
+                                        (
+                                          e.currentTarget.closest(
+                                            "details",
+                                          ) as HTMLDetailsElement
+                                        ).open = false;
+                                        launch(op, item);
+                                      }}
+                                    >
+                                      {op.summary ||
+                                        `${op.method} ${op.path.split("/").pop()}`}
+                                    </button>
+                                  ))}
+                              </div>
+                            </details>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {list && (
+              <footer className="table-footer">
+                <span>
+                  {en ? "Page" : "第"} {page + 1} {en ? "" : "页"} ·{" "}
+                  {filtered.length} {en ? "visible" : "项可见"}
+                </span>
+                <div>
+                  <button
+                    className="icon-button"
+                    aria-label="Previous page"
+                    disabled={!page}
+                    onClick={() => {
+                      setCursor(history[page - 1] || "");
+                      setPage(page - 1);
+                    }}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    className="icon-button"
+                    aria-label="Next page"
+                    disabled={!hasNext}
+                    onClick={() => {
+                      setHistory((h) => [...h.slice(0, page), cursor]);
+                      setCursor(nextCursor);
+                      setPage(page + 1);
+                    }}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </footer>
+            )}
+          </section>
+          {selected.length > 0 && (
+            <div className="bulk-bar">
+              <strong>
+                {en
+                  ? `${selected.length} selected`
+                  : `已选择 ${selected.length} 项`}
+              </strong>
+              <button
+                className="text-button"
+                disabled={busy}
+                onClick={selectAll}
+              >
+                {en ? "Select all matching pages" : "选择跨页全部匹配项"}
+              </button>
+              <button
+                className="icon-button"
+                aria-label="Export selected"
+                onClick={exportSelected}
+              >
+                <Download size={17} />
+              </button>
+              {toggle && can("update") && (
+                <>
+                  <button
+                    className="button secondary"
+                    onClick={() => setBatchAction("enable")}
+                  >
+                    <Power size={15} />
+                    {en ? "Enable" : "启用"}
+                  </button>
+                  <button
+                    className="button secondary"
+                    onClick={() => setBatchAction("disable")}
+                  >
+                    {en ? "Disable" : "停用"}
+                  </button>
+                </>
+              )}
+              {update && can("update") && (
+                <button
+                  className="button secondary"
+                  onClick={() => setBatchAction("update")}
+                >
+                  {en ? "Bulk edit" : "批量修改"}
+                </button>
+              )}
+              {remove && can(module.id === "tokens" ? "revoke" : "delete") && (
+                <button
+                  className="button danger-outline"
+                  onClick={() => setBatchAction("delete")}
+                >
+                  <Trash2 size={15} />
+                  {en ? "Delete / revoke" : "删除 / 撤销"}
+                </button>
+              )}
+              <button
+                className="icon-button"
+                aria-label="Clear selection"
+                disabled={busy}
+                onClick={() => setSelected([])}
+              >
+                <X size={17} />
+              </button>
+            </div>
+          )}
+          {batchAction && (
+            <section className="panel batch-panel">
+              <div className="section-heading">
+                <h3>
+                  {en ? "Review bulk action" : "确认批量操作"} · {batchAction}
+                </h3>
+                <button
+                  className="icon-button"
+                  disabled={busy}
+                  aria-label="Close batch"
+                  onClick={() => {
+                    setBatchAction("");
+                    setBatchResults([]);
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="muted">
+                {en
+                  ? `${selected.length} frozen targets. Individual calls can partially succeed.`
+                  : `已确定 ${selected.length} 个目标。逐项执行，可能部分成功；不支持事务回滚。`}
+              </p>
+              {batchAction === "update" && (
+                <label className="field">
+                  {en ? "Fields to apply (JSON)" : "要统一修改的字段（JSON）"}
+                  <textarea
+                    rows={5}
+                    value={patch}
+                    onChange={(e) => setPatch(e.target.value)}
+                  />
+                </label>
+              )}
+              <button
+                className="button primary"
+                disabled={busy || !selected.length}
+                onClick={() => executeBatch()}
+              >
+                {busy
+                  ? en
+                    ? "Running…"
+                    : "执行中…"
+                  : batchResults.length
+                    ? en
+                      ? "Retry failed targets"
+                      : "重试失败项"
+                    : en
+                      ? "Confirm execution"
+                      : "确认执行"}
+              </button>
+              {batchResults.length > 0 && (
+                <div className="batch-results">
+                  {batchResults.map((r, i) => (
+                    <div key={i}>
+                      {r.ok ? <Check size={15} /> : <X size={15} />}
+                      <strong>{title(r.item)}</strong>
+                      <span className={r.ok ? "muted" : "error-text"}>
+                        {r.ok ? (en ? "Succeeded" : "成功") : r.error}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+        </>
+      )}
+      {operation && (
+        <ActionDialog
+          key={operation.method + operation.path + JSON.stringify(preset)}
+          operation={operation}
+          spec={spec}
+          initial={initial}
+          preset={preset}
+          onClose={() => setOperation(undefined)}
+          onSuccess={refresh}
+          en={en}
+        />
+      )}
+      {connection && (
+        <div className="panel connection-result">
+          <div className="section-heading">
+            <h3>{title(connection)} · MCP</h3>
+            <button
+              className="icon-button"
+              aria-label="Close connection"
+              onClick={() => setConnection(undefined)}
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <p className="muted">
+            {en
+              ? "Use a key scoped to this virtual server."
+              : "请使用限制到此虚拟服务器的 API Key。"}
+          </p>
+          <pre>
+            {JSON.stringify(
+              {
+                mcpServers: {
+                  [connection.name]: {
+                    type: "http",
+                    url: `${window.location.origin}${config.prefix}/servers/${connection.id}/mcp`,
+                    headers: { Authorization: "Bearer <YOUR_API_KEY>" },
+                  },
+                },
+              },
+              null,
+              2,
+            )}
+          </pre>
+        </div>
+      )}
+    </>
+  );
+}

@@ -1,0 +1,32 @@
+# Include at http scope.
+map $http_upgrade $panel_connection {
+    default upgrade;
+    '' close;
+}
+
+server {
+    listen 443 ssl;
+    server_name tools.example.com;
+    # Configure your ssl_certificate and ssl_certificate_key here.
+
+    location = /forge {
+        return 308 /forge/app/;
+    }
+    location /forge/ {
+        # No trailing URI: preserve /forge/ for the panel to strip once.
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $panel_connection;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        client_max_body_size 50m;
+    }
+}
