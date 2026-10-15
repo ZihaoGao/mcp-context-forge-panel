@@ -74,6 +74,24 @@ export const send = (path: string, method: string, body?: unknown) =>
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 export function displayError(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (Array.isArray(error.detail))
+      return error.detail
+        .map(
+          (v) =>
+            `${v.loc?.filter((p: string) => p !== "body").join(".") || "输入"}：${v.msg || JSON.stringify(v)}`,
+        )
+        .join("；");
+    const explanation: Record<number, string> = {
+      400: "请求未通过后端检查",
+      403: "当前账户没有权限，或资源不属于当前团队",
+      409: "资源已存在或配置冲突",
+      422: "输入不符合后端规则",
+      429: "请求过于频繁，请稍后重试",
+      503: "后端或上游服务暂时不可用",
+    };
+    return `${explanation[error.status] || "请求失败"}（${error.status}）：${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`;
+  }
   return error instanceof Error ? error.message : String(error);
 }
 export function permitted(permissions: string[], permission?: string): boolean {

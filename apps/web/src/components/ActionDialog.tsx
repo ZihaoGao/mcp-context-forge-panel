@@ -58,7 +58,18 @@ export function ActionDialog({
   const [result, setResult] = useState<any>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [streaming, setStreaming] = useState(false);
+  const [streaming, setStreaming] = useState(() =>
+    Object.values(operation.responses || {}).some(
+      (r: any) => r.content?.["text/event-stream"],
+    ),
+  );
+  const canStream =
+    Object.values(operation.responses || {}).some(
+      (r: any) => r.content?.["text/event-stream"],
+    ) ||
+    /\/(stream|sse)(\/|$)/.test(operation.path) ||
+    value.stream === true ||
+    /streaming|\bSSE\b/i.test(operation.description || "");
   const [files, setFiles] = useState<Record<string, File>>({});
   const [approved, setApproved] = useState(false);
   const controller = useRef<AbortController | null>(null);
@@ -141,7 +152,7 @@ export function ActionDialog({
         body = JSON.stringify(value);
         extraHeaders.set("Content-Type", contentType);
       }
-      if (streaming) {
+      if (streaming || value.stream === true) {
         extraHeaders.set("X-Panel-Request", "1");
         const response = await fetch(config.prefix + path, {
           method: operation.method,
@@ -284,16 +295,21 @@ export function ActionDialog({
               {en ? "No parameters required." : "此操作不需要参数。"}
             </p>
           )}
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={streaming}
-              onChange={(e) => setStreaming(e.target.checked)}
-            />
-            {en
-              ? "Read streaming response (SSE / events)"
-              : "读取流式响应（SSE / 事件）"}
-          </label>
+          {canStream && (
+            <label className="check-label">
+              <input
+                type="checkbox"
+                checked={streaming}
+                onChange={(e) => setStreaming(e.target.checked)}
+              />
+              {en
+                ? "Show incoming updates as they arrive"
+                : "持续显示新到达的结果"}
+              <small className="field-help">
+                适用于持续返回更新的接口。开始后可点击停止；普通查询不需要开启。
+              </small>
+            </label>
+          )}
           {destructive && (
             <label className="check-label warning">
               <input

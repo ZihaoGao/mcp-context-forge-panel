@@ -36,7 +36,13 @@ import {
   runBatch,
 } from "../../../../packages/api-client/contract.mjs";
 import { type Module } from "../modules";
-import { ActionDialog, type Operation } from "./ActionDialog";
+import { type Operation } from "./ActionDialog";
+import { ResourceDialog, resourceActionName } from "./ResourceDialog";
+import { TransferPanel } from "./TransferPanel";
+import { GovernancePage } from "./GovernancePage";
+import { resourceProfiles, validateValue } from "../resource-model.mjs";
+import { SchemaForm } from "./SchemaForm";
+import { ConfigurationTransfer } from "./ConfigurationTransfer";
 import { ApiExplorer } from "./ApiExplorer";
 
 export function findOperation(
@@ -55,7 +61,12 @@ export function findOperation(
   };
 }
 function status(item: JsonRecord) {
-  return item.is_active ?? item.enabled ?? item.isActive;
+  return (
+    item.is_active ??
+    item.enabled ??
+    item.isActive ??
+    (item.status === "disabled" ? false : undefined)
+  );
 }
 function title(item: JsonRecord) {
   return item.name || item.full_name || item.email || item.uri || item.id;
@@ -95,15 +106,22 @@ export function DataPage({
   const [batchAction, setBatchAction] = useState("");
   const [batchResults, setBatchResults] = useState<JsonRecord[]>([]);
   const [error, setError] = useState("");
-  const [patch, setPatch] = useState('{\n  "tags": []\n}');
+  const [patch, setPatch] = useState("{}");
   const [connection, setConnection] = useState<JsonRecord>();
+  const [activeItem, setActiveItem] = useState<JsonRecord>();
+  const [mode, setMode] = useState<"create" | "edit" | "action" | "detail">(
+    "action",
+  );
+  const [transfer, setTransfer] = useState(false);
   const list = findOperation(spec, module.path, "GET");
   const create = findOperation(spec, module.path, "POST");
   const ops = useMemo(() => operations(spec) as Operation[], [spec]);
   const detailOps = ops.filter(
     (o) =>
       o.path.startsWith(module.path.replace(/\/$/, "") + "/{") &&
-      o.classification.kind !== "excluded",
+      o.classification.kind === "business" &&
+      o["x-panel-available"] !== false &&
+      !/\/(sse|mcp|message)(\/|$)/.test(o.path),
   );
   const primaryDetail = detailOps.find(
     (o) =>
@@ -121,6 +139,29 @@ export function DataPage({
       o.path.split("/").length === module.path.split("/").length + 1,
   );
   const toggle = detailOps.find((o) => o.path.endsWith("/state"));
+  const canToggle =
+    !!toggle &&
+    (!toggle["x-panel-admin"] || session.user?.is_admin) &&
+    permitted(
+      permissions,
+      toggle["x-panel-permission"] || `${module.permission}.update`,
+    );
+  const transferWrite =
+    create ||
+    (module.id === "plugins"
+      ? update
+      : module.id === "catalog"
+        ? detailOps.find(
+            (o) => o.method === "POST" && o.path.endsWith("/register"),
+          )
+        : undefined);
+  const mayImport =
+    transferWrite &&
+    (!transferWrite["x-panel-admin"] || session.user?.is_admin) &&
+    permitted(
+      permissions,
+      transferWrite["x-panel-permission"] || module.permission,
+    );
   const can = (action: string) => {
     const op =
       action === "read"
@@ -131,6 +172,7 @@ export function DataPage({
             ? update
             : remove;
     if (op?.["x-panel-admin"] && !session.user?.is_admin) return false;
+    if (op?.["x-panel-available"] === false) return false;
     if (op?.["x-panel-permission"])
       return permitted(permissions, op["x-panel-permission"]);
     return permitted(
@@ -182,15 +224,34 @@ export function DataPage({
   }, [team]);
   function refresh() {
     void client.invalidateQueries({ queryKey: ["list", module.id] });
+    void client.invalidateQueries({ queryKey: ["reference-options"] });
+    void client.invalidateQueries({ queryKey: ["association-options"] });
+    if (module.id === "rbac")
+      void client.invalidateQueries({ queryKey: ["role-catalog"] });
+    if (module.id === "teams")
+      void client.invalidateQueries({ queryKey: ["my-teams"] });
   }
   function launch(op: Operation, item?: JsonRecord, edit = false) {
     setError("");
     setOperation(op);
+    setActiveItem(item);
+    setMode(
+      op === create
+        ? "create"
+        : edit || op === update
+          ? "edit"
+          : op.method === "GET" &&
+              (op.parameters || []).filter((p: any) => p.in === "path")
+                .length <= 1
+            ? "detail"
+            : "action",
+    );
     setInitial(undefined);
     setPreset(
       Object.fromEntries(
         (op.parameters || [])
           .filter((p: any) => p.in === "path")
+          .slice(0, 1)
           .map((p: any) => [
             p.name,
             String(
@@ -275,6 +336,7 @@ export function DataPage({
       setSelected([
         ...new Map(all.map((item) => [recordId(item), item])).values(),
       ]);
+      return all;
     } catch (err) {
       setError(displayError(err));
     } finally {
@@ -292,6 +354,16 @@ export function DataPage({
         (Array.isArray(patchValue) || typeof patchValue !== "object")
       )
         throw new Error("Patch must be a JSON object");
+      if (batchAction === "update") {
+        if (!Object.keys(patchValue).length)
+          throw new Error("请先选择至少一个要修改的字段");
+        const errors = validateValue(
+          patchValue,
+          { type: "object", properties: batchFields },
+          spec,
+        );
+        if (errors.length) throw new Error(errors.join("；"));
+      }
       const op =
         batchAction === "delete"
           ? remove
@@ -346,17 +418,36 @@ export function DataPage({
     }
   }
   function exportSelected() {
-    const url = URL.createObjectURL(
-      new Blob([JSON.stringify(selected, null, 2)], {
-        type: "application/json",
-      }),
-    );
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = module.id + ".json";
-    a.click();
-    URL.revokeObjectURL(url);
+    setTransfer(true);
   }
+  const batchSchema = resolveSchema(
+    update?.requestBody?.content?.["application/json"]?.schema,
+    spec,
+  );
+  const batchWrapper = [
+    "server",
+    "tool",
+    "resource",
+    "prompt",
+    "gateway",
+    "agent",
+  ].find((k) => batchSchema.properties?.[k]);
+  const batchFields =
+    resolveSchema(
+      batchWrapper ? batchSchema.properties[batchWrapper] : batchSchema,
+      spec,
+    ).properties || {};
+  const editableBatchKeys = [
+    "description",
+    "visibility",
+    "tags",
+    "team_id",
+    "teamId",
+    "enabled",
+    "is_active",
+    "max_members",
+    "expires_in_days",
+  ].filter((k) => batchFields[k]);
   return (
     <>
       <div className="tabs">
@@ -382,8 +473,13 @@ export function DataPage({
           </span>
         </button>
       </div>
-      {tab === "actions" || module.actionsOnly ? (
+      {tab === "actions" ? (
         <ApiExplorer spec={spec} filter={module.path} en={en} />
+      ) : ["logs", "settings", "observability"].includes(module.id) ? (
+        <>
+          <GovernancePage moduleId={module.id} spec={spec} en={en} />
+          {module.id === "settings" && <ConfigurationTransfer spec={spec} />}
+        </>
       ) : (
         <>
           {module.id === "tokens" && (
@@ -420,6 +516,13 @@ export function DataPage({
                 {total ?? filtered.length} {en ? "items" : "项"}
               </span>
               <div className="toolbar-right">
+                <button
+                  className="button secondary"
+                  onClick={() => setTransfer(!transfer)}
+                >
+                  <Download size={16} />
+                  {en ? "Import / export" : "导入 / 导出"}
+                </button>
                 <button
                   className="icon-button"
                   aria-label="Refresh"
@@ -552,10 +655,18 @@ export function DataPage({
                           : "可用"}
                     </span>
                     <div className="card-footer">
-                      {primaryDetail && (
+                      {(primaryDetail || list) && (
                         <button
                           className="text-button"
-                          onClick={() => launch(primaryDetail, item)}
+                          onClick={() =>
+                            launch(
+                              primaryDetail || {
+                                ...list!,
+                                "x-panel-local-detail": true,
+                              },
+                              item,
+                            )
+                          }
                         >
                           {en ? "Details" : "查看详情"}
                           <ArrowUpRight size={14} />
@@ -613,7 +724,18 @@ export function DataPage({
                       </th>
                       <th>{en ? "Name" : "名称"}</th>
                       <th>{en ? "Status" : "状态"}</th>
-                      <th>{en ? "Visibility / scope" : "可见性 / 范围"}</th>
+                      <th>
+                        {en
+                          ? "Scope / type"
+                          : (
+                              {
+                                llm: "供应商类型",
+                                plugins: "运行模式",
+                                catalog: "服务分类",
+                                users: "账户类型",
+                              } as Record<string, string>
+                            )[module.id] || "可见性 / 范围"}
+                      </th>
                       <th>{en ? "Updated / created" : "更新 / 创建时间"}</th>
                       <th>{en ? "Actions" : "操作"}</th>
                     </tr>
@@ -648,7 +770,13 @@ export function DataPage({
                               <button
                                 className="name-button"
                                 onClick={() =>
-                                  primaryDetail && launch(primaryDetail, item)
+                                  launch(
+                                    primaryDetail || {
+                                      ...list!,
+                                      "x-panel-local-detail": true,
+                                    },
+                                    item,
+                                  )
                                 }
                               >
                                 {title(item)}
@@ -679,15 +807,31 @@ export function DataPage({
                         <td>
                           <span className="badge neutral">
                             {item.visibility ||
-                              item.scope ||
+                              (typeof item.scope === "string"
+                                ? item.scope
+                                : undefined) ||
+                              item.provider_type ||
+                              item.mode ||
+                              item.category ||
+                              (module.id === "users"
+                                ? item.is_admin
+                                  ? "管理员"
+                                  : "普通用户"
+                                : undefined) ||
                               item.team_id ||
                               (en ? "Personal" : "个人")}
                           </span>
                         </td>
                         <td className="muted">
-                          {item.updated_at || item.created_at
+                          {item.updated_at ||
+                          item.created_at ||
+                          item.updatedAt ||
+                          item.createdAt
                             ? new Date(
-                                item.updated_at || item.created_at,
+                                item.updated_at ||
+                                  item.created_at ||
+                                  item.updatedAt ||
+                                  item.createdAt,
                               ).toLocaleDateString()
                             : "—"}
                         </td>
@@ -718,7 +862,15 @@ export function DataPage({
                                 {detailOps
                                   .filter(
                                     (o) =>
-                                      o.method !== "GET" || o !== primaryDetail,
+                                      o !== primaryDetail &&
+                                      o !== update &&
+                                      (!o["x-panel-admin"] ||
+                                        session.user?.is_admin) &&
+                                      permitted(
+                                        permissions,
+                                        o["x-panel-permission"],
+                                      ) &&
+                                      o["x-panel-available"] !== false,
                                   )
                                   .map((op) => (
                                     <button
@@ -732,8 +884,15 @@ export function DataPage({
                                         launch(op, item);
                                       }}
                                     >
-                                      {op.summary ||
-                                        `${op.method} ${op.path.split("/").pop()}`}
+                                      {resourceActionName(
+                                        op,
+                                        (
+                                          resourceProfiles as Record<
+                                            string,
+                                            any
+                                          >
+                                        )[module.id]?.noun || "资源",
+                                      )}
                                     </button>
                                   ))}
                               </div>
@@ -780,6 +939,18 @@ export function DataPage({
               </footer>
             )}
           </section>
+          {transfer && (
+            <TransferPanel
+              moduleId={module.id}
+              spec={spec}
+              create={mayImport ? transferWrite : undefined}
+              detail={primaryDetail}
+              records={selected.length ? selected : filtered}
+              loadAll={selectAll}
+              onSuccess={refresh}
+              en={en}
+            />
+          )}
           {selected.length > 0 && (
             <div className="bulk-bar">
               <strong>
@@ -801,7 +972,7 @@ export function DataPage({
               >
                 <Download size={17} />
               </button>
-              {toggle && can("update") && (
+              {canToggle && (
                 <>
                   <button
                     className="button secondary"
@@ -869,14 +1040,58 @@ export function DataPage({
                   : `已确定 ${selected.length} 个目标。逐项执行，可能部分成功；不支持事务回滚。`}
               </p>
               {batchAction === "update" && (
-                <label className="field">
-                  {en ? "Fields to apply (JSON)" : "要统一修改的字段（JSON）"}
-                  <textarea
-                    rows={5}
-                    value={patch}
-                    onChange={(e) => setPatch(e.target.value)}
+                <div className="field">
+                  <span>选择要统一修改的字段；未选择的字段保持不变</span>
+                  <div className="picker-actions">
+                    {editableBatchKeys.map((k) => (
+                      <label key={k} className="check-label">
+                        <input
+                          type="checkbox"
+                          checked={Object.hasOwn(JSON.parse(patch), k)}
+                          onChange={(e) => {
+                            const v = JSON.parse(patch);
+                            if (e.target.checked)
+                              v[k] =
+                                resolveSchema(batchFields[k], spec).type ===
+                                "array"
+                                  ? []
+                                  : "";
+                            else delete v[k];
+                            setPatch(JSON.stringify(v));
+                          }}
+                        />
+                        {k}
+                      </label>
+                    ))}
+                  </div>
+                  <SchemaForm
+                    all
+                    schema={{
+                      type: "object",
+                      properties: Object.fromEntries(
+                        Object.keys(JSON.parse(patch))
+                          .filter((k) => batchFields[k])
+                          .map((k) => [k, batchFields[k]]),
+                      ),
+                    }}
+                    spec={spec}
+                    value={JSON.parse(patch)}
+                    onChange={(v) =>
+                      setPatch(
+                        JSON.stringify({
+                          ...v,
+                          ...(Object.hasOwn(JSON.parse(patch), "description") &&
+                          v.description === undefined
+                            ? { description: "" }
+                            : {}),
+                        }),
+                      )
+                    }
                   />
-                </label>
+                  <small className="field-help">
+                    留空的文本会清空该字段；请确认所有目标都应使用相同值。
+                  </small>
+                </div>
               )}
               <button
                 className="button primary"
@@ -913,9 +1128,13 @@ export function DataPage({
         </>
       )}
       {operation && (
-        <ActionDialog
+        <ResourceDialog
           key={operation.method + operation.path + JSON.stringify(preset)}
           operation={operation}
+          moduleId={module.id}
+          mode={mode}
+          item={activeItem}
+          team={team}
           spec={spec}
           initial={initial}
           preset={preset}

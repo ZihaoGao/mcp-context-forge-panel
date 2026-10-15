@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, UserPlus, Search, Trash2 } from "lucide-react";
 import {
   request,
@@ -7,7 +7,8 @@ import {
   type JsonRecord,
 } from "../../../../packages/api-client";
 import { listItems } from "../../../../packages/api-client/contract.mjs";
-import { ActionDialog, type Operation } from "./ActionDialog";
+import { type Operation } from "./ActionDialog";
+import { ResourceDialog } from "./ResourceDialog";
 import { findOperation } from "./DataPage";
 
 export function RbacPanel({
@@ -19,6 +20,7 @@ export function RbacPanel({
   team: string;
   en?: boolean;
 }) {
+  const client = useQueryClient();
   const [tab, setTab] = useState("assignments");
   const [email, setEmail] = useState("");
   const [target, setTarget] = useState("");
@@ -105,7 +107,12 @@ export function RbacPanel({
             <button className="button secondary">
               {en ? "Look up" : "查询"}
             </button>
-            <button type="button" className="button primary" onClick={assign}>
+            <button
+              type="button"
+              className="button primary"
+              disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target || email)}
+              onClick={assign}
+            >
               <UserPlus size={16} />
               {en ? "Assign role" : "分配角色"}
             </button>
@@ -208,13 +215,23 @@ export function RbacPanel({
         </>
       )}
       {operation && (
-        <ActionDialog
+        <ResourceDialog
+          key={operation.method + operation.path + JSON.stringify(preset)}
+          moduleId="rbac"
+          mode="action"
+          team={team}
+          item={{ email: target || email }}
+          initial={{
+            scope: team ? "team" : "global",
+            ...(team ? { scope_id: team } : {}),
+          }}
           operation={operation}
           spec={spec}
           preset={preset}
           onClose={() => setOperation(undefined)}
           onSuccess={() => {
             void assignments.refetch();
+            void client.invalidateQueries({ queryKey: ["my-permissions"] });
           }}
           en={en}
         />

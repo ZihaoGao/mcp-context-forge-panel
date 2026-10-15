@@ -1,6 +1,11 @@
 import { useContext, useState } from "react";
 import { SessionContext } from "../session";
-import { ReferenceInput, PermissionPicker } from "./ReferenceInput";
+import {
+  ReferenceInput,
+  PermissionPicker,
+  ResourcePicker,
+} from "./ReferenceInput";
+import { enrichField, fieldCopy } from "../resource-model.mjs";
 import { resolveSchema } from "../../../../packages/api-client/contract.mjs";
 import type { JsonRecord } from "../../../../packages/api-client";
 
@@ -9,11 +14,13 @@ export function SchemaForm({
   spec,
   value,
   onChange,
+  all = false,
 }: {
   schema: JsonRecord;
   spec: JsonRecord;
   value: JsonRecord;
   onChange: (v: JsonRecord) => void;
+  all?: boolean;
 }) {
   const s = resolveSchema(schema, spec);
   const session = useContext(SessionContext);
@@ -46,13 +53,18 @@ export function SchemaForm({
     "is_active",
     "enabled",
   ];
-  const visible = advanced
-    ? fields
-    : fields.filter(
-        ([key]) => s.required?.includes(key) || common.includes(key),
-      );
+  const visible =
+    advanced || all
+      ? fields
+      : fields.filter(
+          ([key]) => s.required?.includes(key) || common.includes(key),
+        );
   function update(key: string, next: unknown) {
     const copy = { ...value };
+    if (key === "scope" && typeof next === "string" && s.properties?.role_id) {
+      delete copy.role_id;
+      if (next !== "team") delete copy.scope_id;
+    }
     if (next === undefined) delete copy[key];
     else copy[key] = next;
     onChange(copy);
@@ -91,12 +103,119 @@ export function SchemaForm({
   return (
     <div className="schema-form">
       {visible.map(([key, original]) => {
-        const field = resolveSchema(original, spec);
+        const field = enrichField(key, original, spec);
         const required = s.required?.includes(key);
         const complex =
           field.type === "object" || field.type === "array" || field.properties;
-        const title = field.title || key;
+        const copy = (fieldCopy as Record<string, string[]>)[key];
+        const title =
+          key === "scope" && field.type === "string"
+            ? "角色范围"
+            : copy?.[0] || field.title || key;
         const current = value[key];
+        const auth = value.authType || value.auth_type;
+        if (s.title === "AuthenticationValues" && key === "authType")
+          field.enum = ["none", "basic", "bearer", "authheaders"];
+        if (
+          s.title === "AuthenticationValues" &&
+          ["username", "password", "token", "authValue"].includes(key)
+        ) {
+          if (
+            key === "authValue" ||
+            (key === "token" ? auth !== "bearer" : auth !== "basic")
+          )
+            return null;
+        }
+        const authFields: Record<string, string[]> = {
+          basic: [
+            "authUsername",
+            "authPassword",
+            "auth_username",
+            "auth_password",
+          ],
+          bearer: ["authToken", "auth_token"],
+          authheaders: [
+            "authHeaderKey",
+            "authHeaderValue",
+            "authHeaders",
+            "auth_headers",
+            "auth_header_key",
+            "auth_header_value",
+          ],
+          query_param: [
+            "authQueryParamKey",
+            "authQueryParamValue",
+            "auth_query_param_key",
+            "auth_query_param_value",
+          ],
+          oauth: ["oauthConfig", "oauth_config"],
+        };
+        const credentialField = Object.values(authFields).flat().includes(key);
+        if (credentialField && !authFields[auth]?.includes(key)) return null;
+        if (
+          [
+            "associated_tools",
+            "associated_resources",
+            "associated_prompts",
+            "associated_a2a_agents",
+            "plugin_ids",
+          ].includes(key)
+        )
+          return (
+            <div className="field full" key={key}>
+              <span>{title}</span>
+              <ResourcePicker
+                name={key}
+                value={current || []}
+                onChange={(v) => update(key, v)}
+              />
+              <small className="field-help">{copy?.[1]}</small>
+            </div>
+          );
+        if (["arguments", "members"].includes(key) && field.type === "array")
+          return (
+            <div className="field full" key={key}>
+              <span>{title}</span>
+              <small className="field-help">{copy?.[1]}</small>
+              {(current || []).map((row: JsonRecord, i: number) => (
+                <div className="repeat-row" key={i}>
+                  <SchemaForm
+                    schema={field.items}
+                    spec={spec}
+                    value={row}
+                    all
+                    onChange={(next) =>
+                      update(
+                        key,
+                        current.map((v: JsonRecord, n: number) =>
+                          n === i ? next : v,
+                        ),
+                      )
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() =>
+                      update(
+                        key,
+                        current.filter((_: unknown, n: number) => n !== i),
+                      )
+                    }
+                  >
+                    移除此项
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => update(key, [...(current || []), {}])}
+              >
+                {key === "arguments" ? "添加参数" : "添加成员"}
+              </button>
+            </div>
+          );
         if (key === "permissions" && field.type === "array")
           return (
             <div className="field full" key={key}>
@@ -130,6 +249,7 @@ export function SchemaForm({
             "agent",
             "scope",
             "llm",
+            "auth",
           ].includes(key)
         )
           return (
@@ -142,6 +262,7 @@ export function SchemaForm({
                 schema={field}
                 spec={spec}
                 value={current || {}}
+                all={key === "scope" ? false : all}
                 onChange={(next) => update(key, next)}
               />
             </fieldset>
@@ -155,9 +276,17 @@ export function SchemaForm({
               {title}
               {required && <b className="required"> *</b>} <small>{key}</small>
             </span>
-            {["team_id", "scope_id", "server_id", "role_id"].includes(key) ? (
+            {[
+              "team_id",
+              "teamId",
+              "scope_id",
+              "server_id",
+              "role_id",
+              "inherits_from",
+            ].includes(key) ? (
               <ReferenceInput
                 name={key}
+                scope={key === "role_id" ? value.scope : undefined}
                 value={current || ""}
                 required={!!required}
                 onChange={(next) => update(key, next)}
@@ -173,6 +302,15 @@ export function SchemaForm({
                 {field.enum.map((option: any) => (
                   <option key={option} value={option}>
                     {String(option)}
+                    {key === "visibility"
+                      ? (
+                          {
+                            private: " · 仅自己",
+                            team: " · 所属团队",
+                            public: " · 所有获准用户",
+                          } as Record<string, string>
+                        )[option]
+                      : ""}
                   </option>
                 ))}
               </select>
@@ -194,6 +332,37 @@ export function SchemaForm({
                 <option value="true">是 / Yes</option>
                 <option value="false">否 / No</option>
               </select>
+            ) : field.type === "array" &&
+              (resolveSchema(field.items, spec).type === "string" ||
+                [
+                  "tags",
+                  "ip_restrictions",
+                  "passthroughHeaders",
+                  "passthrough_headers",
+                ].includes(key)) ? (
+              <textarea
+                aria-label={key}
+                rows={3}
+                placeholder="每行一项 / One item per line"
+                value={
+                  drafts[key] ??
+                  (current || [])
+                    .map((v: any) =>
+                      typeof v === "string" ? v : v.label || v.id,
+                    )
+                    .join("\n")
+                }
+                onChange={(e) => {
+                  setDrafts((v) => ({ ...v, [key]: e.target.value }));
+                  update(
+                    key,
+                    e.target.value
+                      .split("\n")
+                      .map((v) => v.trim())
+                      .filter(Boolean),
+                  );
+                }}
+              />
             ) : complex ? (
               <textarea
                 aria-label={key}
@@ -221,10 +390,10 @@ export function SchemaForm({
                   }
                 }}
               />
-            ) : key === "description" ? (
+            ) : ["description", "content", "template"].includes(key) ? (
               <textarea
                 aria-label={key}
-                rows={2}
+                rows={key === "description" ? 2 : 8}
                 value={current ?? ""}
                 required={required}
                 maxLength={field.maxLength}
@@ -234,7 +403,9 @@ export function SchemaForm({
               <input
                 aria-label={key}
                 type={
-                  /password|secret|api_key|auth_value/i.test(key)
+                  /password|secret|api_key|^token$|auth.?token|auth.?value|auth.?header.?value|auth.?query.?param.?value|client.?key/i.test(
+                    key,
+                  )
                     ? "password"
                     : ["integer", "number"].includes(field.type)
                       ? "number"
@@ -273,9 +444,11 @@ export function SchemaForm({
                 aria-label={`${key} validation`}
               />
             )}
-            {field.description && (
+            {(copy?.[1] || field.description) && (
               <small className="field-help">
-                {field.description.split("\n")[0]}
+                {key === "scope" && field.type === "string"
+                  ? "global：全局；team：团队；personal：个人。分配角色时须匹配此范围。"
+                  : copy?.[1] || field.description?.split("\n")[0]}
               </small>
             )}
           </label>
@@ -287,7 +460,7 @@ export function SchemaForm({
           type="button"
           onClick={() => setAdvanced(true)}
         >
-          展开全部 {fields.length} 个字段 / All fields
+          更多限制与高级配置 / Advanced options
         </button>
       )}
     </div>
