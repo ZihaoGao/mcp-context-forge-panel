@@ -11,6 +11,8 @@ import {
   ShieldAlert,
   Trash2,
   Upload,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   displayError,
@@ -22,6 +24,13 @@ import {
 import { SessionContext } from "../session";
 import { HistoryTransfer } from "./HistoryTransfer";
 import { safeDisplay } from "../resource-model.mjs";
+import {
+  formatDuration,
+  formatTimestamp,
+  formatOperationalValue,
+  metricRows,
+  utcTimestamp,
+} from "../operations-display.mjs";
 
 type GovernanceProps = {
   moduleId: string;
@@ -32,6 +41,7 @@ type GovernanceProps = {
 type Column = {
   key: string;
   label: string;
+  render?: (row: JsonRecord) => React.ReactNode;
 };
 
 type LogFilters = {
@@ -199,14 +209,37 @@ function Table({
           {rows.map((row, index) => (
             <tr
               key={String(
-                row.id || row.correlation_id || row.timestamp || index,
+                row.trace_id ||
+                  row.span_id ||
+                  row.id ||
+                  row.correlation_id ||
+                  row.timestamp ||
+                  index,
               )}
               onClick={() => onRow?.(row)}
               className={onRow ? "governance-clickable-row" : undefined}
             >
-              {columns.map((column) => (
-                <td key={column.key}>{text(row[column.key], column.key)}</td>
-              ))}
+              {columns.map((column) => {
+                const value = row[column.key];
+                const isTime =
+                  /^(timestamp|start_time|end_time|created_at|updated_at)$/.test(
+                    column.key,
+                  );
+                return (
+                  <td key={column.key}>
+                    {column.render ? (
+                      column.render(row)
+                    ) : isTime ? (
+                      <time dateTime={utcTimestamp(value)} title={text(value)}>
+                        {formatTimestamp(value, en)}
+                      </time>
+                    ) : (
+                      (formatOperationalValue(value, column.key, en) ??
+                      text(value, column.key))
+                    )}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
@@ -809,6 +842,58 @@ function MetricCard({ label, value }: { label: string; value: unknown }) {
   );
 }
 
+function TraceIdentifier({
+  value,
+  onSelect,
+  en,
+}: {
+  value: string;
+  onSelect: () => void;
+  en: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
+  if (!value) return <>—</>;
+  return (
+    <div className="trace-identifier">
+      <button
+        type="button"
+        className="text-button trace-id-button"
+        title={en ? "Open trace details" : "查看 Trace 详情"}
+        onClick={(event) => {
+          event.stopPropagation();
+          onSelect();
+        }}
+      >
+        {value}
+      </button>
+      <button
+        type="button"
+        className="icon-button"
+        aria-label={`${en ? "Copy Trace ID" : "复制 Trace ID"} ${value}`}
+        onClick={async (event) => {
+          event.stopPropagation();
+          try {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            setError("");
+          } catch {
+            setError(
+              en
+                ? "Clipboard unavailable; select and copy the ID."
+                : "剪贴板不可用，请选中 ID 手动复制。",
+            );
+          }
+        }}
+      >
+        {copied ? <Check size={14} /> : <Copy size={14} />}
+      </button>
+      {copied && <small role="status">{en ? "Copied" : "已复制"}</small>}
+      {error && <small role="alert">{error}</small>}
+    </div>
+  );
+}
+
 function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
   const session = useContext(SessionContext);
   const queryClient = useQueryClient();
@@ -827,7 +912,7 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
   const [filters, setFilters] = useState(draft);
   const [traceId, setTraceId] = useState("");
   const canAdmin = permitted(session.permissions, "admin.system_config");
-  const canMetrics = permitted(session.permissions, "metrics:read") || canAdmin;
+  const canMetrics = permitted(session.permissions, "metrics:read");
   const cleanupAvailable = operationAvailable(
     spec,
     "/v1/observability/traces/cleanup",
@@ -857,6 +942,12 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
     "percentiles",
     "/v1/observability/metrics/percentiles",
   );
+  const timeseriesEnabled =
+    canMetrics &&
+    operationAvailable(spec, "/v1/observability/metrics/timeseries", "GET");
+  const percentilesEnabled =
+    canMetrics &&
+    operationAvailable(spec, "/v1/observability/metrics/percentiles", "GET");
   const stats = useQuery({
     queryKey: ["governance", "observability", "stats", hours],
     queryFn: () =>
@@ -912,8 +1003,15 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
   });
   const statsRows =
     stats.data && typeof stats.data === "object" ? stats.data : {};
-  const timeseriesRows = records(timeseries.data);
-  const percentileRows = records(percentiles.data);
+  const timeseriesRows = metricRows(timeseries.data, "timeseries");
+  const percentileRows = metricRows(percentiles.data, "percentiles");
+  const lastPercentile = [...percentileRows]
+    .reverse()
+    .find((row) =>
+      [row.p50, row.p95, row.p99].some(
+        (value) => typeof value === "number" && Number.isFinite(value),
+      ),
+    );
   const traceRows = records(traces.data);
   const spanRows = records(spans.data);
   const performCleanup = async () => {
@@ -988,6 +1086,13 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
         </div>
       </div>
       {actionError && <ErrorBox error={actionError} en={en} />}
+      <p className="field-help governance-timezone">
+        {en ? "Times shown in browser timezone: " : "时间显示为浏览器时区："}
+        {Intl.DateTimeFormat().resolvedOptions().timeZone}
+        {en
+          ? ". Backend timestamps without an offset are interpreted as UTC. Hover over a time to see the original value."
+          : "。后端未附时区的时间按 UTC 解释；悬停可查看原始值。"}
+      </p>
       {!canMetrics && !canAdmin ? (
         <Empty en={en} />
       ) : (
@@ -1040,8 +1145,24 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   : "未启用遥测时指标接口可能不可用。"}
               </span>
             </div>
-            <QueryState query={timeseries} en={en} />
-            <QueryState query={percentiles} en={en} />
+            {timeseriesEnabled ? (
+              <QueryState query={timeseries} en={en} />
+            ) : (
+              <p className="alert info">
+                {en
+                  ? "Request metrics are not enabled or permitted."
+                  : "请求指标未启用，或当前账户无权查看。"}
+              </p>
+            )}
+            {percentilesEnabled ? (
+              <QueryState query={percentiles} en={en} />
+            ) : (
+              <p className="alert info">
+                {en
+                  ? "Latency percentiles are not enabled or permitted."
+                  : "延迟分位数未启用，或当前账户无权查看。"}
+              </p>
+            )}
             <div className="governance-stats">
               {Object.entries(statsRows)
                 .filter(
@@ -1067,7 +1188,7 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                             } as Record<string, string>
                           )[key] || key
                     }
-                    value={value}
+                    value={formatOperationalValue(value, key, en) ?? value}
                   />
                 ))}
             </div>
@@ -1089,37 +1210,112 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
               </section>
             )}
             {timeseriesRows.length > 0 && (
-              <Table
-                en={en}
-                rows={timeseriesRows}
-                columns={[
-                  { key: "timestamp", label: en ? "Time" : "时间" },
-                  { key: "request_count", label: en ? "Requests" : "请求" },
-                  { key: "error_count", label: en ? "Errors" : "错误" },
-                  {
-                    key: "avg_duration_ms",
-                    label: en ? "Average ms" : "平均毫秒",
-                  },
-                ]}
-              />
+              <details className="metric-buckets">
+                <summary>
+                  {en
+                    ? "Request counts by time bucket (latest 24)"
+                    : "按时间桶查看请求数（最近 24 桶）"}{" "}
+                  · {timeseriesRows.length}
+                </summary>
+                <Table
+                  en={en}
+                  rows={timeseriesRows.slice(-24)}
+                  columns={[
+                    { key: "timestamp", label: en ? "Time" : "时间" },
+                    { key: "request_count", label: en ? "Requests" : "请求" },
+                    { key: "error_count", label: en ? "Errors" : "错误" },
+                    {
+                      key: "success_count",
+                      label: en ? "Successful requests" : "成功请求",
+                    },
+                  ]}
+                />
+              </details>
             )}
-            {percentileRows.length > 0 && (
-              <Table
-                en={en}
-                rows={percentileRows}
-                columns={[
-                  { key: "timestamp", label: en ? "Time" : "时间" },
-                  { key: "p50", label: "P50" },
-                  { key: "p95", label: "P95" },
-                  { key: "p99", label: "P99" },
-                ]}
-              />
-            )}
+            <section className="latency-percentiles">
+              <h4>{en ? "Latency percentiles" : "延迟分位数"}</h4>
+              <p className="field-help">
+                {!percentilesEnabled
+                  ? en
+                    ? "Latency metrics unavailable."
+                    : "延迟指标不可用。"
+                  : percentiles.error
+                    ? en
+                      ? "Could not load latency samples. Retry the request."
+                      : "未能读取延迟样本，请重试。"
+                    : percentiles.isPending
+                      ? en
+                        ? "Loading latency samples…"
+                        : "正在读取延迟样本…"
+                      : lastPercentile
+                        ? `${en ? "Latest sampled bucket: " : "最近有样本的时间桶："}${formatTimestamp(lastPercentile.timestamp, en)}`
+                        : en
+                          ? "No latency samples in this time window."
+                          : "此时间窗内暂无延迟样本。"}
+              </p>
+              <div className="percentile-cards">
+                {["p50", "p95", "p99"].map((key) => (
+                  <MetricCard
+                    key={key}
+                    label={key.toUpperCase()}
+                    value={formatDuration(lastPercentile?.[key], en)}
+                  />
+                ))}
+              </div>
+              <p className="field-help">
+                {en
+                  ? "P50 / P95 / P99 show the latency within which 50% / 95% / 99% of requests completed in that bucket. Empty buckets are not zero latency."
+                  : "P50 / P95 / P99 表示该时间桶内 50% / 95% / 99% 请求完成所需的耗时上界。空桶不表示延迟为零。"}
+              </p>
+              {percentileRows.length > 0 && (
+                <details className="metric-buckets">
+                  <summary>
+                    {en
+                      ? "Latency by time bucket (latest 24)"
+                      : "按时间桶查看延迟（最近 24 桶）"}{" "}
+                    · {percentileRows.length}
+                  </summary>
+                  <Table
+                    en={en}
+                    rows={percentileRows.slice(-24)}
+                    columns={[
+                      { key: "timestamp", label: en ? "Time" : "时间" },
+                      { key: "p50", label: "P50" },
+                      { key: "p95", label: "P95" },
+                      { key: "p99", label: "P99" },
+                    ]}
+                  />
+                </details>
+              )}
+            </section>
             {queryPerformance.data && (
-              <pre className="governance-json">
-                {JSON.stringify(redact(queryPerformance.data), null, 2)}
-              </pre>
+              <details className="advanced-fields">
+                <summary>
+                  {en
+                    ? "Advanced: query performance JSON"
+                    : "高级：查询性能原始数据"}
+                </summary>
+                <pre className="governance-json">
+                  {JSON.stringify(redact(queryPerformance.data), null, 2)}
+                </pre>
+              </details>
             )}
+            <details className="advanced-fields">
+              <summary>
+                {en ? "Advanced: raw metric responses" : "高级：指标原始响应"}
+              </summary>
+              <pre className="governance-json">
+                {JSON.stringify(
+                  redact({
+                    timeseries: timeseries.data,
+                    percentiles: percentiles.data,
+                    stats: stats.data,
+                  }),
+                  null,
+                  2,
+                )}
+              </pre>
+            </details>
           </section>
           {canAdmin && (
             <section className="panel">
@@ -1168,10 +1364,22 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                 en={en}
                 rows={traceRows}
                 onRow={(row) =>
-                  setTraceId(String(row.id || row.trace_id || ""))
+                  setTraceId(String(row.trace_id || row.id || ""))
                 }
                 columns={[
-                  { key: "id", label: en ? "Trace ID" : "Trace ID" },
+                  {
+                    key: "trace_id",
+                    label: "Trace ID",
+                    render: (row) => (
+                      <TraceIdentifier
+                        value={String(row.trace_id || row.id || "")}
+                        onSelect={() =>
+                          setTraceId(String(row.trace_id || row.id || ""))
+                        }
+                        en={en}
+                      />
+                    ),
+                  },
                   { key: "start_time", label: en ? "Start" : "开始" },
                   { key: "duration_ms", label: en ? "Duration" : "耗时" },
                   { key: "status", label: en ? "Status" : "状态" },
@@ -1196,16 +1404,43 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
               />
               <QueryState query={detail} en={en} />
               {detail.data && (
-                <pre className="governance-json">
-                  {JSON.stringify(redact(detail.data), null, 2)}
-                </pre>
+                <>
+                  <div className="governance-stats">
+                    <MetricCard
+                      label={en ? "Operation" : "操作"}
+                      value={detail.data.name}
+                    />
+                    <MetricCard
+                      label={en ? "Status" : "状态"}
+                      value={detail.data.status}
+                    />
+                    <MetricCard
+                      label={en ? "Duration" : "耗时"}
+                      value={formatDuration(detail.data.duration_ms, en)}
+                    />
+                    <MetricCard
+                      label={en ? "Started at" : "开始时间"}
+                      value={formatTimestamp(detail.data.start_time, en)}
+                    />
+                  </div>
+                  <details className="advanced-fields">
+                    <summary>
+                      {en
+                        ? "Advanced: raw trace response"
+                        : "高级：Trace 原始响应"}
+                    </summary>
+                    <pre className="governance-json">
+                      {JSON.stringify(redact(detail.data), null, 2)}
+                    </pre>
+                  </details>
+                </>
               )}
               <Table
                 en={en}
                 rows={spanRows}
                 columns={[
                   { key: "span_id", label: "Span ID" },
-                  { key: "operation_name", label: en ? "Operation" : "操作" },
+                  { key: "name", label: en ? "Operation" : "操作" },
                   { key: "start_time", label: en ? "Start" : "开始" },
                   { key: "duration_ms", label: en ? "Duration" : "耗时" },
                   { key: "status", label: en ? "Status" : "状态" },

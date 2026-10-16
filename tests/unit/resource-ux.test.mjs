@@ -140,6 +140,66 @@ test("server portable definitions preserve read-model associations and team alia
   });
   assert.deepEqual(validateValue(record, ref("ServerCreate"), spec), []);
 });
+
+test("A2A exports remove snake-case and camel-case authentication without losing public configuration", () => {
+  const credentials = {
+    auth_username: "synthetic-audit-user",
+    auth_password: "synthetic-audit-password",
+    auth_token: "synthetic-audit-token",
+    auth_header_key: "X-Custom-Auth",
+    auth_header_value: "synthetic-audit-header",
+    auth_headers: [{ key: "X-Custom", value: "synthetic-audit-custom" }],
+    auth_query_param_key: "custom",
+    auth_query_param_value: "synthetic-audit-query",
+    auth_value: "synthetic-audit-value",
+  };
+  for (const camelCase of [false, true]) {
+    const input = {
+      name: "public-agent",
+      endpoint_url: "https://example.com/agent",
+      auth_type: "authheaders",
+      ...credentials,
+    };
+    const record = Object.fromEntries(
+      Object.entries(input).map(([key, value]) => [
+        camelCase
+          ? key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+          : key,
+        value,
+      ]),
+    );
+    const exported = portableRecord(record, ref("A2AAgentCreate"), spec);
+    assert.deepEqual(exported, {
+      name: "public-agent",
+      endpoint_url: "https://example.com/agent",
+      auth_type: "none",
+    });
+    assert.deepEqual(validateValue(exported, ref("A2AAgentCreate"), spec), []);
+  }
+});
+
+test("portable nested configuration and snapshots redact authentication aliases consistently", () => {
+  const config = {
+    auth_username: "synthetic-audit-user",
+    authHeaderValue: "synthetic-audit-header",
+    entries: [{ auth_value: "synthetic-audit-value", total_tokens: 12 }],
+    region: "eu",
+  };
+  const exported = portableRecord(
+    { name: "provider", provider_type: "openai", config },
+    ref("LLMProviderCreate"),
+    spec,
+  );
+  assert.deepEqual(exported.config, {
+    entries: [{ total_tokens: 12 }],
+    region: "eu",
+  });
+  const display = safeDisplay(config);
+  assert.equal(display.auth_username, "••••••");
+  assert.equal(display.authHeaderValue, "••••••");
+  assert.equal(display.entries[0].auth_value, "••••••");
+  assert.equal(display.entries[0].total_tokens, 12);
+});
 test("display redaction hides custom header credentials without hiding token usage counts", () => {
   const value = safeDisplay({
     total_tokens: 12,

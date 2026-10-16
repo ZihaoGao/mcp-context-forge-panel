@@ -1,6 +1,6 @@
 # ContextForge Panel 架构
 
-ContextForge Panel 是独立部署的管理与使用控制台，以 ContextForge v1.0.11 为后端基线。管理员和普通用户共用应用，实际资源可见性与操作授权由后端决定。参考仓库只读，不复用原前端。
+ContextForge Panel 是独立部署的管理与使用控制台，以 ContextForge v1.0.11 为后端基线。管理员和普通用户共用应用，实际资源可见性与操作授权由后端决定。参考仓库只读，前端使用独立的 React + TypeScript 工程。开发期间部分后端字段和权限搜索曾返回原版前端片段，来源核查范围见 [第三方声明](../THIRD_PARTY_NOTICES.md)。
 
 ## 部署边界
 

@@ -28,5 +28,9 @@ env = dict(os.environ, PYTHONIOENCODING='utf-8', PYTHONPATH=str(source), HOST='1
     SSO_ENABLED='true', OBSERVABILITY_ENABLED='true', MCPGATEWAY_REVERSE_PROXY_ENABLED='true',
     SSRF_ALLOW_LOCALHOST='true' if args.chat else 'false',
     A2A_ENABLED='true', LEGACY_API_ENABLED='false', LOG_LEVEL='WARNING')
+# Browser suites create and clean up paginated fixtures in a short burst.
+# Keep throttling enabled with test-only capacity; production never uses this launcher.
+env.update(RATE_LIMIT_CRITICAL_RPM='1000', RATE_LIMIT_HIGH_RPM='2000',
+           RATE_LIMIT_MEDIUM_RPM='5000', RATE_LIMIT_LOW_RPM='5000')
 python = root / f'.cache/{profile}-venv' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 sys.exit(subprocess.call([str(python), '-m', 'mcpgateway'], cwd=source, env=env))

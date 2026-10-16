@@ -1,4 +1,7 @@
 import { mkdir, writeFile, readFile } from "node:fs/promises";
+const BASELINE_TAG = "v1.0.11";
+const BASELINE_COMMIT = "077071bbb43599dd5ab9372ebdbb9a8e686a9816";
+const BASELINE_TAG_OBJECT = "f918209a1788437b2508f9f8504eecd44bbc5cf5";
 const base = (
   process.env.CONTRACT_BACKEND_URL || "http://127.0.0.1:4444"
 ).replace(/\/$/, "");
@@ -31,12 +34,14 @@ await writeFile(
   "contracts/contextforge/provenance.json",
   JSON.stringify(
     {
-      tag: "v1.0.11",
-      commit: "f918209a1788437b2508f9f8504eecd44bbc5cf5",
-      source: "isolated runtime /openapi.json",
+      tag: BASELINE_TAG,
+      commit: BASELINE_COMMIT,
+      tagObject: BASELINE_TAG_OBJECT,
+      source: "configured runtime /openapi.json",
+      runtimeProvenanceVerified: false,
       backendVersion: schema.info?.version,
       capturedAt: new Date().toISOString(),
-      note: "Feature-gated routes depend on runtime configuration; see source-routes.json for the static inventory.",
+      note: `The tag and commit identify the checked-in ${BASELINE_TAG} panel baseline; this runtime capture does not verify that the configured endpoint is that commit. The annotated tag object is recorded separately as tagObject. Feature-gated routes depend on runtime configuration; see source-routes.json for the static inventory.`,
     },
     null,
     2,

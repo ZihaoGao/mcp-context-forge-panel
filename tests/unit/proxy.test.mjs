@@ -229,6 +229,28 @@ test("blocks private routes, deployment escapes and serves runtime config", asyn
   assert.equal(config.headers.get("cache-control"), "no-store");
   assert.match(await config.text(), /"prefix":"\/forge"/);
 });
+
+test("root redirects into the prefixed console and origin errors identify the configured entry", async () => {
+  for (const method of ["GET", "HEAD"]) {
+    const response = await fetch(origin + "/", { method, redirect: "manual" });
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get("location"), "/forge/app/");
+  }
+  const response = await fetch(origin + "/forge/_panel/login", {
+    method: "POST",
+    headers: {
+      Origin: "http://127.0.0.1:3000",
+      "Content-Type": "application/json",
+    },
+    body: "{}",
+  });
+  assert.equal(response.status, 403);
+  assert.deepEqual((await response.json()).detail, {
+    code: "ORIGIN_MISMATCH",
+    message: "Same-origin request required",
+    login_url: publicOrigin + "/forge/app/",
+  });
+});
 test("logout clears cookie and revokes upstream session; refresh rotates without exposing token", async () => {
   const headers = { Origin: publicOrigin, Cookie: browserCookie };
   const refresh = await fetch(origin + "/forge/_panel/refresh", {

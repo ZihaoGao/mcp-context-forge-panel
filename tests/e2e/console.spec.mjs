@@ -65,6 +65,299 @@ async function login(page, user = credentials) {
     page.getByRole("heading", { level: 1, name: "工作台" }),
   ).toBeVisible();
 }
+
+test("login distinguishes an incorrect origin from invalid credentials and root opens the console", async ({
+  page,
+}) => {
+  await page.goto(new URL("/", origin).href);
+  await expect(page).toHaveURL(root + "/app/");
+  await page
+    .getByLabel("邮箱地址", { exact: true })
+    .fill("invalid-user@example.com");
+  await page
+    .getByLabel("密码", { exact: true })
+    .fill("invalid-fixture-password");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("登录凭据无效");
+  const alternate = new URL(root + "/app/");
+  alternate.hostname =
+    alternate.hostname === "localhost" ? "127.0.0.1" : "localhost";
+  await page.goto(alternate.href);
+  await expect(
+    page.getByRole("link", { name: root + "/app/", exact: true }),
+  ).toHaveAttribute("href", root + "/app/");
+  await page
+    .getByLabel("邮箱地址", { exact: true })
+    .fill("invalid-user@example.com");
+  await page
+    .getByLabel("密码", { exact: true })
+    .fill("invalid-fixture-password");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "请使用登录页" }),
+  ).toContainText("访问地址与部署配置不一致");
+});
+
+test("mobile resource forms keep the header and complete actions visible while only the body scrolls", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+  for (const route of ["gateways", "tools", "tokens"]) {
+    await page.goto(root + "/app/#" + route);
+    await page
+      .getByRole("button", {
+        name: route === "tokens" ? "创建 API Key" : "新建",
+        exact: true,
+      })
+      .click();
+    const dialog = page.getByRole("dialog");
+    if (route === "tokens")
+      await dialog
+        .getByLabel("授权方式", { exact: true })
+        .selectOption("custom");
+    const body = dialog.locator(".dialog-body");
+    await body.evaluate((node) => {
+      node.scrollTop = node.scrollHeight;
+    });
+    const geometry = await dialog.evaluate((node) => ({
+      outerScrollable: node.scrollHeight > node.clientHeight + 1,
+      overflow: getComputedStyle(node).overflowY,
+      footer: node
+        .querySelector(".dialog-footer")
+        .getBoundingClientRect()
+        .toJSON(),
+      header: node
+        .querySelector(".dialog-header")
+        .getBoundingClientRect()
+        .toJSON(),
+      width: document.documentElement.scrollWidth,
+      viewport: innerWidth,
+    }));
+    expect(geometry.outerScrollable).toBe(false);
+    expect(geometry.overflow).toBe("hidden");
+    expect(geometry.header.top).toBeGreaterThanOrEqual(0);
+    expect(geometry.footer.bottom).toBeLessThanOrEqual(844);
+    expect(geometry.width).toBeLessThanOrEqual(geometry.viewport + 1);
+    for (const button of await dialog.locator(".dialog-footer button").all()) {
+      const box = await button.boundingBox();
+      expect(box.y + box.height).toBeLessThanOrEqual(844);
+      expect(box.x + box.width).toBeLessThanOrEqual(390);
+    }
+    await page.screenshot({ path: `.cache/reports/p1-mobile-${route}.png` });
+    await dialog.getByRole("button", { name: "关闭", exact: true }).click();
+  }
+  await page.goto(root + "/app/#api");
+  await page.getByLabel("Search API", { exact: true }).fill("POST /v1/tools");
+  await page
+    .locator(".api-row")
+    .filter({ has: page.locator("code").filter({ hasText: /^\/v1\/tools$/ }) })
+    .click();
+  const apiDialog = page.getByRole("dialog");
+  await apiDialog.locator(".dialog-body").evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+  });
+  expect(
+    await apiDialog.evaluate(
+      (node) => node.scrollHeight <= node.clientHeight + 1,
+    ),
+  ).toBe(true);
+  for (const button of await apiDialog.locator(".dialog-footer button").all()) {
+    const box = await button.boundingBox();
+    expect(box.y + box.height).toBeLessThanOrEqual(844);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
+  }
+  await page.screenshot({ path: ".cache/reports/p1-mobile-api.png" });
+  await apiDialog.getByRole("button", { name: "关闭", exact: true }).click();
+});
+
+test("tool details prioritize purpose and ownership with grouped configuration and direct edit", async ({
+  page,
+}) => {
+  const name = "p1-tool-" + run;
+  const create = await admin.post(root + "/v1/tools", {
+    data: {
+      tool: {
+        name,
+        description: "P1 detail workflow fixture",
+        integration_type: "REST",
+        request_type: "POST",
+        url: "https://example.com/panel-fixture",
+        inputSchema: {
+          type: "object",
+          properties: { message: { type: "string" } },
+        },
+        visibility: "private",
+      },
+    },
+  });
+  expect(create.status()).toBe(200);
+  const tool = await create.json();
+  try {
+    await login(page);
+    await page.goto(root + "/app/#tools");
+    await page.getByLabel("Filter resources").fill(name);
+    await page.getByRole("button", { name, exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.locator(".tool-overview")).toContainText(
+      "P1 detail workflow fixture",
+    );
+    await expect(dialog.locator(".tool-overview")).toContainText("所有者");
+    await expect(dialog.locator(".tool-overview")).toContainText("已启用");
+    await expect(
+      dialog
+        .locator("details")
+        .filter({ has: page.getByText("输入输出", { exact: true }) }),
+    ).not.toHaveAttribute("open", "");
+    await dialog.getByText("输入输出", { exact: true }).click();
+    await expect(dialog.locator(".tool-details")).toContainText("message");
+    await expect(
+      dialog.locator("details").filter({ hasText: "查看原始数据" }),
+    ).not.toHaveAttribute("open", "");
+    await page.screenshot({ path: ".cache/reports/p1-tool-details.png" });
+    await dialog.getByRole("button", { name: "编辑工具", exact: true }).click();
+    await expect(dialog.getByLabel("name", { exact: true })).toHaveValue(name);
+    await dialog.getByRole("button", { name: "关闭", exact: true }).click();
+  } finally {
+    await admin.delete(root + "/v1/tools/" + tool.id);
+  }
+});
+
+test("connection guide copies selected client configurations and performs a real MCP handshake", async ({
+  page,
+  context,
+}) => {
+  const created = await admin.post(root + "/v1/servers", {
+    data: { server: { name: "p1-connect-" + run, visibility: "private" } },
+  });
+  expect(created.status()).toBe(201);
+  const server = await created.json();
+  servers.push(server.id);
+  const keyResponse = await admin.post(root + "/v1/tokens", {
+    data: {
+      name: "p1-connect-" + run,
+      expires_in_days: 1,
+      scope: {
+        server_id: server.id,
+        permissions: ["servers.read", "tools.read"],
+      },
+    },
+  });
+  expect(keyResponse.status()).toBe(201);
+  const key = await keyResponse.json();
+  try {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await login(page);
+    await page.goto(root + "/app/#connections");
+    const mcp = page.locator("section").filter({
+      has: page.getByRole("heading", {
+        name: "MCP · Streamable HTTP",
+        exact: true,
+      }),
+    });
+    await expect(
+      mcp.getByRole("button", { name: "复制完整配置" }),
+    ).toBeDisabled();
+    await mcp.getByLabel("server_id", { exact: true }).selectOption(server.id);
+    await mcp.getByLabel("MCP API Key", { exact: true }).fill(key.access_token);
+    await mcp
+      .getByLabel("客户端配置格式", { exact: true })
+      .selectOption("vscode");
+    await mcp.getByRole("button", { name: "复制完整配置" }).click();
+    const copied = JSON.parse(
+      await page.evaluate(() => navigator.clipboard.readText()),
+    );
+    expect(copied.servers.contextforge.url).toBe(
+      root + `/servers/${server.id}/mcp`,
+    );
+    expect(
+      copied.servers.contextforge.headers.Authorization ===
+        "Bearer " + key.access_token,
+    ).toBe(true);
+    expect(await mcp.locator("pre").textContent()).not.toContain(
+      key.access_token,
+    );
+    await mcp.getByRole("button", { name: "检查连接" }).click();
+    await expect(mcp.getByRole("status")).toContainText("MCP 初始化握手成功", {
+      timeout: 25000,
+    });
+    await page.screenshot({ path: ".cache/reports/p1-connections.png" });
+    await mcp
+      .getByLabel("MCP API Key", { exact: true })
+      .fill("invalid-fixture-key");
+    await mcp.getByRole("button", { name: "检查连接" }).click();
+    await expect(mcp.getByRole("status")).toContainText("MCP 握手失败", {
+      timeout: 25000,
+    });
+    const llm = page.locator("section").filter({
+      has: page.getByRole("heading", {
+        name: "LLM · OpenAI compatible",
+        exact: true,
+      }),
+    });
+    await expect(llm.getByLabel("LLM API 前缀", { exact: true })).toHaveValue(
+      "/llm/v1",
+    );
+    await llm.getByLabel("模型", { exact: true }).fill("fixture-model");
+    await llm
+      .getByLabel("LLM API Key", { exact: true })
+      .fill("invalid-fixture-key");
+    await llm.getByRole("button", { name: "复制完整配置" }).click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
+      root + "/llm/v1/chat/completions",
+    );
+    await llm.getByRole("button", { name: "检查连接" }).click();
+    await expect(llm.getByRole("status")).toContainText("401", {
+      timeout: 25000,
+    });
+    await expect(
+      page.getByRole("heading", { level: 1, name: "连接指南" }),
+    ).toBeVisible();
+    await page.getByLabel("Change language").click();
+    await expect(
+      mcp.getByRole("button", { name: "Copy configuration", exact: true }),
+    ).toBeVisible();
+    await expect(
+      mcp.getByLabel("Client configuration format", { exact: true }),
+    ).toBeVisible();
+
+    const secondResponse = await admin.post(root + "/v1/servers", {
+      data: { server: { name: "p1-switch-" + run, visibility: "private" } },
+    });
+    expect(secondResponse.status()).toBe(201);
+    const second = await secondResponse.json();
+    servers.push(second.id);
+    await page.goto(root + "/app/#servers");
+    await page
+      .getByRole("row")
+      .filter({ hasText: "p1-connect-" + run })
+      .getByLabel("Connection", { exact: true })
+      .click();
+    const connectionPanel = page.locator(".connection-result");
+    await connectionPanel
+      .getByLabel("MCP API Key", { exact: true })
+      .fill("invalid-fixture-key");
+    await expect(connectionPanel.locator("pre")).toContainText(server.id);
+    await page
+      .getByRole("row")
+      .filter({ hasText: "p1-switch-" + run })
+      .getByLabel("Connection", { exact: true })
+      .click();
+    await expect(
+      connectionPanel.getByLabel("server_id", { exact: true }),
+    ).toHaveValue(second.id);
+    await expect(
+      connectionPanel.getByLabel("MCP API Key", { exact: true }),
+    ).toHaveValue("");
+    await connectionPanel
+      .getByLabel("MCP API Key", { exact: true })
+      .fill("invalid-fixture-key");
+    await expect(connectionPanel.locator("pre")).toContainText(second.id);
+    await expect(connectionPanel.locator("pre")).not.toContainText(server.id);
+  } finally {
+    await admin.delete(root + "/v1/tokens/" + key.token.id);
+  }
+});
 test("admin sees workspace, role management and permission catalog without runtime errors", async ({
   page,
 }) => {
@@ -108,6 +401,17 @@ test("ordinary user creates a key, copies the creation response and revokes it t
   await page.getByRole("button", { name: "创建 API Key", exact: true }).click();
   await page.getByLabel("name", { exact: true }).fill(`browser-key-${run}`);
   await page.getByLabel("expires_in_days", { exact: true }).fill("1");
+  await expect(page.locator(".permission-summary")).toContainText(
+    "继承账户 RBAC 权限",
+  );
+  await page.getByLabel("授权方式", { exact: true }).selectOption("custom");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "创建 API Key", exact: true })
+    .click();
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+    "自定义权限至少需要选择一项",
+  );
   await page.getByLabel("Filter permission choices").fill("tools");
   await page
     .getByRole("dialog")
@@ -123,6 +427,7 @@ test("ordinary user creates a key, copies the creation response and revokes it t
   await expect(
     page.locator(".permission-picker input[type=checkbox]").first(),
   ).not.toBeChecked();
+  await page.getByLabel("授权方式", { exact: true }).selectOption("inherit");
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "创建 API Key", exact: true })
@@ -207,12 +512,15 @@ test("server form and cross-page bulk disable and delete operate on frozen targe
   servers.push(created.id);
   await page.getByRole("button", { name: "关闭", exact: true }).click();
   const prefix = "bulk-fixture-" + run;
+  const bulkTargets = [];
   for (let i = 0; i < 28; i++) {
     const response = await admin.post(root + "/v1/servers", {
       data: { server: { name: prefix + "-" + i, visibility: "public" } },
     });
     expect(response.status()).toBe(201);
-    servers.push((await response.json()).id);
+    const id = (await response.json()).id;
+    servers.push(id);
+    bulkTargets.push(id);
   }
   await page.getByLabel("Refresh", { exact: true }).click();
   await page.getByLabel("Filter resources").fill(prefix);
@@ -261,7 +569,7 @@ test("server form and cross-page bulk disable and delete operate on frozen targe
   await page.getByRole("button", { name: "删除 / 撤销", exact: true }).click();
   await page.getByRole("button", { name: "确认执行", exact: true }).click();
   await expect(page.locator(".batch-results>div")).toHaveCount(28);
-  for (const id of servers.slice(1))
+  for (const id of bulkTargets)
     expect((await admin.get(root + "/v1/servers/" + id)).status()).toBe(404);
 });
 test("password recovery deep link survives refresh and preserves asset base", async ({

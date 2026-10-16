@@ -16,7 +16,11 @@ import {
   readField,
 } from "../resource-model.mjs";
 import { SchemaForm } from "./SchemaForm";
-import { SessionContext } from "../session";
+import { SessionContext, useText } from "../session";
+import {
+  TokenPermissionContext,
+  TokenPermissionSummary,
+} from "./TokenPermissions";
 import type { Operation } from "./ActionDialog";
 
 const actionNames: Record<string, string> = {
@@ -102,6 +106,147 @@ export function RecordDetails({ value }: { value: unknown }) {
     </span>
   );
 }
+function ToolDetails({ value }: { value: JsonRecord }) {
+  const t = useText();
+  const labels: Record<string, string> = {
+    集成方式: "Integration",
+    请求方法: "Request method",
+    调用地址: "Endpoint",
+    结果过滤: "Result filter",
+    行为说明: "Annotations",
+    输入结构: "Input schema",
+    输出结构: "Output schema",
+    可见范围: "Visibility",
+    所属团队: "Team",
+    所有者: "Owner",
+    认证配置: "Authentication",
+    "工具 ID": "Tool ID",
+    原始名称: "Original name",
+    创建时间: "Created at",
+    创建人: "Created by",
+    更新时间: "Updated at",
+    修改人: "Modified by",
+    调用次数: "Execution count",
+    调用配置: "Invocation",
+    输入输出: "Input & output",
+    访问控制: "Access control",
+    审计信息: "Audit information",
+  };
+  const pick = (fields: Record<string, string>) =>
+    Object.fromEntries(
+      Object.entries(fields)
+        .map(([key, label]) => [
+          t(label, labels[label] || label),
+          safeDisplay(readField(value, key), key),
+        ])
+        .filter(
+          ([, v]) =>
+            v !== null &&
+            v !== undefined &&
+            v !== "" &&
+            (!Array.isArray(v) || v.length),
+        ),
+    );
+  const enabled = value.enabled ?? value.is_active;
+  const groups = [
+    [
+      "调用配置",
+      {
+        integrationType: "集成方式",
+        requestType: "请求方法",
+        url: "调用地址",
+        jsonpathFilter: "结果过滤",
+        annotations: "行为说明",
+      },
+    ],
+    ["输入输出", { inputSchema: "输入结构", outputSchema: "输出结构" }],
+    [
+      "访问控制",
+      {
+        visibility: "可见范围",
+        teamId: "所属团队",
+        ownerEmail: "所有者",
+        auth: "认证配置",
+      },
+    ],
+    [
+      "审计信息",
+      {
+        id: "工具 ID",
+        originalName: "原始名称",
+        createdAt: "创建时间",
+        createdBy: "创建人",
+        updatedAt: "更新时间",
+        modifiedBy: "修改人",
+        executionCount: "调用次数",
+      },
+    ],
+  ] as const;
+  return (
+    <div className="tool-details">
+      <section className="tool-overview">
+        <h3>
+          {value.displayName ||
+            value.name ||
+            value.originalName ||
+            t("未命名工具", "Unnamed tool")}
+        </h3>
+        <p>
+          {value.description ||
+            value.originalDescription ||
+            t("尚未填写用途说明", "No purpose provided")}
+        </p>
+        <RecordDetails
+          value={{
+            [t("状态", "State")]:
+              enabled === undefined
+                ? t("未知", "Unknown")
+                : enabled
+                  ? t("已启用", "Enabled")
+                  : t("已停用", "Disabled"),
+            [t("可达性", "Reachability")]:
+              value.reachable === undefined
+                ? t("未知", "Unknown")
+                : value.reachable
+                  ? t("可达", "Reachable")
+                  : t("不可达", "Unreachable"),
+            [t("来源", "Source")]:
+              value.gatewaySlug ||
+              readField(value, "gatewayId") ||
+              readField(value, "grpcServiceId") ||
+              t("手工注册", "Manually registered"),
+            [t("所属团队", "Team")]:
+              readField(value, "teamId") ||
+              t("未指定团队", "No team specified"),
+            [t("所有者", "Owner")]:
+              readField(value, "ownerEmail") ||
+              readField(value, "createdBy") ||
+              t("未提供", "Not provided"),
+          }}
+        />
+      </section>
+      {groups.map(([name, fields]) => (
+        <details
+          className="advanced-fields"
+          key={name}
+          open={name === "调用配置"}
+        >
+          <summary>{t(name, labels[name])}</summary>
+          {Object.keys(pick(fields)).length ? (
+            <RecordDetails value={pick(fields)} />
+          ) : (
+            <p className="muted">
+              {t(
+                "未配置或后端未提供",
+                "Not configured or not provided by backend",
+              )}
+            </p>
+          )}
+        </details>
+      ))}
+    </div>
+  );
+}
 export function ResourceDialog({
   moduleId,
   operation,
@@ -114,6 +259,7 @@ export function ResourceDialog({
   onClose,
   onSuccess,
   en = false,
+  detailActions = [],
 }: {
   moduleId: string;
   operation: Operation;
@@ -126,6 +272,7 @@ export function ResourceDialog({
   onClose: () => void;
   onSuccess: () => void;
   en?: boolean;
+  detailActions?: { label: string; onSelect: () => void }[];
 }) {
   const session = useContext(SessionContext);
   const profile = (resourceProfiles as Record<string, any>)[moduleId];
@@ -197,6 +344,9 @@ export function ResourceDialog({
   );
   const [confirmed, setConfirmed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [permissionMode, setPermissionMode] = useState(
+    initial?.scope?.permissions?.length ? "custom" : "inherit",
+  );
   const dialog = useRef<HTMLDialogElement>(null);
   const alive = useRef(true);
   useEffect(() => {
@@ -313,6 +463,14 @@ export function ResourceDialog({
       ...validateValue(params, parameterSchema, spec),
       ...(contentType ? validateValue(body, root, spec) : []),
     ];
+    if (
+      moduleId === "tokens" &&
+      permissionMode === "custom" &&
+      !value.scope?.permissions?.length
+    )
+      problems.push(
+        "自定义权限至少需要选择一项；如需继承，请明确选择“继承账户权限”。",
+      );
     if (moduleId === "catalog" && item?.requires_api_key && !value.api_key)
       problems.push("此目录服务需要 API Key，请填写该服务的访问凭据");
     if (problems.length) {
@@ -374,164 +532,204 @@ export function ResourceDialog({
           <X size={20} />
         </button>
       </div>
-      <form onSubmit={submit}>
-        <div className="dialog-body">
-          {errors.length > 0 && (
-            <div className="alert error" role="alert">
-              <strong>请检查以下问题</strong>
-              <ul>
-                {errors.map((v, i) => (
-                  <li key={i}>{v}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {loading && (
-            <p>
-              {errors.length
-                ? "未能读取完整配置，请关闭后重试。"
-                : "正在读取完整配置…"}
-            </p>
-          )}
-          {!loading && result === undefined && (
-            <>
-              {(mode === "create" || mode === "edit") && (
-                <p className="field-help">{profile?.purpose}</p>
-              )}
-              {mode === "edit" && (
-                <p className="field-help">
-                  未填写的凭据保持原值。选择认证方式并填写新凭据才会更换认证；选择
-                  none 会移除认证。 请求头与 OAuth
-                  配置不回填；需要更换时请填写完整的新配置。
-                </p>
-              )}
-              {parameters.length > 0 && (
-                <SchemaForm
-                  schema={parameterSchema}
-                  spec={spec}
-                  value={params}
-                  onChange={setParams}
-                  all
-                />
-              )}
-              {contentType && (
-                <SchemaForm
-                  schema={sliceSchema(primaryKeys)}
-                  spec={spec}
-                  value={value}
-                  onChange={setValue}
-                  all
-                />
-              )}
-              {!!advancedKeys.length && (
-                <details className="advanced-fields">
-                  <summary>更多配置（可选） · {advancedKeys.length}</summary>
+      <TokenPermissionContext.Provider
+        value={{ mode: permissionMode, setMode: setPermissionMode }}
+      >
+        <form onSubmit={submit}>
+          <div className="dialog-body">
+            {errors.length > 0 && (
+              <div className="alert error" role="alert">
+                <strong>请检查以下问题</strong>
+                <ul>
+                  {errors.map((v, i) => (
+                    <li key={i}>{v}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {loading && (
+              <p>
+                {errors.length
+                  ? "未能读取完整配置，请关闭后重试。"
+                  : "正在读取完整配置…"}
+              </p>
+            )}
+            {!loading && result === undefined && (
+              <>
+                {(mode === "create" || mode === "edit") && (
+                  <p className="field-help">{profile?.purpose}</p>
+                )}
+                {mode === "edit" && (
+                  <p className="field-help">
+                    未填写的凭据保持原值。选择认证方式并填写新凭据才会更换认证；选择
+                    none 会移除认证。 请求头与 OAuth
+                    配置不回填；需要更换时请填写完整的新配置。
+                  </p>
+                )}
+                {parameters.length > 0 && (
                   <SchemaForm
-                    schema={sliceSchema(advancedKeys)}
+                    schema={parameterSchema}
+                    spec={spec}
+                    value={params}
+                    onChange={setParams}
+                    all
+                  />
+                )}
+                {contentType && (
+                  <SchemaForm
+                    schema={sliceSchema(primaryKeys)}
                     spec={spec}
                     value={value}
                     onChange={setValue}
                     all
                   />
-                </details>
-              )}
-              {destructive && (
-                <div className="alert warning">
-                  <p>
-                    {moduleId === "tokens"
-                      ? "撤销后，使用此 Key 的应用将无法继续访问。请确认已切换应用凭据。"
-                      : `此操作将影响「${item?.name || item?.email || noun}」及其使用者。删除后无法从此页面恢复。`}
-                  </p>
-                  <label className="check-label">
-                    <input
-                      type="checkbox"
-                      required
-                      checked={confirmed}
-                      onChange={(e) => setConfirmed(e.target.checked)}
+                )}
+                {!!advancedKeys.length && (
+                  <details className="advanced-fields">
+                    <summary>更多配置（可选） · {advancedKeys.length}</summary>
+                    <SchemaForm
+                      schema={sliceSchema(advancedKeys)}
+                      spec={spec}
+                      value={value}
+                      onChange={setValue}
+                      all
                     />
-                    我已确认操作对象和影响
-                  </label>
-                </div>
+                  </details>
+                )}
+                {destructive && (
+                  <div className="alert warning">
+                    <p>
+                      {moduleId === "tokens"
+                        ? "撤销后，使用此 Key 的应用将无法继续访问。请确认已切换应用凭据。"
+                        : `此操作将影响「${item?.name || item?.email || noun}」及其使用者。删除后无法从此页面恢复。`}
+                    </p>
+                    <label className="check-label">
+                      <input
+                        type="checkbox"
+                        required
+                        checked={confirmed}
+                        onChange={(e) => setConfirmed(e.target.checked)}
+                      />
+                      我已确认操作对象和影响
+                    </label>
+                  </div>
+                )}
+              </>
+            )}
+            {result !== undefined && (
+              <section className="resource-result result">
+                {mode !== "detail" && (
+                  <div className="alert success">
+                    <Check size={18} /> {en ? "Saved successfully" : "操作成功"}
+                  </div>
+                )}
+                {result?.access_token ? (
+                  <div className="key-delivery">
+                    <h3>保存 API Key</h3>
+                    <p>
+                      明文仅在此时显示。关闭页面后无法找回，请保存到安全的凭据管理器中。
+                    </p>
+                    <code>{result.access_token}</code>
+                    <button
+                      type="button"
+                      className="button primary"
+                      onClick={() =>
+                        navigator.clipboard
+                          .writeText(result.access_token)
+                          .then(() => setCopied(true))
+                          .catch(() =>
+                            setErrors(["无法访问剪贴板，请手动复制。"]),
+                          )
+                      }
+                    >
+                      <Copy size={16} />
+                      {copied ? "已复制" : "复制 API Key"}
+                    </button>
+                    <RecordDetails
+                      value={{
+                        name: result.token?.name || value.name,
+                        expires_at: result.token?.expires_at,
+                        授权方式: result.token?.resource_scopes?.length
+                          ? "自定义权限，与账户 RBAC 权限取交集"
+                          : "运行时继承账户 RBAC 权限",
+                        权限范围: result.token?.resource_scopes,
+                        服务器范围: result.token?.server_id || "未额外限制",
+                      }}
+                    />
+                    {!!result.warnings?.length && (
+                      <div className="alert warning" role="alert">
+                        <strong>后端授权提示</strong>
+                        <ul>
+                          {result.warnings.map((warning: string, i: number) => (
+                            <li key={i}>{warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : mode === "detail" &&
+                  moduleId === "tools" &&
+                  result &&
+                  typeof result === "object" ? (
+                  <ToolDetails value={result} />
+                ) : (
+                  <RecordDetails value={result} />
+                )}
+                {mode === "detail" && (
+                  <details>
+                    <summary>查看原始数据（敏感字段已隐藏）</summary>
+                    <pre>{JSON.stringify(safeDisplay(result), null, 2)}</pre>
+                  </details>
+                )}
+              </section>
+            )}
+          </div>
+          <div className="dialog-footer">
+            {moduleId === "tokens" &&
+              mode === "create" &&
+              result === undefined && (
+                <TokenPermissionSummary scope={value.scope} />
               )}
-            </>
-          )}
-          {result !== undefined && (
-            <section className="resource-result result">
-              {mode !== "detail" && (
-                <div className="alert success">
-                  <Check size={18} /> {en ? "Saved successfully" : "操作成功"}
-                </div>
-              )}
-              {result?.access_token ? (
-                <div className="key-delivery">
-                  <h3>保存 API Key</h3>
-                  <p>
-                    明文仅在此时显示。关闭页面后无法找回，请保存到安全的凭据管理器中。
-                  </p>
-                  <code>{result.access_token}</code>
-                  <button
-                    type="button"
-                    className="button primary"
-                    onClick={() =>
-                      navigator.clipboard
-                        .writeText(result.access_token)
-                        .then(() => setCopied(true))
-                        .catch(() =>
-                          setErrors(["无法访问剪贴板，请手动复制。"]),
-                        )
-                    }
-                  >
-                    <Copy size={16} />
-                    {copied ? "已复制" : "复制 API Key"}
-                  </button>
-                  <RecordDetails
-                    value={{
-                      name: result.name || value.name,
-                      expires_at: result.expires_at,
-                      scope: value.scope,
-                    }}
-                  />
-                </div>
-              ) : (
-                <RecordDetails value={result} />
-              )}
-              {mode === "detail" && (
-                <details>
-                  <summary>查看原始数据（敏感字段已隐藏）</summary>
-                  <pre>{JSON.stringify(safeDisplay(result), null, 2)}</pre>
-                </details>
-              )}
-            </section>
-          )}
-        </div>
-        <div className="dialog-footer">
-          <button
-            type="button"
-            className="button secondary"
-            disabled={busy}
-            onClick={onClose}
-          >
-            {en ? "Close" : "关闭"}
-          </button>
-          {!loading && result === undefined && mode !== "detail" && (
+            {mode === "detail" &&
+              !loading &&
+              detailActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  className="button secondary"
+                  onClick={action.onSelect}
+                >
+                  {action.label}
+                </button>
+              ))}
             <button
-              type="submit"
-              className={`button ${destructive ? "danger" : "primary"}`}
+              type="button"
+              className="button secondary"
               disabled={busy}
+              onClick={onClose}
             >
-              {busy
-                ? "正在处理…"
-                : mode === "create"
-                  ? moduleId === "tokens"
-                    ? "创建 API Key"
-                    : `创建${noun}`
-                  : mode === "edit"
-                    ? "保存修改"
-                    : title}
+              {en ? "Close" : "关闭"}
             </button>
-          )}
-        </div>
-      </form>
+            {!loading && result === undefined && mode !== "detail" && (
+              <button
+                type="submit"
+                className={`button ${destructive ? "danger" : "primary"}`}
+                disabled={busy}
+              >
+                {busy
+                  ? "正在处理…"
+                  : mode === "create"
+                    ? moduleId === "tokens"
+                      ? "创建 API Key"
+                      : `创建${noun}`
+                    : mode === "edit"
+                      ? "保存修改"
+                      : title}
+              </button>
+            )}
+          </div>
+        </form>
+      </TokenPermissionContext.Provider>
     </dialog>
   );
 }

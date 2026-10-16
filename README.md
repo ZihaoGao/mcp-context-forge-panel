@@ -83,3 +83,9 @@ docs/                        架构、部署、维护和验证说明
 ```
 
 架构约定见 [architecture.md](docs/architecture.md)。
+
+## 许可证与安全报告
+
+本项目原创代码使用 [MIT License](LICENSE)。上游生成的接口契约与类型保留 Apache-2.0 授权，来源、修改说明和许可证见 [第三方声明](THIRD_PARTY_NOTICES.md)。
+
+漏洞报告与支持范围见 [安全策略](SECURITY.md)。请勿在公开 Issue 中提交凭据或未公开漏洞的利用细节。

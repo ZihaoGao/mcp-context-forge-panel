@@ -7,6 +7,9 @@ import subprocess
 import tarfile
 import tomllib
 
+BASELINE_TAG = 'v1.0.11'
+BASELINE_COMMIT = '077071bbb43599dd5ab9372ebdbb9a8e686a9816'
+BASELINE_TAG_OBJECT = 'f918209a1788437b2508f9f8504eecd44bbc5cf5'
 parser = argparse.ArgumentParser()
 parser.add_argument('--repo', default='../mcp-context-forge')
 parser.add_argument('--tag', choices=['v1.0.11', 'v1.0.10'], default='v1.0.11')
@@ -19,10 +22,22 @@ source = root / f'.cache/{profile}'
 venv = root / f'.cache/{profile}-venv'
 source.mkdir(parents=True, exist_ok=True)
 git = ['git', '-C', str(repo), '-c', f'safe.directory={repo.as_posix()}']
-commit = subprocess.check_output([*git, 'rev-parse', args.tag], text=True).strip()
+commit = subprocess.check_output([*git, 'rev-parse', f'{args.tag}^{{commit}}'], text=True).strip()
+tag_object = subprocess.check_output([*git, 'rev-parse', args.tag], text=True).strip()
+if args.tag == BASELINE_TAG and (
+    commit != BASELINE_COMMIT or tag_object != BASELINE_TAG_OBJECT
+):
+    raise SystemExit(
+        f'{args.tag} does not resolve to the expected baseline commit/tag object '
+        f'({BASELINE_COMMIT}/{BASELINE_TAG_OBJECT}); got {commit}/{tag_object}'
+    )
 marker = source / '.panel-source-commit'
-if marker.exists() and marker.read_text().strip() != commit:
-    raise SystemExit('Existing isolated source has a different commit; choose a fresh profile directory.')
+if marker.exists():
+    previous = marker.read_text().strip()
+    # Older runs stored git rev-parse <tag>, which is the annotated tag object.
+    # Accept only this exact tag object's hash, then migrate the marker to the peeled commit.
+    if previous not in {commit, tag_object}:
+        raise SystemExit('Existing isolated source has a different commit/tag object; choose a fresh profile directory.')
 archive = subprocess.check_output([*git, 'archive', args.tag])
 with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
     # Symlinks in upstream source are unnecessary for the headless test runtime.

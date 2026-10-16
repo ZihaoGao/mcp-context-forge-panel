@@ -38,6 +38,8 @@ node scripts/playwright.mjs install chromium
 npm run test:e2e
 ```
 
+隔离测试启动器保留后端限流，但显式提高各请求层级的测试限额，以支持跨页资源夹具的连续创建与清理。这些设置仅用于 `.cache` 测试后端，不是生产吞吐能力或限流策略的验证。
+
 浏览器测试在桌面和手机视口使用真实后端。测试用户和资源使用随机名称，结束时清理；后端软删除可能保留测试记录，不要在生产后端运行这些脚本。
 
 资源界面的交互与导入格式约定见 [resource-workflows.md](resource-workflows.md)。新增栏目需单独决定基本场景与字段，避免直接使用 API 调用器承担列表操作。修改字段控件需检查权限搜索 / 批选、嵌套校验、编辑回填和敏感信息；导入改动需检查预览、确认、部分失败及模板兼容性。
@@ -64,6 +66,8 @@ node scripts/coverage.mjs
 Linux 使用 `.cache/backend-venv/bin/python`。此导出过程从后端 API router 生成规范，不启动外部服务的 lifespan，不代表 Vault、SIEM 或 ToolOps 连接验证通过。前端合并基线规范与实时规范，实时不存在的方法标记未启用。
 
 `openapi.json` 是实时捕获；`optional-openapi.json` 是明确配置条件的补充规范；`web-contract.json` 删除冗长示例和文档段落供浏览器加载；`coverage.json/csv` 逐项说明界面入口及排除原因。
+
+来源元数据的 `commit` 为 `git rev-parse v1.0.11^{commit}` 得到的源码提交，`tagObject` 单独记录 annotated tag 对象。源码提取和主后端准备脚本会核对固定基线。运行时捕获只知道配置端点返回的规范，不能单凭版本号证明端点运行了该提交，因此 `runtimeProvenanceVerified` 保持为 `false`。
 
 ## 独立 Chat 验证
 

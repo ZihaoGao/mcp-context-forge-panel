@@ -13,6 +13,8 @@
 
 nginx 保留原始 URI 转给控制台，不要在 `proxy_pass` 后加 `/` 二次剥离。`PUBLIC_ORIGIN` 必须设置为实际外部 Origin，包括非默认端口。HTTPS 时设置 `COOKIE_SECURE=true`。
 
+独立控制台的裸根路径 `/`（GET / HEAD）会跳转到 `${APP_ROOT_PATH}/app/`，其他前缀外路径仍返回 404。登录页在当前 Origin 与 `PUBLIC_ORIGIN` 不一致时显示正确入口；写请求仍严格执行同源校验，错误码 `ORIGIN_MISMATCH` 与账户权限不足分开解释。本地 `localhost` 与 `127.0.0.1` 是不同 Origin，必须使用配置的入口。
+
 如需 API Key 的 IP 限制、按 IP 审计和限流，把前置 nginx 的实际地址或网段加入控制台 `TRUSTED_PROXY_CIDRS`。控制台从右向左解析受信任的代理链，忽略直连客户端伪造的转发头，并向后端发送确定的客户端 IP。后端 Uvicorn 还需通过 `FORWARDED_ALLOW_IPS` 等运行配置明确信任控制台地址；这与关闭业务鉴权无关。Docker 中请使用实际容器网络地址，不能假定前置代理为回环地址。
 
 ## 流式请求

@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
 import { SessionContext } from "../session";
+import { TokenPermissionPicker } from "./TokenPermissions";
 import {
   ReferenceInput,
   PermissionPicker,
@@ -223,17 +224,17 @@ export function SchemaForm({
                 {title}
                 {required && <b className="required"> *</b>}
               </span>
-              <PermissionPicker
-                value={Array.isArray(current) ? current : []}
-                restricted={s.title === "TokenScopeRequest"}
-                onChange={(next) => update(key, next)}
-              />
-              {s.title === "TokenScopeRequest" && (
-                <small className="field-help">
-                  未选择时，Key 在运行时继承账户的 RBAC
-                  权限。选择具体权限可进一步限制访问。 / Empty selection
-                  inherits account permissions.
-                </small>
+              {s.title === "TokenScopeRequest" ? (
+                <TokenPermissionPicker
+                  value={Array.isArray(current) ? current : []}
+                  onChange={(next) => update(key, next)}
+                />
+              ) : (
+                <PermissionPicker
+                  value={Array.isArray(current) ? current : []}
+                  restricted={s.title === "TokenScopeRequest"}
+                  onChange={(next) => update(key, next)}
+                />
               )}
             </div>
           );

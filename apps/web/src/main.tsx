@@ -45,6 +45,7 @@ import { DataPage, findOperation } from "./components/DataPage";
 import { ApiExplorer } from "./components/ApiExplorer";
 import { RbacPanel } from "./components/RbacPanel";
 import { Chat } from "./components/Chat";
+import { Connections } from "./components/Connections";
 import { ActionDialog, type Operation } from "./components/ActionDialog";
 import "./style.css";
 import { SessionContext } from "./session";
@@ -90,6 +91,10 @@ function Login({
       : "",
   );
   const [busy, setBusy] = useState(false);
+  const canonicalLogin =
+    config.publicOrigin && config.publicOrigin !== window.location.origin
+      ? `${config.publicOrigin}${config.prefix}/app/`
+      : "";
   const [action, setAction] = useState<Operation | undefined>(() =>
     route.startsWith("reset-password/")
       ? findOperation(baseline, "/v1/auth/email/reset-password/{token}", "POST")
@@ -217,6 +222,16 @@ function Login({
               {en
                 ? "Sign in with the invited email to accept the team invitation."
                 : "请使用受邀邮箱登录，然后接受团队邀请。"}
+            </div>
+          )}
+          {canonicalLogin && (
+            <div className="alert warning" role="alert">
+              <p>
+                {en
+                  ? "This address differs from the configured public origin. Sign in using the configured entry:"
+                  : "当前访问地址与部署配置不一致，请使用正确入口登录："}
+              </p>
+              <a href={canonicalLogin}>{canonicalLogin}</a>
             </div>
           )}
           <div className="segmented login-method">
@@ -545,59 +560,6 @@ function Dashboard({
   );
 }
 
-function Connections({ en }: { en: boolean }) {
-  const root = window.location.origin + config.prefix;
-  return (
-    <div className="dashboard-columns">
-      <section className="panel prose">
-        <h3>MCP · Streamable HTTP</h3>
-        <p>
-          {en
-            ? "Select a virtual server to copy its connection configuration. Use a scoped API key in the Authorization header."
-            : "在虚拟服务器列表中复制具体服务的连接配置。通过 Authorization 请求头传递受限 API Key。"}
-        </p>
-        <pre>
-          {JSON.stringify(
-            {
-              mcpServers: {
-                contextforge: {
-                  type: "http",
-                  url: root + "/servers/<SERVER_ID>/mcp",
-                  headers: { Authorization: "Bearer <YOUR_API_KEY>" },
-                },
-              },
-            },
-            null,
-            2,
-          )}
-        </pre>
-        <a className="button secondary" href="#servers">
-          {en ? "Virtual servers" : "选择虚拟服务器"}
-          <ArrowRight size={16} />
-        </a>
-      </section>
-      <section className="panel prose">
-        <h3>LLM · OpenAI compatible</h3>
-        <p>
-          {en
-            ? "Use the LLM API prefix configured on your backend. The proxy preserves the request path, authentication and streaming response."
-            : "使用后端实际配置的 LLM API 前缀；反代保留请求路径、调用者身份与流式响应。"}
-        </p>
-        <pre>{`curl '${root}/<LLM_API_PREFIX>/chat/completions' \\\n  -H 'Authorization: Bearer <YOUR_API_KEY>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{"model":"<MODEL_ID>","messages":[{"role":"user","content":"Hello"}],"stream":true}'`}</pre>
-        <div className="alert info">
-          {en
-            ? "The LLM prefix may be /llm/v1 or another backend-configured path. Do not assume it is /v1."
-            : "LLM 前缀可能是 /llm/v1 或其他后端配置值，不应假定为 /v1。"}
-        </div>
-        <a className="button secondary" href="#tokens">
-          {en ? "Manage API keys" : "管理 API Key"}
-          <KeyRound size={16} />
-        </a>
-      </section>
-    </div>
-  );
-}
-
 function App() {
   const route = useRoute();
   const [en, setEn] = useState(localStorage.getItem("panel-language") === "en");
@@ -713,7 +675,9 @@ function App() {
         profile: en ? "My account" : "我的账户",
       }[route] || (en ? "Page not found" : "页面不存在");
   return (
-    <SessionContext.Provider value={{ user: session.data, permissions, team }}>
+    <SessionContext.Provider
+      value={{ user: session.data, permissions, team, en }}
+    >
       <div className="app-shell">
         <div
           className={`sidebar-backdrop ${mobile ? "visible" : ""}`}
@@ -932,7 +896,7 @@ function App() {
             ) : route === "chat" ? (
               <Chat en={en} />
             ) : route === "connections" ? (
-              <Connections en={en} />
+              <Connections liveSpec={liveSpec.data} />
             ) : route === "profile" ? (
               <>
                 <section className="panel prose">
@@ -983,6 +947,8 @@ function App() {
                   spec={spec}
                   permissions={permissions}
                   team={team}
+                  teams={listItems(teams.data)}
+                  onTeamChange={setTeam}
                   en={en}
                 />
                 {route === "llm" && (

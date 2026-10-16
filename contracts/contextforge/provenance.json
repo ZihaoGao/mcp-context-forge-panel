@@ -1,8 +1,10 @@
 {
   "tag": "v1.0.11",
-  "commit": "f918209a1788437b2508f9f8504eecd44bbc5cf5",
-  "source": "isolated runtime /openapi.json",
+  "commit": "077071bbb43599dd5ab9372ebdbb9a8e686a9816",
+  "tagObject": "f918209a1788437b2508f9f8504eecd44bbc5cf5",
+  "source": "configured runtime /openapi.json",
+  "runtimeProvenanceVerified": false,
   "backendVersion": "1.0.11",
   "capturedAt": "2026-10-15T17:38:21.828Z",
-  "note": "Feature-gated routes depend on runtime configuration; see source-routes.json for the static inventory."
+  "note": "The tag and commit identify the checked-in v1.0.11 panel baseline; this runtime capture does not verify that the configured endpoint is that commit. The annotated tag object is recorded separately as tagObject. Feature-gated routes depend on runtime configuration; see source-routes.json for the static inventory."
 }

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SessionContext } from "../session";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,6 +44,14 @@ import { SchemaForm } from "./SchemaForm";
 import { ConfigurationTransfer } from "./ConfigurationTransfer";
 import { ApiExplorer } from "./ApiExplorer";
 import { RowActionMenu } from "./RowActionMenu";
+import { McpConnection } from "./Connections";
+import {
+  listPath as resourceListPath,
+  pagination,
+  loadResourcePages,
+  matchesResource,
+  resourceStatus as status,
+} from "../list-model.mjs";
 
 export function findOperation(
   spec: JsonRecord,
@@ -60,21 +68,8 @@ export function findOperation(
     method: method.toUpperCase(),
   };
 }
-function status(item: JsonRecord) {
-  return (
-    item.is_active ??
-    item.enabled ??
-    item.isActive ??
-    (item.status === "disabled" ? false : undefined)
-  );
-}
 function title(item: JsonRecord) {
   return item.name || item.full_name || item.email || item.uri || item.id;
-}
-function matches(item: JsonRecord, search: string) {
-  return `${title(item)} ${item.description || ""} ${item.id || ""}`
-    .toLowerCase()
-    .includes(search.toLowerCase());
 }
 
 export function DataPage({
@@ -83,17 +78,23 @@ export function DataPage({
   permissions,
   team,
   en = false,
+  teams = [],
+  onTeamChange,
 }: {
   module: Module;
   spec: JsonRecord;
   permissions: string[];
   team: string;
   en?: boolean;
+  teams?: JsonRecord[];
+  onTeamChange?: (team: string) => void;
 }) {
   const client = useQueryClient();
   const session = useContext(SessionContext);
   const [tab, setTab] = useState("list");
   const [search, setSearch] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState("");
   const [cursor, setCursor] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [page, setPage] = useState(0);
@@ -101,7 +102,17 @@ export function DataPage({
   const [operation, setOperation] = useState<Operation>();
   const [initial, setInitial] = useState<JsonRecord>();
   const [preset, setPreset] = useState<Record<string, string>>({});
-  const [grid, setGrid] = useState(false);
+  const [compact, setCompact] = useState(
+    () => window.matchMedia("(max-width: 800px)").matches,
+  );
+  const [gridChoice, setGridChoice] = useState<boolean>();
+  const grid = gridChoice ?? compact;
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 800px)");
+    const update = () => setCompact(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   const [busy, setBusy] = useState(false);
   const [batchAction, setBatchAction] = useState("");
   const [batchResults, setBatchResults] = useState<JsonRecord[]>([]);
@@ -184,44 +195,84 @@ export function DataPage({
           : undefined,
     );
   };
+  const profile = (resourceProfiles as Record<string, any>)[module.id];
+  const hasVisibility = profile?.fields?.includes("visibility");
+  const hasTeam =
+    profile?.fields?.some((field: string) =>
+      ["team_id", "teamId"].includes(field),
+    ) || module.id === "tokens";
+  const hasStatus =
+    !!toggle || ["tokens", "users", "llm", "plugins"].includes(module.id);
+  const filters = {
+    search,
+    state: stateFilter,
+    visibility: visibilityFilter,
+    team: hasTeam ? team : "",
+  };
+  const filterKey = JSON.stringify(filters);
+  const currentFilters = useRef(filterKey);
+  currentFilters.current = filterKey;
+  const searching = !!(
+    search.trim() ||
+    stateFilter ||
+    visibilityFilter ||
+    (team && hasTeam)
+  );
   function listPath(nextCursor = "", nextPage = 0) {
-    const params = list?.parameters || [];
-    const names = params.map((p: any) => p.name);
-    const q = new URLSearchParams();
-    if (names.includes("include_pagination"))
-      q.set("include_pagination", "true");
-    if (names.includes("include_inactive")) q.set("include_inactive", "true");
-    if (names.includes("limit")) q.set("limit", "25");
-    if (names.includes("offset")) q.set("offset", String(nextPage * 25));
-    if (names.includes("page")) q.set("page", String(nextPage + 1));
-    if (names.includes("page_size")) q.set("page_size", "25");
-    if (team && names.includes("team_id")) q.set("team_id", team);
-    if (nextCursor) q.set("cursor", nextCursor);
-    return list!.path + (q.size ? "?" + q : "");
+    return resourceListPath(list!, {
+      team,
+      cursor: nextCursor,
+      page: nextPage,
+    });
   }
   const query = useQuery({
     queryKey: ["list", module.id, team, cursor, page],
-    queryFn: () => request(listPath(cursor, page)),
-    enabled: !!list && can("read") && !module.actionsOnly,
+    queryFn: ({ signal }) => request(listPath(cursor, page), { signal }),
+    enabled: !!list && can("read") && !module.actionsOnly && !searching,
     retry: false,
   });
+  const allQuery = useQuery({
+    queryKey: ["list", module.id, team, "all", visibilityFilter],
+    queryFn: ({ signal }) =>
+      loadResourcePages(list!, request, {
+        team,
+        visibility: visibilityFilter,
+        signal,
+      }),
+    enabled: !!list && can("read") && !module.actionsOnly && searching,
+    retry: false,
+  });
+  const activeQuery = searching ? allQuery : query;
   const items = listItems(query.data) as JsonRecord[];
-  const filtered = items.filter((item) => matches(item, search));
-  const nextCursor = query.data?.nextCursor || query.data?.next_cursor || "";
-  const total = query.data?.total ?? query.data?.pagination?.total;
-  const offsetPaging = list?.parameters?.some((p: any) =>
-    ["offset", "page"].includes(p.name),
+  const allMatches = ((allQuery.data || []) as JsonRecord[]).filter((item) =>
+    matchesResource(item, filters),
   );
-  const hasNext = Boolean(
-    nextCursor ||
-    (offsetPaging && (total ? (page + 1) * 25 < total : items.length === 25)),
-  );
+  const filtered = searching
+    ? allMatches.slice(page * 25, (page + 1) * 25)
+    : items;
+  const pageInfo = list
+    ? pagination(query.data, list, page)
+    : { nextCursor: "", total: undefined, hasNext: false };
+  const nextCursor = searching ? "" : pageInfo.nextCursor;
+  const total = searching ? allMatches.length : pageInfo.total;
+  const hasNext = searching
+    ? (page + 1) * 25 < allMatches.length
+    : pageInfo.hasNext;
   useEffect(() => {
     setCursor("");
     setHistory([]);
     setPage(0);
     setSelected([]);
-  }, [team]);
+    setBatchAction("");
+    setBatchResults([]);
+    setError("");
+  }, [team, search, stateFilter, visibilityFilter]);
+  useEffect(() => {
+    if (searching && allQuery.isSuccess && page > 0) {
+      const last = Math.max(0, Math.ceil(allMatches.length / 25) - 1);
+      if (page > last) setPage(last);
+    }
+  }, [searching, allQuery.data, allQuery.isSuccess, page, allMatches.length]);
   function refresh() {
     void client.invalidateQueries({ queryKey: ["list", module.id] });
     void client.invalidateQueries({ queryKey: ["reference-options"] });
@@ -299,44 +350,29 @@ export function DataPage({
   async function selectAll() {
     setBusy(true);
     setError("");
+    const scope = filterKey;
     try {
-      let c = "";
-      let n = 0;
-      const all: JsonRecord[] = [];
-      const seen = new Set<string>();
-      while (true) {
-        const data = await request(listPath(c, n));
-        const values = listItems(data);
-        all.push(...values.filter((item: JsonRecord) => matches(item, search)));
-        if (all.length > 10000 || n > 400)
-          throw new Error(
-            en
-              ? "Too many matches; narrow the filter first."
-              : "匹配项过多，请先缩小范围。",
-          );
-        const next = data?.nextCursor || data?.next_cursor;
-        if (next) {
-          if (seen.has(next))
-            throw new Error("Backend returned repeated pagination cursor");
-          seen.add(next);
-          c = next;
-          n++;
-          continue;
-        }
-        if (
-          offsetPaging &&
-          values.length === 25 &&
-          (!data.total || (n + 1) * 25 < data.total)
-        ) {
-          n++;
-          continue;
-        }
-        break;
-      }
-      setSelected([
-        ...new Map(all.map((item) => [recordId(item), item])).values(),
-      ]);
-      return all;
+      const all = await client.fetchQuery({
+        queryKey: ["list", module.id, team, "all", visibilityFilter],
+        queryFn: ({ signal }) =>
+          loadResourcePages(list!, request, {
+            team,
+            visibility: visibilityFilter,
+            signal,
+          }),
+        staleTime: 0,
+      });
+      if (currentFilters.current !== scope)
+        throw new Error(
+          en
+            ? "Filters changed. Select again."
+            : "筛选条件已变更，请重新选择。",
+        );
+      const matches = all.filter((item: JsonRecord) =>
+        matchesResource(item, filters),
+      );
+      setSelected(matches);
+      return matches;
     } catch (err) {
       setError(displayError(err));
     } finally {
@@ -506,14 +542,22 @@ export function DataPage({
                 <input
                   aria-label="Filter resources"
                   placeholder={
-                    en ? "Filter names on this page…" : "筛选当前页名称、描述…"
+                    en
+                      ? "Search all pages by name, description or ID…"
+                      : "跨页搜索名称、描述或 ID…"
                   }
+                  disabled={busy}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </label>
               <span className="muted">
-                {total ?? filtered.length} {en ? "items" : "项"}
+                {activeQuery.error
+                  ? "—"
+                  : activeQuery.isPending
+                    ? "…"
+                    : (total ?? filtered.length)}{" "}
+                {en ? "items" : "项"}
               </span>
               <div className="toolbar-right">
                 <button
@@ -530,13 +574,13 @@ export function DataPage({
                 >
                   <RefreshCw
                     size={17}
-                    className={query.isFetching ? "spinning" : ""}
+                    className={activeQuery.isFetching ? "spinning" : ""}
                   />
                 </button>
                 <button
                   className="icon-button"
                   aria-label="Toggle layout"
-                  onClick={() => setGrid(!grid)}
+                  onClick={() => setGridChoice(!grid)}
                 >
                   {grid ? <List size={18} /> : <LayoutGrid size={18} />}
                 </button>
@@ -555,14 +599,103 @@ export function DataPage({
                 )}
               </div>
             </div>
+            <div className="resource-filters">
+              {hasStatus && (
+                <label className="field">
+                  <span>{en ? "Status" : "状态"}</span>
+                  <select
+                    aria-label="Resource status"
+                    disabled={busy}
+                    value={stateFilter}
+                    onChange={(e) => setStateFilter(e.target.value)}
+                  >
+                    <option value="">{en ? "All statuses" : "全部状态"}</option>
+                    <option value="enabled">{en ? "Enabled" : "已启用"}</option>
+                    <option value="disabled">
+                      {en ? "Disabled" : "已停用"}
+                    </option>
+                  </select>
+                </label>
+              )}
+              {hasVisibility && (
+                <label className="field">
+                  <span>{en ? "Visibility" : "可见性"}</span>
+                  <select
+                    aria-label="Resource visibility"
+                    disabled={busy}
+                    value={visibilityFilter}
+                    onChange={(e) => setVisibilityFilter(e.target.value)}
+                  >
+                    <option value="">
+                      {en ? "All visibility" : "全部可见性"}
+                    </option>
+                    <option value="private">{en ? "Private" : "仅自己"}</option>
+                    <option value="team">{en ? "Team" : "所属团队"}</option>
+                    <option value="public">
+                      {en ? "Public" : "所有获准用户"}
+                    </option>
+                  </select>
+                </label>
+              )}
+              {hasTeam && onTeamChange && (
+                <label className="field">
+                  <span>{en ? "Team" : "团队"}</span>
+                  <select
+                    aria-label="Resource team"
+                    disabled={busy}
+                    value={team}
+                    onChange={(e) => onTeamChange(e.target.value)}
+                  >
+                    <option value="">
+                      {en ? "All accessible teams" : "所有可访问团队"}
+                    </option>
+                    {teams.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {searching && (
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={busy}
+                  onClick={() => {
+                    setSearch("");
+                    setStateFilter("");
+                    setVisibilityFilter("");
+                    onTeamChange?.("");
+                  }}
+                >
+                  {en ? "Clear filters" : "清除筛选"}
+                </button>
+              )}
+            </div>
+            {searching && (
+              <p className="resource-search-help field-help" role="status">
+                {activeQuery.error
+                  ? en
+                    ? "Search incomplete. Retry before selecting results."
+                    : "查找未完成，请重试后再选择结果。"
+                  : activeQuery.isFetching
+                    ? en
+                      ? "Searching accessible resources across pages…"
+                      : "正在跨页查找可访问资源…"
+                    : en
+                      ? "Search and filters cover all accessible pages in the selected team scope (up to 10,000 resources)."
+                      : "搜索和筛选覆盖所选团队范围内的全部可访问页（最多 10000 项）。"}
+              </p>
+            )}
             {error && (
               <div className="alert error" role="alert">
                 {error}
               </div>
             )}
-            {query.error && (
+            {activeQuery.error && (
               <div className="alert error" role="alert">
-                {displayError(query.error)}
+                {displayError(activeQuery.error)}
                 <button className="text-button" onClick={refresh}>
                   {en ? "Retry" : "重试"}
                 </button>
@@ -586,10 +719,20 @@ export function DataPage({
                     : "可在全部操作中查看当前提供的能力。"}
                 </p>
               </div>
-            ) : query.isPending ? (
+            ) : activeQuery.isPending || activeQuery.error ? (
               <div className="empty">
-                <RefreshCw className="spinning" />
-                <p>{en ? "Loading…" : "正在加载…"}</p>
+                <RefreshCw
+                  className={activeQuery.isPending ? "spinning" : ""}
+                />
+                <p>
+                  {activeQuery.error
+                    ? en
+                      ? "Search failed. Retry to obtain complete results."
+                      : "查找失败，请重试以获取完整结果。"
+                    : en
+                      ? "Loading…"
+                      : "正在加载…"}
+                </p>
               </div>
             ) : !filtered.length ? (
               <div className="empty">
@@ -597,14 +740,14 @@ export function DataPage({
                 <h3>
                   {en
                     ? "No resources yet"
-                    : search
+                    : searching
                       ? "没有匹配的资源"
                       : "还没有资源"}
                 </h3>
                 <p>
                   {en
                     ? "Create a resource or adjust your filters."
-                    : search
+                    : searching
                       ? "尝试调整筛选条件。"
                       : "创建第一个资源，或切换团队查看已有资源。"}
                 </p>
@@ -1122,6 +1265,28 @@ export function DataPage({
           preset={preset}
           onClose={() => setOperation(undefined)}
           onSuccess={refresh}
+          detailActions={
+            module.id === "tools" && activeItem
+              ? [
+                  ...(update && can("update")
+                    ? [
+                        {
+                          label: en ? "Edit tool" : "编辑工具",
+                          onSelect: () => launch(update, activeItem, true),
+                        },
+                      ]
+                    : []),
+                  ...(toggle && canToggle
+                    ? [
+                        {
+                          label: en ? "Change enabled state" : "更改启用状态",
+                          onSelect: () => launch(toggle, activeItem),
+                        },
+                      ]
+                    : []),
+                ]
+              : []
+          }
           en={en}
         />
       )}
@@ -1137,26 +1302,7 @@ export function DataPage({
               <X size={18} />
             </button>
           </div>
-          <p className="muted">
-            {en
-              ? "Use a key scoped to this virtual server."
-              : "请使用限制到此虚拟服务器的 API Key。"}
-          </p>
-          <pre>
-            {JSON.stringify(
-              {
-                mcpServers: {
-                  [connection.name]: {
-                    type: "http",
-                    url: `${window.location.origin}${config.prefix}/servers/${connection.id}/mcp`,
-                    headers: { Authorization: "Bearer <YOUR_API_KEY>" },
-                  },
-                },
-              },
-              null,
-              2,
-            )}
-          </pre>
+          <McpConnection key={connection.id} serverId={connection.id} />
         </div>
       )}
     </>

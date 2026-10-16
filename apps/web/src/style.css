@@ -1025,6 +1025,23 @@ tbody tr:hover {
   font-size: 12px;
   color: #646d64;
   min-height: 36px;
+  overflow-wrap: anywhere;
+}
+.resource-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding: 0 18px 16px;
+}
+.resource-filters .field {
+  flex: 1 1 150px;
+  max-width: 260px;
+  min-width: 0;
+}
+.resource-search-help {
+  padding: 0 18px 12px;
+  margin: 0;
 }
 .card-footer {
   display: flex;
@@ -1155,12 +1172,33 @@ tbody tr:hover {
 .action-dialog {
   padding: 0;
   width: min(760px, calc(100vw - 30px));
-  max-height: 90vh;
+  height: min(850px, 90dvh);
+  max-height: 90dvh;
+  overflow: hidden;
   border: 1px solid #dce6da;
   border-radius: 13px;
   box-shadow: 0 20px 80px #1d342e40;
   color: #304135;
   background: white;
+}
+.action-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.action-dialog > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+.action-dialog .dialog-header,
+.action-dialog .dialog-footer {
+  flex-shrink: 0;
+}
+.action-dialog .dialog-header > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .action-dialog::backdrop {
   background: #1c302f55;
@@ -1189,7 +1227,9 @@ tbody tr:hover {
 .dialog-body {
   padding: 23px 25px;
   overflow: auto;
-  max-height: calc(90vh - 170px);
+  min-height: 0;
+  flex: 1;
+  overscroll-behavior: contain;
 }
 .dialog-footer {
   display: flex;
@@ -1197,6 +1237,21 @@ tbody tr:hover {
   gap: 12px;
   border-top: 1px solid var(--line);
   padding: 15px 25px;
+  flex-wrap: wrap;
+  background: white;
+}
+.permission-summary {
+  flex: 1 0 100%;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.permission-summary small {
+  display: block;
+}
+.permission-summary small:first-of-type {
+  max-height: 3em;
+  overflow: auto;
 }
 .schema-form {
   display: grid;
@@ -1814,7 +1869,7 @@ tbody tr:hover {
     min-height: 470px;
   }
   .resource-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .toolbar {
     gap: 9px;
@@ -2137,6 +2192,22 @@ textarea::placeholder {
   opacity: 1;
 }
 @media (max-width: 760px) {
+  .action-dialog,
+  .action-dialog.resource-dialog {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .action-dialog .dialog-footer {
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  }
+  .action-dialog .dialog-footer .button {
+    white-space: normal;
+  }
   .permission-choices,
   .governance-grid {
     grid-template-columns: 1fr;
@@ -2236,6 +2307,36 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
   align-items: start;
+}
+.percentile-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.latency-percentiles {
+  margin-top: 24px;
+}
+.metric-buckets {
+  margin-top: 18px;
+}
+.metric-buckets summary {
+  cursor: pointer;
+  padding: 10px 0;
+  font-weight: 600;
+}
+.trace-identifier {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 190px;
+  max-width: 290px;
+}
+.trace-id-button {
+  font-family: monospace;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 .governance-stat-card {
   min-width: 0;

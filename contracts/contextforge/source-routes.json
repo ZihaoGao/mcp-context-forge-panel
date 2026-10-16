@@ -1,7 +1,8 @@
 {
   "tag": "v1.0.11",
-  "commit": "f918209a1788437b2508f9f8504eecd44bbc5cf5",
-  "note": "HTTP decorators and dependencies before router mounting, including admin API metadata only. No UI rendering bodies, templates or frontend assets are extracted. Not a substitute for runtime OpenAPI or backend authorization.",
+  "commit": "077071bbb43599dd5ab9372ebdbb9a8e686a9816",
+  "tagObject": "f918209a1788437b2508f9f8504eecd44bbc5cf5",
+  "note": "HTTP decorators and dependencies before router mounting, including admin API metadata only. No UI rendering bodies, templates or frontend assets are extracted. The commit is the peeled commit for the annotated v1.0.11 tag; tagObject records the annotated tag object. Not a substitute for runtime OpenAPI or backend authorization.",
   "routes": [
     {
       "source": "mcpgateway/admin.py",

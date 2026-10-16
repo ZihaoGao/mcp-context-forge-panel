@@ -211,6 +211,13 @@ export function createPanelServer(config = readConfig(), options = {}) {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "same-origin");
     const url = new URL(req.url, "http://panel");
+    if (url.pathname === "/" && ["GET", "HEAD"].includes(req.method)) {
+      res.writeHead(302, {
+        Location: `${config.prefix}/app/`,
+        "Cache-Control": "no-store",
+      });
+      return res.end();
+    }
     if (
       config.prefix &&
       url.pathname !== config.prefix &&
@@ -225,7 +232,13 @@ export function createPanelServer(config = readConfig(), options = {}) {
         (hasSession && req.headers["x-panel-request"] === "1" && unsafe)) &&
       !sameOrigin(req)
     )
-      return json(res, 403, { detail: "Same-origin request required" });
+      return json(res, 403, {
+        detail: {
+          code: "ORIGIN_MISMATCH",
+          message: "Same-origin request required",
+          login_url: `${expectedOrigin}${config.prefix}/app/`,
+        },
+      });
     try {
       if (local === "/_panel/config.js" && req.method === "GET") {
         res.writeHead(200, {
@@ -233,7 +246,7 @@ export function createPanelServer(config = readConfig(), options = {}) {
           "Cache-Control": "no-store",
         });
         return res.end(
-          `window.__PANEL_CONFIG__=${JSON.stringify({ prefix: config.prefix, version: "1.0.11" })};`,
+          `window.__PANEL_CONFIG__=${JSON.stringify({ prefix: config.prefix, version: "1.0.11", publicOrigin: expectedOrigin })};`,
         );
       }
       if (local === "/_panel/login" && req.method === "POST") {

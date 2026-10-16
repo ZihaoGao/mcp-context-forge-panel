@@ -5,7 +5,11 @@ export type TokenCreateResponse = components["schemas"]["TokenCreateResponse"];
 export type JsonRecord = Record<string, any>;
 declare global {
   interface Window {
-    __PANEL_CONFIG__: { prefix: string; version: string };
+    __PANEL_CONFIG__: {
+      prefix: string;
+      version: string;
+      publicOrigin?: string;
+    };
   }
 }
 export const config = window.__PANEL_CONFIG__ || {
@@ -59,7 +63,11 @@ export async function request<T = any>(
     /* retain non-JSON response for diagnostics */
   }
   if (!response.ok) {
-    if (response.status === 401 && !path.startsWith("/_panel/"))
+    if (
+      response.status === 401 &&
+      !path.startsWith("/_panel/") &&
+      !headers.has("Authorization")
+    )
       window.dispatchEvent(new Event("panel:unauthorized"));
     throw new ApiError(
       response.status,
@@ -75,6 +83,13 @@ export const send = (path: string, method: string, body?: unknown) =>
   });
 export function displayError(error: unknown): string {
   if (error instanceof ApiError) {
+    if (
+      error.detail &&
+      typeof error.detail === "object" &&
+      "code" in error.detail &&
+      error.detail.code === "ORIGIN_MISMATCH"
+    )
+      return "访问地址与部署配置不一致，请使用登录页给出的正确入口重新登录。";
     if (Array.isArray(error.detail))
       return error.detail
         .map(
@@ -83,6 +98,7 @@ export function displayError(error: unknown): string {
         )
         .join("；");
     const explanation: Record<number, string> = {
+      401: "登录凭据无效或会话已过期，请检查邮箱、密码或 Token 后重新登录",
       400: "请求未通过后端检查",
       403: "当前账户没有权限，或资源不属于当前团队",
       409: "资源已存在或配置冲突",

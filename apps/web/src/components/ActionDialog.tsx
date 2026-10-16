@@ -11,6 +11,7 @@ import {
   resolveSchema,
 } from "../../../../packages/api-client/contract.mjs";
 import { SchemaForm } from "./SchemaForm";
+import { TokenPermissionContext } from "./TokenPermissions";
 
 export type Operation = JsonRecord & { path: string; method: string };
 export function ActionDialog({
@@ -57,6 +58,9 @@ export function ActionDialog({
   const [parameters, setParameters] = useState<Record<string, string>>(preset);
   const [result, setResult] = useState<any>();
   const [error, setError] = useState("");
+  const [permissionMode, setPermissionMode] = useState(
+    initial?.scope?.permissions?.length ? "custom" : "inherit",
+  );
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState(() =>
     Object.values(operation.responses || {}).some(
@@ -234,181 +238,204 @@ export function ActionDialog({
           <X size={20} />
         </button>
       </div>
-      <form onSubmit={execute}>
-        <div className="dialog-body">
-          {(operation.parameters || []).length > 0 && (
-            <div className="schema-form">
-              {operation.parameters
-                .filter((p: any) => p.in !== "cookie")
-                .map((p: any) => (
-                  <label className="field" key={`${p.in}-${p.name}`}>
-                    <span>
-                      {p.name}
-                      {p.required && <b className="required"> *</b>}{" "}
-                      <small>{p.in}</small>
-                    </span>
+      <TokenPermissionContext.Provider
+        value={{ mode: permissionMode, setMode: setPermissionMode }}
+      >
+        <form
+          onSubmit={(e) => {
+            if (
+              permissionMode === "custom" &&
+              !value.scope?.permissions?.length
+            ) {
+              e.preventDefault();
+              setError(
+                "自定义权限至少需要选择一项；如需继承，请明确选择“继承账户权限”。",
+              );
+            } else void execute(e);
+          }}
+        >
+          <div className="dialog-body">
+            {(operation.parameters || []).length > 0 && (
+              <div className="schema-form">
+                {operation.parameters
+                  .filter((p: any) => p.in !== "cookie")
+                  .map((p: any) => (
+                    <label className="field" key={`${p.in}-${p.name}`}>
+                      <span>
+                        {p.name}
+                        {p.required && <b className="required"> *</b>}{" "}
+                        <small>{p.in}</small>
+                      </span>
+                      <input
+                        aria-label={p.name}
+                        required={p.required}
+                        value={parameters[p.name] || ""}
+                        onChange={(e) =>
+                          setParameters((v) => ({
+                            ...v,
+                            [p.name]: e.target.value,
+                          }))
+                        }
+                      />
+                      <small className="field-help">{p.description}</small>
+                    </label>
+                  ))}
+              </div>
+            )}
+            {contentType && (
+              <SchemaForm
+                schema={formSchema}
+                spec={spec}
+                value={value}
+                onChange={setValue}
+              />
+            )}
+            {contentType === "multipart/form-data" &&
+              Object.entries(schema.properties || {})
+                .filter(
+                  ([, s]: any) => resolveSchema(s, spec).format === "binary",
+                )
+                .map(([name]) => (
+                  <label key={name} className="field">
+                    {name}
                     <input
-                      aria-label={p.name}
-                      required={p.required}
-                      value={parameters[p.name] || ""}
-                      onChange={(e) =>
-                        setParameters((v) => ({
-                          ...v,
-                          [p.name]: e.target.value,
-                        }))
-                      }
+                      aria-label={name + " file"}
+                      type="file"
+                      required={schema.required?.includes(name)}
+                      onChange={(e) => {
+                        if (e.target.files?.[0])
+                          setFiles((v) => ({
+                            ...v,
+                            [name]: e.target.files![0],
+                          }));
+                      }}
                     />
-                    <small className="field-help">{p.description}</small>
                   </label>
                 ))}
-            </div>
-          )}
-          {contentType && (
-            <SchemaForm
-              schema={formSchema}
-              spec={spec}
-              value={value}
-              onChange={setValue}
-            />
-          )}
-          {contentType === "multipart/form-data" &&
-            Object.entries(schema.properties || {})
-              .filter(
-                ([, s]: any) => resolveSchema(s, spec).format === "binary",
-              )
-              .map(([name]) => (
-                <label key={name} className="field">
-                  {name}
-                  <input
-                    aria-label={name + " file"}
-                    type="file"
-                    required={schema.required?.includes(name)}
-                    onChange={(e) => {
-                      if (e.target.files?.[0])
-                        setFiles((v) => ({ ...v, [name]: e.target.files![0] }));
-                    }}
-                  />
-                </label>
-              ))}
-          {!contentType && !(operation.parameters || []).length && (
-            <p className="muted">
-              {en ? "No parameters required." : "此操作不需要参数。"}
-            </p>
-          )}
-          {canStream && (
-            <label className="check-label">
-              <input
-                type="checkbox"
-                checked={streaming}
-                onChange={(e) => setStreaming(e.target.checked)}
-              />
-              {en
-                ? "Show incoming updates as they arrive"
-                : "持续显示新到达的结果"}
-              <small className="field-help">
-                适用于持续返回更新的接口。开始后可点击停止；普通查询不需要开启。
-              </small>
-            </label>
-          )}
-          {destructive && (
-            <label className="check-label warning">
-              <input
-                required
-                type="checkbox"
-                checked={approved}
-                onChange={(e) => setApproved(e.target.checked)}
-              />
-              {en
-                ? "I understand this action changes or deletes data."
-                : "我确认执行此操作，理解它将修改或删除数据。"}
-            </label>
-          )}
-          {error && (
-            <div className="alert error" role="alert">
-              {error}
-            </div>
-          )}
-          {result !== undefined && (
-            <section className="result">
-              <div className="section-heading">
-                <strong>{en ? "Response" : "执行结果"}</strong>
-                <div>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label="Copy response"
-                    onClick={() =>
-                      navigator.clipboard
-                        .writeText(
-                          typeof result === "string"
-                            ? result
-                            : JSON.stringify(result, null, 2),
-                        )
-                        .catch(() => setError("Clipboard unavailable"))
-                    }
-                  >
-                    <Copy size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-button"
-                    aria-label="Download response"
-                    onClick={download}
-                  >
-                    <Download size={16} />
-                  </button>
-                </div>
+            {!contentType && !(operation.parameters || []).length && (
+              <p className="muted">
+                {en ? "No parameters required." : "此操作不需要参数。"}
+              </p>
+            )}
+            {canStream && (
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={streaming}
+                  onChange={(e) => setStreaming(e.target.checked)}
+                />
+                {en
+                  ? "Show incoming updates as they arrive"
+                  : "持续显示新到达的结果"}
+                <small className="field-help">
+                  适用于持续返回更新的接口。开始后可点击停止；普通查询不需要开启。
+                </small>
+              </label>
+            )}
+            {destructive && (
+              <label className="check-label warning">
+                <input
+                  required
+                  type="checkbox"
+                  checked={approved}
+                  onChange={(e) => setApproved(e.target.checked)}
+                />
+                {en
+                  ? "I understand this action changes or deletes data."
+                  : "我确认执行此操作，理解它将修改或删除数据。"}
+              </label>
+            )}
+            {error && (
+              <div className="alert error" role="alert">
+                {error}
               </div>
-              {result?.access_token && (
-                <div className="alert warning">
-                  {en
-                    ? "Copy this key now. It is only displayed on creation."
-                    : "请立即复制并妥善保存 API Key，明文仅在创建时返回。"}
+            )}
+            {result !== undefined && (
+              <section className="result">
+                <div className="section-heading">
+                  <strong>{en ? "Response" : "执行结果"}</strong>
+                  <div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Copy response"
+                      onClick={() =>
+                        navigator.clipboard
+                          .writeText(
+                            typeof result === "string"
+                              ? result
+                              : JSON.stringify(result, null, 2),
+                          )
+                          .catch(() => setError("Clipboard unavailable"))
+                      }
+                    >
+                      <Copy size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Download response"
+                      onClick={download}
+                    >
+                      <Download size={16} />
+                    </button>
+                  </div>
                 </div>
-              )}
-              <pre tabIndex={0}>
-                {result?.download instanceof Blob
-                  ? `${result.filename} · ${result.download.size} bytes`
-                  : typeof result === "string"
-                    ? result
-                    : JSON.stringify(result, null, 2)}
-              </pre>
-            </section>
-          )}
-        </div>
-        <footer className="dialog-footer">
-          {authorizationFlow && (
+                {result?.access_token && (
+                  <div className="alert warning">
+                    {en
+                      ? "Copy this key now. It is only displayed on creation."
+                      : "请立即复制并妥善保存 API Key，明文仅在创建时返回。"}
+                  </div>
+                )}
+                <pre tabIndex={0}>
+                  {result?.download instanceof Blob
+                    ? `${result.filename} · ${result.download.size} bytes`
+                    : typeof result === "string"
+                      ? result
+                      : JSON.stringify(result, null, 2)}
+                </pre>
+              </section>
+            )}
+          </div>
+          <footer className="dialog-footer">
+            {authorizationFlow && (
+              <button
+                type="button"
+                className="button primary"
+                onClick={navigateAuthorization}
+              >
+                {en ? "Authorize in browser" : "在浏览器中授权"}
+              </button>
+            )}
             <button
               type="button"
-              className="button primary"
-              onClick={navigateAuthorization}
+              className="button secondary"
+              onClick={onClose}
             >
-              {en ? "Authorize in browser" : "在浏览器中授权"}
+              {en ? "Close" : "关闭"}
             </button>
-          )}
-          <button type="button" className="button secondary" onClick={onClose}>
-            {en ? "Close" : "关闭"}
-          </button>
-          {busy ? (
-            <button
-              type="button"
-              className="button danger"
-              onClick={() => controller.current?.abort()}
-            >
-              <Square size={15} />
-              {en ? "Stop" : "停止"}
-            </button>
-          ) : (
-            <button
-              className={`button ${destructive ? "danger" : "primary"}`}
-              disabled={destructive && !approved}
-            >
-              <Play size={15} />
-              {en ? "Execute" : "执行"}
-            </button>
-          )}
-        </footer>
-      </form>
+            {busy ? (
+              <button
+                type="button"
+                className="button danger"
+                onClick={() => controller.current?.abort()}
+              >
+                <Square size={15} />
+                {en ? "Stop" : "停止"}
+              </button>
+            ) : (
+              <button
+                className={`button ${destructive ? "danger" : "primary"}`}
+                disabled={destructive && !approved}
+              >
+                <Play size={15} />
+                {en ? "Execute" : "执行"}
+              </button>
+            )}
+          </footer>
+        </form>
+      </TokenPermissionContext.Provider>
     </dialog>
   );
 }
