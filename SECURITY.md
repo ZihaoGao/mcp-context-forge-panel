@@ -1,34 +1,35 @@
-# 安全策略
+# Security Policy
 
-## 支持范围
+## Supported Versions
 
-本项目当前维护开发主分支及最新的 `0.1.x` 版本。修复以最新版本提供，
-不承诺向旧版本回移。独立 ContextForge 后端及第三方服务的问题应向各自项目报告。
+This project currently maintains the main development branch and the latest `0.1.x` release.
+Fixes are provided in the latest release; backports to older versions are not guaranteed.
+Report issues affecting the separate ContextForge backend or third-party services to their respective projects.
 
-## 私密报告漏洞
+## Reporting a Vulnerability Privately
 
-请在本仓库 GitHub 页面选择 **Security → Advisories → Report a vulnerability**，
-通过 GitHub 私密漏洞报告提交。请勿在公开 Issue、讨论或 Pull Request 中发布
-未公开漏洞的利用细节、真实 API Key、JWT、Cookie、密码或生产数据。
+On this repository's GitHub page, select **Security → Advisories → Report a vulnerability**
+to submit a private vulnerability report. Do not post exploitation details for undisclosed vulnerabilities,
+real API keys, JWTs, cookies, passwords, or production data in public issues, discussions, or pull requests.
 
-如果页面没有私密报告入口，请先通过普通 Issue 请求维护者启用该入口；
-该 Issue 只需说明“需要私密安全报告渠道”，不要包含漏洞细节或附件。
-在私密渠道可用后再发送完整报告。
+If private reporting is unavailable, open a regular issue asking the maintainers to enable it.
+Simply state that you need a private security reporting channel; do not include vulnerability details or attachments.
+Send the full report once a private channel is available.
 
-报告中请提供：
+Please include:
 
-- 控制台版本或提交、后端版本、部署方式和相关配置（删除凭据）。
-- 受影响的功能、所需权限、可复现步骤及预期和实际结果。
-- 可能的影响，以及使用合成数据的最小复现。
+- The console version or commit, backend version, deployment method, and relevant configuration with credentials removed.
+- The affected functionality, required permissions, reproduction steps, and expected and actual results.
+- The potential impact and a minimal reproduction using synthetic data.
 
-收到报告后，维护者会在私密报告中讨论复现、修复和披露时间。
-请先撤销已经暴露的凭据，再提交经过脱敏的日志或截图。
+After receiving a report, maintainers will discuss reproduction, remediation, and disclosure timing within the private report.
+Revoke any exposed credentials before submitting redacted logs or screenshots.
 
-## 发布维护要求
+## Release and Maintenance Requirements
 
-首次公开发布前，仓库维护者需要在 GitHub 的安全设置中启用
-**Private vulnerability reporting**，并确认上述报告入口可用。
-添加本文件不会自动启用 GitHub 的该项设置。
+Before the first public release, repository maintainers must enable **Private vulnerability reporting**
+in GitHub's security settings and confirm that the reporting option described above is available.
+Adding this file does not enable that GitHub setting automatically.
 
-生产部署应遵守 [部署说明](docs/deployment.md) 中的 HTTPS、可信代理、
-Cookie 和单实例会话约束。测试凭据、数据库、日志、截图与运行缓存不得提交。
+Production deployments should follow the HTTPS, trusted proxy, cookie, and single-instance session requirements
+in the [deployment guide](docs/deployment.md). Do not commit test credentials, databases, logs, screenshots, or runtime caches.

@@ -19,3 +19,4 @@ playwright-report/
 test-results/
 .venv/
 __pycache__/
+AGENTS.md
