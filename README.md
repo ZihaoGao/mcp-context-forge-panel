@@ -1,22 +1,24 @@
 # ContextForge Console
 
-独立的 ContextForge 管理与使用控制台，以 **v1.0.11** 为 API 基线。支持管理员和普通用户、API Key 自助创建、RBAC、资源批量管理、运行时子路径配置，以及 MCP、LLM 和业务 API 的同源反代。
+English | [简体中文](README.zh-CN.md)
 
-## 开发与运行
+A standalone console for administering and using ContextForge, with **v1.0.11** as its API baseline. It supports administrators and regular users, self-service API keys, RBAC, bulk resource management, runtime path prefixes, and a same-origin reverse proxy for MCP, LLM, and business APIs.
 
-需要 Node.js 24 和独立运行的 ContextForge 后端。
+## Development and running
+
+Requires Node.js 24 and a separately running ContextForge backend.
 
 ```powershell
 npm ci
 Copy-Item .env.example .env
-# 修改 .env 中的 BACKEND_URL 和 PUBLIC_ORIGIN
+# Set BACKEND_URL and PUBLIC_ORIGIN in .env
 npm run build
 node --env-file=.env apps/server/index.mjs
 ```
 
-默认配置访问 `http://localhost:3000/forge/app/`。`npm run dev` 使用构建监听与 Node.js 重载；修改界面后刷新浏览器即可。
+With the default configuration, open `http://localhost:3000/forge/app/`. `npm run dev` watches the frontend build and reloads Node.js; refresh the browser after UI changes.
 
-Linux / macOS 可用 `cp .env.example .env`。生产环境以环境变量配置，镜像无需按访问前缀重新构建。
+On Linux / macOS, use `cp .env.example .env`. Production deployments use environment variables; changing the public path prefix does not require rebuilding the image.
 
 ## Docker
 
@@ -25,67 +27,110 @@ docker build -f deploy/Dockerfile -t contextforge-panel:local .
 docker compose -f deploy/compose.yaml up -d
 ```
 
-Compose 默认后端为宿主机 `http://host.docker.internal:4444`，只在宿主机回环地址发布前端端口。容器中的 `localhost` 是容器自身；其他部署方式请明确设置 `BACKEND_URL`。Compose 的环境变量从运行命令的环境或指定 `--env-file` 读取。
+Compose defaults to the host backend at `http://host.docker.internal:4444` and publishes the frontend port only on the host loopback interface. Inside a container, `localhost` refers to that container; set `BACKEND_URL` explicitly for other deployments. Compose reads environment variables from the command's environment or the specified `--env-file`.
 
-前端单容器不包含后端、数据库或 Redis。参考仓库不会被修改。
+The frontend container does not include the backend, a database, or Redis. The reference repository is not modified.
 
-## 配置
+## Configuration
 
-| 变量                  | 示例                           | 作用                                                   |
-| --------------------- | ------------------------------ | ------------------------------------------------------ |
-| `APP_ROOT_PATH`       | `/forge`                       | 公共访问前缀；空字符串为域名根目录                     |
-| `BACKEND_URL`         | `http://gateway:4444/internal` | 固定上游地址，可含独立内部前缀                         |
-| `PUBLIC_ORIGIN`       | `https://tools.example.com`    | 浏览器所见的协议、域名和端口；用于 Origin 校验与重定向 |
-| `COOKIE_SECURE`       | `true`                         | HTTPS 部署开启；本地 HTTP 为 `false`                   |
-| `TRUSTED_PROXY_CIDRS` | `127.0.0.1/32`                 | 允许读取转发客户端 IP 的前置代理网段；默认空           |
-| `PORT` / `HOST`       | `3000` / `0.0.0.0`             | 监听地址                                               |
+| Variable              | Example                        | Purpose                                                                                |
+| --------------------- | ------------------------------ | -------------------------------------------------------------------------------------- |
+| `APP_ROOT_PATH`       | `/forge`                       | Public path prefix; an empty string serves at the domain root                          |
+| `BACKEND_URL`         | `http://gateway:4444/internal` | Fixed upstream URL, optionally including its own internal path prefix                  |
+| `PUBLIC_ORIGIN`       | `https://tools.example.com`    | Browser-facing scheme, hostname, and port; used for Origin checks and redirects        |
+| `COOKIE_SECURE`       | `true`                         | Enable for HTTPS access to the console; use `false` for local HTTP                     |
+| `TRUSTED_PROXY_CIDRS` | `127.0.0.1/32`                 | Trusted proxy networks whose forwarded client IP headers may be read; empty by default |
+| `PORT` / `HOST`       | `3000` / `0.0.0.0`             | Listening port and address                                                             |
 
-页面使用 `/forge/app/`；控制台内部接口使用 `/forge/_panel/`；其他公共业务路径剥离 `/forge` 后转发上游。`/forge/_internal/` 不对外开放。LLM 使用后端实际的 API 前缀，例如 `/forge/llm/v1/chat/completions`。MCP 虚拟服务器连接地址为 `/forge/servers/<id>/mcp`。
+The UI is served at `/forge/app/`, and internal console endpoints use `/forge/_panel/`. Other public business paths are forwarded upstream after stripping `/forge`. `/forge/_internal/` is not publicly exposed. LLM requests use the backend's actual API prefix, such as `/forge/llm/v1/chat/completions`. MCP virtual servers connect through `/forge/servers/<id>/mcp`.
 
-参见 [nginx 示例](deploy/nginx.conf.example) 和 [部署说明](docs/deployment.md)。
+See the [nginx example](deploy/nginx.conf.example) and [deployment guide](docs/deployment.md).
 
-## 功能入口
+### HTTPS backends with self-signed certificates
 
-- 资源目录：MCP 网关、虚拟服务器、Tools、Resources、Prompts、A2A、Roots，提供 CRUD、详情、相关操作与批量执行。
-- 我的 API Key：按已有权限自助创建团队或服务器范围的 Key，设置有效期和权限；创建时复制明文；查看、更新、撤销与用量查询。
-- 角色与权限：角色 CRUD、权限目录、用户角色查询、分配与按作用域撤销。
-- 团队和用户：账户、成员、邀请、加入请求等操作。
-- 模型与供应商、对话调试、插件、服务目录、可观测性、日志和系统配置。
-- 资源列表使用带上下文的创建、编辑、详情和操作确认；权限及资源关联支持搜索、批选，固定选项使用下拉控件。各栏目提供导入导出与模板，先预检查再执行。日志检索和系统设置使用专用页面。
-- 接口工作台：使用实际 OpenAPI 参数和请求 Schema 执行业务操作，支持表单、JSON、文件、结果下载和流式读取。低频功能在该入口操作，不会因没有专门的列表页面而遗漏。
+Set `BACKEND_URL` to an HTTPS URL and use `NODE_EXTRA_CA_CERTS` to make the console's Node.js process trust the backend certificate. This covers regular API proxying, WebSocket connections, and server-side requests such as login, without changing application code.
 
-条件功能标明启用配置。内部服务接口、健康探测、已废弃方法和原前端 HTML 渲染接口被明确排除。协议能力由连接配置与调试入口覆盖。
+Prepare a PEM certificate file: for certificates issued by a private CA, use that CA's public certificate; for a directly self-signed backend certificate, use the certificate itself. No private key is required. The hostname or IP in `BACKEND_URL` must match the certificate's Subject Alternative Name (SAN), and the certificate must be valid and unexpired.
 
-完整逐项映射见 [coverage.csv](contracts/contextforge/coverage.csv)。接口映射不等于逐项集成验证；已执行的场景与限制见 [验证记录](docs/verification.md)。
+For local execution, set the following in `.env`:
 
-资源导入格式、插件 / 目录的特殊处理、只读历史快照及原生配置迁移的区别见 [资源操作说明](docs/resource-workflows.md)。
+```dotenv
+BACKEND_URL=https://backend.example.internal:4444
+```
 
-## 质量检查
+In PowerShell, set the certificate path before starting:
+
+```powershell
+$env:NODE_EXTRA_CA_CERTS = "C:\certs\backend-ca.pem"
+npm start
+```
+
+On Linux / macOS:
+
+```sh
+NODE_EXTRA_CA_CERTS=/absolute/path/backend-ca.pem npm start
+```
+
+For development, replace `npm start` with `npm run dev`. Set this environment variable before launching the process, and restart the console after changing the certificate or its path. Do not rely solely on loading `.env` after the application has started to configure certificate trust. See the [Node.js certificate configuration documentation](https://nodejs.org/api/cli.html#node_extra_ca_certsfile).
+
+For Docker deployments, merge the following into the `panel` service in `deploy/compose.yaml`, keeping its other existing fields:
+
+```yaml
+services:
+  panel:
+    environment:
+      BACKEND_URL: https://backend.example.internal:4444
+      NODE_EXTRA_CA_CERTS: /app/certs/backend-ca.pem
+    volumes:
+      - ./certs/backend-ca.pem:/app/certs/backend-ca.pem:ro
+```
+
+Place the host certificate at `deploy/certs/backend-ca.pem`. Ensure the container's `node` user can read it and the container can resolve and reach the backend address. The existing Compose configuration does not automatically pass `NODE_EXTRA_CA_CERTS` into the container; adding it only to the host `.env` is insufficient. After updating the configuration, run `docker compose -f deploy/compose.yaml up -d`. If you only replace the certificate contents, restart the container as well.
+
+Set `COOKIE_SECURE` according to whether browsers access the console over HTTPS; it is independent of the backend protocol. Avoid disabling certificate verification for the entire process with `NODE_TLS_REJECT_UNAUTHORIZED=0`. Verify login and business API proxying with your own certificates in the actual deployment.
+
+## Features
+
+- Resource catalog: CRUD, details, related actions, and bulk operations for MCP gateways, virtual servers, Tools, Resources, Prompts, A2A, and Roots.
+- My API Keys: create team- or server-scoped keys within existing permissions, set expiration and permissions, copy the plaintext key at creation, and view, update, revoke, or inspect usage.
+- Roles and permissions: role CRUD, permission catalog, user role lookup, assignment, and revocation by scope.
+- Teams and users: accounts, members, invitations, join requests, and related operations.
+- Models and providers, chat debugging, plugins, service catalogs, observability, logs, and system configuration.
+- Resource lists include contextual creation, editing, details, and action confirmations. Permission and resource associations support search and batch selection; fixed choices use dropdowns. Sections provide import, export, and templates, with preflight checks before execution. Log search and system settings have dedicated pages.
+- API workbench: execute business operations using actual OpenAPI parameters and request schemas, with support for forms, JSON, files, result downloads, and streaming. Less frequently used features remain available here even without a dedicated list page.
+
+Conditional features identify the configuration needed to enable them. Internal service endpoints, health probes, deprecated methods, and the original frontend's HTML rendering endpoints are explicitly excluded. Protocol capabilities are covered through connection configuration and debugging tools.
+
+See [coverage.csv](contracts/contextforge/coverage.csv) for the complete mapping. Endpoint coverage does not imply that every operation has passed integration testing; see the [verification record](docs/verification.md) for tested scenarios and limitations.
+
+See the [resource workflow guide](docs/resource-workflows.md) for resource import formats, plugin and catalog handling, read-only historical snapshots, and how these differ from native configuration migration.
+
+## Quality checks
 
 ```sh
 npm run check
 npm run format:check
 ```
 
-真实后端与浏览器测试的准备命令见 [开发与测试](docs/development.md)。Chat 使用独立 v1.0.10 测试环境，不改变 v1.0.11 主后端。
+See [development and testing](docs/development.md) for real-backend and browser test setup. Chat uses a separate v1.0.10 test environment without changing the main v1.0.11 backend.
 
-## 工程结构
+## Project structure
 
 ```text
-apps/web/                    React 页面与交互
-apps/server/                 会话、配置、静态文件和固定上游反代
-packages/api-client/         API 客户端、生成类型、契约和批量执行辅助函数
-contracts/contextforge/      版本化规范、来源记录和功能覆盖清单
-scripts/                     契约生成、隔离测试环境与开发命令
-tests/                       单元、真实后端集成与浏览器测试
-deploy/                      Docker、Compose、nginx
-docs/                        架构、部署、维护和验证说明
+apps/web/                    React UI and interactions
+apps/server/                 Sessions, configuration, static files, and fixed upstream proxy
+packages/api-client/         API client, generated types, contracts, and bulk execution helpers
+contracts/contextforge/      Versioned specifications, provenance, and feature coverage
+scripts/                     Contract generation, isolated test environments, and development commands
+tests/                       Unit, real-backend integration, and browser tests
+deploy/                      Docker, Compose, and nginx
+docs/                        Architecture, deployment, maintenance, and verification
 ```
 
-架构约定见 [architecture.md](docs/architecture.md)。
+See [architecture.md](docs/architecture.md) for architectural conventions.
 
-## 许可证与安全报告
+## License and security reports
 
-本项目原创代码使用 [MIT License](LICENSE)。上游生成的接口契约与类型保留 Apache-2.0 授权，来源、修改说明和许可证见 [第三方声明](THIRD_PARTY_NOTICES.md)。
+Original project code is licensed under the [MIT License](LICENSE). Contracts and types generated from upstream retain the Apache-2.0 license. See [third-party notices](THIRD_PARTY_NOTICES.md) for sources, modifications, and licenses.
 
-漏洞报告与支持范围见 [安全策略](SECURITY.md)。请勿在公开 Issue 中提交凭据或未公开漏洞的利用细节。
+See the [security policy](SECURITY.md) for vulnerability reporting and support scope. Do not include credentials or exploitation details for undisclosed vulnerabilities in public issues.
