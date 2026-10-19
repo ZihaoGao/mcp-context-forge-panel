@@ -34,7 +34,7 @@ export function resourceStatus(item) {
 
 export function matchesResource(
   item,
-  { search = "", state = "", visibility = "", team = "" } = {},
+  { search = "", state = "", visibility = "", team = "", gateway = "" } = {},
 ) {
   const haystack = [
     item.name,
@@ -57,13 +57,21 @@ export function matchesResource(
         ? resourceStatus(item) === true
         : resourceStatus(item) === false)) &&
     (!visibility || item.visibility === visibility) &&
-    (!team || readField(item, "team_id") === team)
+    (!team || readField(item, "team_id") === team) &&
+    (!gateway || readField(item, "gateway_id") === gateway)
   );
 }
 
 export function listPath(
   operation,
-  { team = "", visibility = "", cursor = "", page = 0, size = 25 } = {},
+  {
+    team = "",
+    visibility = "",
+    gateway = "",
+    cursor = "",
+    page = 0,
+    size = 25,
+  } = {},
 ) {
   const names = new Set((operation.parameters || []).map((p) => p.name));
   const q = new URLSearchParams();
@@ -78,6 +86,7 @@ export function listPath(
   if (names.has("page")) q.set("page", String(page + 1));
   if (team && names.has("team_id")) q.set("team_id", team);
   if (visibility && names.has("visibility")) q.set("visibility", visibility);
+  if (gateway && names.has("gateway_id")) q.set("gateway_id", gateway);
   if (cursor) q.set("cursor", cursor);
   return operation.path + (q.size ? "?" + q : "");
 }
@@ -105,9 +114,15 @@ export function pagination(data, operation, page, size = 25) {
 }
 
 // Never present a truncated scan as a complete search or batch selection.
-/** @param {{team?: string, visibility?: string, signal?: AbortSignal, maxItems?: number}} [options] */
+/** @param {{team?: string, visibility?: string, gateway?: string, signal?: AbortSignal, maxItems?: number}} [options] */
 export async function loadResourcePages(operation, fetchPage, options = {}) {
-  const { team = "", visibility = "", signal, maxItems = 10000 } = options;
+  const {
+    team = "",
+    visibility = "",
+    gateway = "",
+    signal,
+    maxItems = 10000,
+  } = options;
   const size = 100;
   const out = new Map();
   const cursors = new Set();
@@ -115,7 +130,7 @@ export async function loadResourcePages(operation, fetchPage, options = {}) {
   for (let page = 0; page < 500; page++) {
     signal?.throwIfAborted();
     const data = await fetchPage(
-      listPath(operation, { team, visibility, cursor, page, size }),
+      listPath(operation, { team, visibility, gateway, cursor, page, size }),
       { signal },
     );
     const items = listItems(data);

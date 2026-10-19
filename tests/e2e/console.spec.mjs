@@ -107,7 +107,12 @@ test("mobile resource forms keep the header and complete actions visible while o
     await page.goto(root + "/app/#" + route);
     await page
       .getByRole("button", {
-        name: route === "tokens" ? "创建 API Key" : "新建",
+        name:
+          route === "tokens"
+            ? "创建 API Key"
+            : route === "tools"
+              ? "创建 REST 工具"
+              : "新建",
         exact: true,
       })
       .click();

@@ -29,6 +29,8 @@ import {
   englishProfiles,
 } from "../resource-copy.mjs";
 import { associationEndpoints } from "../association-model.mjs";
+import { restToolProblems } from "../tool-workflows.mjs";
+import { GatewayRegistrationResult } from "./GatewayRegistrationResult";
 export { resourceActionName } from "../resource-actions.mjs";
 
 export function RecordDetails({ value }: { value: unknown }) {
@@ -252,8 +254,20 @@ export function ResourceDialog({
   const englishProfile = (englishProfiles as Record<string, string[]>)[
     moduleId
   ];
-  const noun = en ? englishProfile?.[0] || "resource" : profile?.noun || "资源";
-  const purpose = en ? englishProfile?.[1] : profile?.purpose;
+  const restCreate = moduleId === "tools" && mode === "create";
+  const noun = restCreate
+    ? t("REST 工具", "REST tool")
+    : en
+      ? englishProfile?.[0] || "resource"
+      : profile?.noun || "资源";
+  const purpose = restCreate
+    ? t(
+        "注册独立 REST HTTP 端点。MCP 服务请通过 MCP 网关接入并自动发现工具。",
+        "Register an individual REST HTTP endpoint. Connect MCP services through MCP gateways to discover tools automatically.",
+      )
+    : en
+      ? englishProfile?.[1]
+      : profile?.purpose;
   const content = operation.requestBody?.content || {};
   const contentType =
     Object.keys(content).find((k) => k.includes("json")) ||
@@ -268,6 +282,7 @@ export function ResourceDialog({
     return {
       ...defaults,
       ...body,
+      ...(restCreate ? { integration_type: "REST", request_type: "POST" } : {}),
       ...(mode === "create" && team && schema.properties?.team_id
         ? { team_id: team }
         : {}),
@@ -430,8 +445,22 @@ export function ResourceDialog({
     ...schema,
     properties: Object.fromEntries(
       keys
-        .filter((k) => schema.properties?.[k])
-        .map((k) => [k, schema.properties[k]]),
+        .filter(
+          (k) =>
+            schema.properties?.[k] &&
+            !(restCreate && ["gateway_id", "allow_auto"].includes(k)),
+        )
+        .map((k) => [
+          k,
+          restCreate && k === "integration_type"
+            ? { ...schema.properties[k], enum: ["REST"] }
+            : restCreate && k === "request_type"
+              ? {
+                  ...schema.properties[k],
+                  enum: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+                }
+              : schema.properties[k],
+        ]),
     ),
     required: schema.required?.filter((k: string) => keys.includes(k)),
   });
@@ -455,6 +484,7 @@ export function ResourceDialog({
     const problems = [
       ...validateValue(params, parameterSchema, spec, "", en),
       ...(contentType ? validateValue(body, root, spec, "", en) : []),
+      ...(restCreate ? restToolProblems(submittedValue, en) : []),
     ];
     if (
       moduleId === "tokens" &&
@@ -640,12 +670,16 @@ export function ResourceDialog({
             )}
             {result !== undefined && (
               <section className="resource-result result">
-                {mode !== "detail" && (
-                  <div className="alert success">
-                    <Check size={18} /> {en ? "Saved successfully" : "操作成功"}
-                  </div>
-                )}
-                {result?.access_token ? (
+                {mode !== "detail" &&
+                  !(moduleId === "gateways" && mode === "create") && (
+                    <div className="alert success">
+                      <Check size={18} />{" "}
+                      {en ? "Saved successfully" : "操作成功"}
+                    </div>
+                  )}
+                {moduleId === "gateways" && mode === "create" ? (
+                  <GatewayRegistrationResult gateway={result} spec={spec} />
+                ) : result?.access_token ? (
                   <div className="key-delivery">
                     <h3>{t("保存 API Key", "Save API Key")}</h3>
                     <p>

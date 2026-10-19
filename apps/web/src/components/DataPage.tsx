@@ -83,6 +83,7 @@ export function DataPage({
   en = false,
   teams = [],
   onTeamChange,
+  routeQuery = "",
 }: {
   module: Module;
   spec: JsonRecord;
@@ -91,6 +92,7 @@ export function DataPage({
   en?: boolean;
   teams?: JsonRecord[];
   onTeamChange?: (team: string) => void;
+  routeQuery?: string;
 }) {
   const client = useQueryClient();
   const session = useContext(SessionContext);
@@ -127,6 +129,10 @@ export function DataPage({
     "action",
   );
   const [transfer, setTransfer] = useState(false);
+  const gatewayFilter =
+    module.id === "tools"
+      ? new URLSearchParams(routeQuery).get("gateway") || ""
+      : "";
   const list = findOperation(spec, module.path, "GET");
   const create = findOperation(spec, module.path, "POST");
   const ops = useMemo(() => operations(spec) as Operation[], [spec]);
@@ -171,6 +177,7 @@ export function DataPage({
         : undefined);
   const mayImport =
     transferWrite &&
+    transferWrite["x-panel-available"] !== false &&
     (!transferWrite["x-panel-admin"] || session.user?.is_admin) &&
     permitted(
       permissions,
@@ -198,6 +205,15 @@ export function DataPage({
           : undefined,
     );
   };
+  const gatewayCreate = findOperation(spec, "/v1/gateways", "POST");
+  const mayConnect =
+    !!gatewayCreate &&
+    gatewayCreate["x-panel-available"] !== false &&
+    (!gatewayCreate["x-panel-admin"] || session.user?.is_admin) &&
+    permitted(
+      permissions,
+      gatewayCreate["x-panel-permission"] || "gateways.create",
+    );
   const profile = (resourceProfiles as Record<string, any>)[module.id];
   const hasVisibility = profile?.fields?.includes("visibility");
   const hasTeam =
@@ -211,6 +227,7 @@ export function DataPage({
     state: stateFilter,
     visibility: visibilityFilter,
     team: hasTeam ? team : "",
+    gateway: gatewayFilter,
   };
   const filterKey = JSON.stringify(filters);
   const currentFilters = useRef(filterKey);
@@ -219,7 +236,8 @@ export function DataPage({
     search.trim() ||
     stateFilter ||
     visibilityFilter ||
-    (team && hasTeam)
+    (team && hasTeam) ||
+    gatewayFilter
   );
   function listPath(nextCursor = "", nextPage = 0) {
     return resourceListPath(list!, {
@@ -235,11 +253,12 @@ export function DataPage({
     retry: false,
   });
   const allQuery = useQuery({
-    queryKey: ["list", module.id, team, "all", visibilityFilter],
+    queryKey: ["list", module.id, team, "all", visibilityFilter, gatewayFilter],
     queryFn: ({ signal }) =>
       loadResourcePages(list!, request, {
         team,
         visibility: visibilityFilter,
+        gateway: gatewayFilter,
         signal,
       }),
     enabled: !!list && can("read") && !module.actionsOnly && searching,
@@ -269,7 +288,23 @@ export function DataPage({
     setBatchAction("");
     setBatchResults([]);
     setError("");
-  }, [team, search, stateFilter, visibilityFilter]);
+  }, [team, search, stateFilter, visibilityFilter, gatewayFilter]);
+  useEffect(() => {
+    if (
+      module.id !== "gateways" ||
+      new URLSearchParams(routeQuery).get("connect") !== "1"
+    )
+      return;
+    if (mayConnect) launch(create!);
+    else
+      setError(
+        en
+          ? "MCP gateway creation is unavailable or not permitted."
+          : "当前账户或后端不允许创建 MCP 网关。",
+      );
+    window.history.replaceState(null, "", "#gateways");
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+  }, [routeQuery, mayConnect]);
   useEffect(() => {
     if (searching && allQuery.isSuccess && page > 0) {
       const last = Math.max(0, Math.ceil(allMatches.length / 25) - 1);
@@ -278,6 +313,8 @@ export function DataPage({
   }, [searching, allQuery.data, allQuery.isSuccess, page, allMatches.length]);
   function refresh() {
     void client.invalidateQueries({ queryKey: ["list", module.id] });
+    if (module.id === "gateways")
+      void client.invalidateQueries({ queryKey: ["list", "tools"] });
     void client.invalidateQueries({ queryKey: ["reference-options"] });
     void client.invalidateQueries({ queryKey: ["association-options"] });
     if (module.id === "rbac")
@@ -356,11 +393,19 @@ export function DataPage({
     const scope = filterKey;
     try {
       const all = await client.fetchQuery({
-        queryKey: ["list", module.id, team, "all", visibilityFilter],
+        queryKey: [
+          "list",
+          module.id,
+          team,
+          "all",
+          visibilityFilter,
+          gatewayFilter,
+        ],
         queryFn: ({ signal }) =>
           loadResourcePages(list!, request, {
             team,
             visibility: visibilityFilter,
+            gateway: gatewayFilter,
             signal,
           }),
         staleTime: 0,
@@ -540,6 +585,13 @@ export function DataPage({
             </div>
           )}
           <section className="panel">
+            {module.id === "tools" && (
+              <p className="field-help">
+                {en
+                  ? "Connect an upstream MCP service to discover tools automatically. Create or import REST definitions for individual HTTP endpoints."
+                  : "连接上游 MCP 服务，自动发现并注册工具。独立 HTTP 端点请创建或导入 REST 工具定义。"}
+              </p>
+            )}
             <div className="toolbar">
               <label className="search-field">
                 <Search size={17} />
@@ -569,8 +621,29 @@ export function DataPage({
                   onClick={() => setTransfer(true)}
                 >
                   <Download size={16} />
-                  {en ? "Import / export" : "导入 / 导出"}
+                  {module.id === "tools"
+                    ? !mayImport
+                      ? en
+                        ? "Tool inventory snapshot"
+                        : "工具清单快照"
+                      : en
+                        ? "REST tool import / export"
+                        : "REST 工具导入 / 导出"
+                    : en
+                      ? "Import / export"
+                      : "导入 / 导出"}
                 </button>
+                {module.id === "tools" && mayConnect && (
+                  <button
+                    className="button secondary"
+                    onClick={() => {
+                      window.location.hash = "gateways?connect=1";
+                    }}
+                  >
+                    <Plus size={16} />
+                    {en ? "Connect MCP service" : "接入 MCP 服务"}
+                  </button>
+                )}
                 <button
                   className="icon-button"
                   aria-label="Refresh"
@@ -595,15 +668,33 @@ export function DataPage({
                   >
                     <Plus size={16} />
                     {en
-                      ? "Create"
+                      ? module.id === "tools"
+                        ? "Create REST tool"
+                        : "Create"
                       : module.id === "tokens"
                         ? "创建 API Key"
-                        : "新建"}
+                        : module.id === "tools"
+                          ? "创建 REST 工具"
+                          : "新建"}
                   </button>
                 )}
               </div>
             </div>
             <div className="resource-filters">
+              {gatewayFilter && (
+                <div className="field">
+                  <span>{en ? "Source MCP gateway" : "来源 MCP 网关"}</span>
+                  <code>{gatewayFilter}</code>
+                  <button
+                    className="text-button"
+                    onClick={() => {
+                      window.location.hash = "tools";
+                    }}
+                  >
+                    {en ? "Clear gateway filter" : "清除网关筛选"}
+                  </button>
+                </div>
+              )}
               {hasStatus && (
                 <label className="field">
                   <span>{en ? "Status" : "状态"}</span>
@@ -670,6 +761,7 @@ export function DataPage({
                     setSearch("");
                     setStateFilter("");
                     setVisibilityFilter("");
+                    if (gatewayFilter) window.location.hash = "tools";
                     onTeamChange?.("");
                   }}
                 >

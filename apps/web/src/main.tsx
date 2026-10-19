@@ -561,7 +561,8 @@ function Dashboard({
 }
 
 function App() {
-  const route = useRoute();
+  const fullRoute = useRoute();
+  const [route, routeQuery = ""] = fullRoute.split("?");
   const [en, setEn] = useState(localStorage.getItem("panel-language") === "en");
   const [team, setTeam] = useState("");
   const [mobile, setMobile] = useState(false);
@@ -943,6 +944,7 @@ function App() {
                 )}
                 <DataPage
                   key={module.id}
+                  routeQuery={routeQuery}
                   module={module}
                   spec={spec}
                   permissions={permissions}

@@ -52,8 +52,13 @@ const coverage = operations(spec).map((op) => {
     entry:
       op.classification.kind === "excluded"
         ? null
-        : domains.find(([prefix]) => op.path.startsWith(prefix))?.[1] ||
-          "API workspace",
+        : op.path.replace(/\/$/, "") === "/v1/tools" && op.method === "POST"
+          ? "Tools / create or import local REST definitions (MCP tools discovered via gateways)"
+          : op.path.replace(/\/$/, "") === "/v1/gateways" &&
+              op.method === "POST"
+            ? "MCP gateways / Tools: connect MCP service and view discovered tools"
+            : domains.find(([prefix]) => op.path.startsWith(prefix))?.[1] ||
+              "API workspace",
     permission,
     dependencies: [...new Set(candidates.flatMap((r) => r.dependencies || []))],
     permissionEvidence: candidates.map((r) => `${r.source}:${r.line}`),

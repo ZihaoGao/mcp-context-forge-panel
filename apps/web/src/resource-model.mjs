@@ -704,7 +704,7 @@ export function redactSecrets(value) {
 }
 
 export function sensitiveKey(key) {
-  return /password|secret|credential|authorization|cookie|(?:^|[-_])api[-_]?key(?:$|[-_])|^(token|access_token|refresh_token|id_token|jwt_token|api[_-]?key|client[_-]?key|private[_-]?key|signing[_-]?key|encryption[_-]?key)$|^auth.*(token|value|header|query|username)|(?:database|redis|smtp)[_-]?url|dsn/i.test(
+  return /password|secret|credential|authorization|cookie|(?:^|[-_])api[-_]?key(?:$|[-_])|^(auth|token|access_token|refresh_token|id_token|jwt_token|api[_-]?key|client[_-]?key|private[_-]?key|signing[_-]?key|encryption[_-]?key)$|^auth.*(token|value|header|query|username)|(?:database|redis|smtp)[_-]?url|dsn/i.test(
     key,
   );
 }

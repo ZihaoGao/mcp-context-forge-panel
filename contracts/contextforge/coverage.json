@@ -178,7 +178,7 @@
       "operationId": "create_tool_v1_tools__post",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "Tools",
+      "entry": "Tools / create or import local REST definitions (MCP tools discovered via gateways)",
       "permission": "require_permission('tools.create')",
       "dependencies": [
         "Depends(get_db)",
@@ -215,7 +215,7 @@
       "operationId": "create_tool_v1_tools_post",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "Tools",
+      "entry": "Tools / create or import local REST definitions (MCP tools discovered via gateways)",
       "permission": "require_permission('tools.create')",
       "dependencies": [
         "Depends(get_db)",
@@ -803,7 +803,7 @@
       "operationId": "register_gateway_v1_gateways__post",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "MCP gateways",
+      "entry": "MCP gateways / Tools: connect MCP service and view discovered tools",
       "permission": "require_permission('gateways.create')",
       "dependencies": [
         "Depends(get_db)",
@@ -840,7 +840,7 @@
       "operationId": "register_gateway_v1_gateways_post",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "MCP gateways",
+      "entry": "MCP gateways / Tools: connect MCP service and view discovered tools",
       "permission": "require_permission('gateways.create')",
       "dependencies": [
         "Depends(get_db)",
