@@ -1,12 +1,14 @@
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MoreHorizontal } from "lucide-react";
+import { useText } from "../session";
 
 export function RowActionMenu({
   items,
 }: {
   items: { id: string; label: string; onSelect: () => void }[];
 }) {
+  const t = useText();
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({
     left: 0,
@@ -68,7 +70,7 @@ export function RowActionMenu({
         ref={trigger}
         type="button"
         className="icon-button"
-        aria-label="More actions"
+        aria-label={t("更多操作", "More actions")}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
@@ -88,7 +90,7 @@ export function RowActionMenu({
             ref={menu}
             id={id}
             role="menu"
-            aria-label="Resource actions"
+            aria-label={t("资源操作", "Resource actions")}
             className="row-action-popover"
             style={position}
             onKeyDown={(event) => {

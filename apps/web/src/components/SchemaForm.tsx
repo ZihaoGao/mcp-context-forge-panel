@@ -1,5 +1,10 @@
 import { useContext, useState } from "react";
-import { SessionContext } from "../session";
+import { SessionContext, useText } from "../session";
+import {
+  canonicalField,
+  englishFieldLabel,
+  associationHelp,
+} from "../resource-copy.mjs";
 import { TokenPermissionPicker } from "./TokenPermissions";
 import {
   ReferenceInput,
@@ -25,6 +30,7 @@ export function SchemaForm({
 }) {
   const s = resolveSchema(schema, spec);
   const session = useContext(SessionContext);
+  const t = useText();
   const [advanced, setAdvanced] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,12 +91,16 @@ export function SchemaForm({
               onChange(next);
               setErrors({});
             } catch {
-              setErrors({ root: "JSON 格式错误 / Invalid JSON" });
+              setErrors({ root: "json" });
             }
           }}
           required
         />
-        {errors.root && <span className="error-text">{errors.root}</span>}
+        {errors.root && (
+          <span className="error-text">
+            {t("JSON 格式错误", "Invalid JSON")}
+          </span>
+        )}
         <input
           className="validation-proxy"
           value={errors.root || ""}
@@ -104,15 +114,23 @@ export function SchemaForm({
   return (
     <div className="schema-form">
       {visible.map(([key, original]) => {
+        const canonical = canonicalField(key);
         const field = enrichField(key, original, spec);
         const required = s.required?.includes(key);
         const complex =
           field.type === "object" || field.type === "array" || field.properties;
-        const copy = (fieldCopy as Record<string, string[]>)[key];
+        const copy =
+          (fieldCopy as Record<string, string[]>)[key] ||
+          (fieldCopy as Record<string, string[]>)[canonical];
         const title =
           key === "scope" && field.type === "string"
-            ? "角色范围"
-            : copy?.[0] || field.title || key;
+            ? t("角色范围", "Role scope")
+            : session.en
+              ? englishFieldLabel(key, field.title)
+              : copy?.[0] || field.title || key;
+        const help = session.en
+          ? field.description?.split("\n")[0]
+          : copy?.[1] || field.description?.split("\n")[0];
         const current = value[key];
         const auth = value.authType || value.auth_type;
         if (s.title === "AuthenticationValues" && key === "authType")
@@ -160,24 +178,36 @@ export function SchemaForm({
             "associated_prompts",
             "associated_a2a_agents",
             "plugin_ids",
-          ].includes(key)
+          ].includes(canonical)
         )
           return (
-            <div className="field full" key={key}>
+            <div
+              className="field full"
+              key={key}
+              role="group"
+              aria-label={title}
+            >
               <span>{title}</span>
               <ResourcePicker
-                name={key}
+                name={canonical}
+                spec={spec}
                 value={current || []}
                 onChange={(v) => update(key, v)}
               />
-              <small className="field-help">{copy?.[1]}</small>
+              <small className="field-help">
+                {
+                  (associationHelp as Record<string, string[]>)[canonical]?.[
+                    session.en ? 1 : 0
+                  ]
+                }
+              </small>
             </div>
           );
         if (["arguments", "members"].includes(key) && field.type === "array")
           return (
             <div className="field full" key={key}>
               <span>{title}</span>
-              <small className="field-help">{copy?.[1]}</small>
+              <small className="field-help">{help}</small>
               {(current || []).map((row: JsonRecord, i: number) => (
                 <div className="repeat-row" key={i}>
                   <SchemaForm
@@ -204,7 +234,7 @@ export function SchemaForm({
                       )
                     }
                   >
-                    移除此项
+                    {t("移除此项", "Remove item")}
                   </button>
                 </div>
               ))}
@@ -213,7 +243,9 @@ export function SchemaForm({
                 className="button secondary"
                 onClick={() => update(key, [...(current || []), {}])}
               >
-                {key === "arguments" ? "添加参数" : "添加成员"}
+                {key === "arguments"
+                  ? t("添加参数", "Add argument")
+                  : t("添加成员", "Add member")}
               </button>
             </div>
           );
@@ -306,9 +338,12 @@ export function SchemaForm({
                     {key === "visibility"
                       ? (
                           {
-                            private: " · 仅自己",
-                            team: " · 所属团队",
-                            public: " · 所有获准用户",
+                            private: t(" · 仅自己", " · Owner only"),
+                            team: t(" · 所属团队", " · Team"),
+                            public: t(
+                              " · 所有获准用户",
+                              " · All authorized users",
+                            ),
                           } as Record<string, string>
                         )[option]
                       : ""}
@@ -329,9 +364,9 @@ export function SchemaForm({
                   )
                 }
               >
-                <option value="">默认 / Default</option>
-                <option value="true">是 / Yes</option>
-                <option value="false">否 / No</option>
+                <option value="">{t("默认", "Default")}</option>
+                <option value="true">{t("是", "Yes")}</option>
+                <option value="false">{t("否", "No")}</option>
               </select>
             ) : field.type === "array" &&
               (resolveSchema(field.items, spec).type === "string" ||
@@ -344,7 +379,7 @@ export function SchemaForm({
               <textarea
                 aria-label={key}
                 rows={3}
-                placeholder="每行一项 / One item per line"
+                placeholder={t("每行一项", "One item per line")}
                 value={
                   drafts[key] ??
                   (current || [])
@@ -386,7 +421,7 @@ export function SchemaForm({
                   } catch {
                     setErrors((v) => ({
                       ...v,
-                      [key]: "JSON 格式错误 / Invalid JSON",
+                      [key]: "json",
                     }));
                   }
                 }}
@@ -434,7 +469,11 @@ export function SchemaForm({
                 }
               />
             )}
-            {errors[key] && <span className="error-text">{errors[key]}</span>}
+            {errors[key] && (
+              <span className="error-text">
+                {t("JSON 格式错误", "Invalid JSON")}
+              </span>
+            )}
             {complex && (
               <input
                 className="validation-proxy"
@@ -448,8 +487,11 @@ export function SchemaForm({
             {(copy?.[1] || field.description) && (
               <small className="field-help">
                 {key === "scope" && field.type === "string"
-                  ? "global：全局；team：团队；personal：个人。分配角色时须匹配此范围。"
-                  : copy?.[1] || field.description?.split("\n")[0]}
+                  ? t(
+                      "global：全局；team：团队；personal：个人。分配角色时须匹配此范围。",
+                      "global, team or personal. The assigned role must match this scope.",
+                    )
+                  : help}
               </small>
             )}
           </label>
@@ -461,7 +503,7 @@ export function SchemaForm({
           type="button"
           onClick={() => setAdvanced(true)}
         >
-          更多限制与高级配置 / Advanced options
+          {t("更多限制与高级配置", "Advanced options")}
         </button>
       )}
     </div>

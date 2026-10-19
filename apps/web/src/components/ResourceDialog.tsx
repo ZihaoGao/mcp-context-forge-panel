@@ -22,53 +22,17 @@ import {
   TokenPermissionSummary,
 } from "./TokenPermissions";
 import type { Operation } from "./ActionDialog";
+import { resourceActionName } from "../resource-actions.mjs";
+import {
+  canonicalField,
+  englishFieldLabel,
+  englishProfiles,
+} from "../resource-copy.mjs";
+import { associationEndpoints } from "../association-model.mjs";
+export { resourceActionName } from "../resource-actions.mjs";
 
-const actionNames: Record<string, string> = {
-  state: "更改启用状态",
-  refresh: "重新发现工具",
-  test: "测试连接",
-  validate: "验证配置",
-  revoke: "撤销访问",
-  metrics: "查看使用统计",
-  usage: "查看用量",
-  members: "团队成员",
-  invitations: "发送团队邀请",
-  join: "申请加入团队",
-  leave: "退出团队",
-  join_requests: "加入申请",
-  export: "导出",
-  import: "导入",
-  execute: "试运行工具",
-  invoke: "调用智能体",
-  render: "预览提示词",
-  content: "读取内容",
-  models: "管理模型",
-  bindings: "资源绑定",
-  permissions: "查看权限",
-  reset_password: "重置密码",
-  activate: "启用账户",
-  deactivate: "停用账户",
-  sync: "同步配置",
-  probe: "检测连接",
-  register: "注册服务",
-  discover: "发现模型",
-};
-export function resourceActionName(op: Operation, noun: string) {
-  const tail = op.path.split("/").pop() || "";
-  if (op.path.includes("/rbac/users/") && op.path.includes("/roles"))
-    return op.method === "DELETE" ? "撤销角色分配" : "分配角色";
-  if (op.method === "DELETE")
-    return noun === "API Key" ? "撤销 API Key" : `删除${noun}`;
-  if (actionNames[tail]) return actionNames[tail];
-  if (tail.startsWith("{"))
-    return op.method === "GET"
-      ? `${noun}详情`
-      : ["PUT", "PATCH"].includes(op.method)
-        ? `编辑${noun}`
-        : `新建${noun}`;
-  return op.summary || `${noun}操作`;
-}
 export function RecordDetails({ value }: { value: unknown }) {
+  const { en } = useContext(SessionContext);
   if (value === null || value === undefined)
     return <span className="muted">—</span>;
   if (Array.isArray(value))
@@ -81,14 +45,18 @@ export function RecordDetails({ value }: { value: unknown }) {
         ))}
       </div>
     ) : (
-      <span className="muted">无 / None</span>
+      <span className="muted">{en ? "None" : "无"}</span>
     );
   if (typeof value === "object")
     return (
       <dl className="record-details">
         {Object.entries(value as JsonRecord).map(([k, v]) => (
           <div key={k}>
-            <dt>{(fieldCopy as Record<string, string[]>)[k]?.[0] || k}</dt>
+            <dt>
+              {en
+                ? englishFieldLabel(k, k)
+                : (fieldCopy as Record<string, string[]>)[k]?.[0] || k}
+            </dt>
             <dd>
               {sensitiveKey(k) ? "••••••••" : <RecordDetails value={v} />}
             </dd>
@@ -100,8 +68,12 @@ export function RecordDetails({ value }: { value: unknown }) {
     <span className="detail-text">
       {typeof value === "boolean"
         ? value
-          ? "是 / Yes"
-          : "否 / No"
+          ? en
+            ? "Yes"
+            : "是"
+          : en
+            ? "No"
+            : "否"
         : String(safeDisplay(value))}
     </span>
   );
@@ -275,8 +247,13 @@ export function ResourceDialog({
   detailActions?: { label: string; onSelect: () => void }[];
 }) {
   const session = useContext(SessionContext);
+  const t = (zh: string, english: string) => (en ? english : zh);
   const profile = (resourceProfiles as Record<string, any>)[moduleId];
-  const noun = profile?.noun || "资源";
+  const englishProfile = (englishProfiles as Record<string, string[]>)[
+    moduleId
+  ];
+  const noun = en ? englishProfile?.[0] || "resource" : profile?.noun || "资源";
+  const purpose = en ? englishProfile?.[1] : profile?.purpose;
   const content = operation.requestBody?.content || {};
   const contentType =
     Object.keys(content).find((k) => k.includes("json")) ||
@@ -349,6 +326,7 @@ export function ResourceDialog({
   );
   const dialog = useRef<HTMLDialogElement>(null);
   const alive = useRef(true);
+  const loadedAssociations = useRef<JsonRecord>({});
   useEffect(() => {
     if (errors.length || result !== undefined)
       dialog.current?.querySelector(".dialog-body")?.scrollTo({ top: 0 });
@@ -358,16 +336,16 @@ export function ResourceDialog({
     /\/(reset|revoke|cleanup|deactivate|leave)(\/|$)/.test(operation.path);
   const title =
     mode === "create"
-      ? `新建${noun}`
+      ? t(`新建${noun}`, `Create ${noun}`)
       : mode === "edit"
-        ? `编辑${noun}`
-        : resourceActionName(operation, noun);
+        ? t(`编辑${noun}`, `Edit ${noun}`)
+        : resourceActionName(operation, noun, en);
   function pathFor(values: JsonRecord) {
     let path = operation.path;
     for (const p of operation.parameters || [])
       if (p.in === "path") {
         const id = preset[p.name] || values[p.name];
-        if (!id) throw new Error(`请选择 ${p.name}`);
+        if (!id) throw new Error(t(`请选择 ${p.name}`, `Select ${p.name}`));
         path = path.replace(`{${p.name}}`, encodeURIComponent(id));
       }
     const q = new URLSearchParams();
@@ -420,6 +398,11 @@ export function ResourceDialog({
               )
                 normalized[key] = v;
             }
+            loadedAssociations.current = Object.fromEntries(
+              Object.entries(normalized).filter(
+                ([key]) => canonicalField(key) in associationEndpoints,
+              ),
+            );
             setValue(normalized);
           }
           setLoading(false);
@@ -434,10 +417,15 @@ export function ResourceDialog({
       abort.abort();
     };
   }, []);
-  const primaryKeys =
+  const requestedKeys =
     mode === "create" || mode === "edit"
       ? [...new Set([...(profile?.fields || []), ...(schema.required || [])])]
       : Object.keys(schema.properties || {});
+  const primaryKeys = Object.keys(schema.properties || {}).filter((key) =>
+    requestedKeys.some(
+      (candidate: string) => canonicalField(candidate) === canonicalField(key),
+    ),
+  );
   const sliceSchema = (keys: string[]) => ({
     ...schema,
     properties: Object.fromEntries(
@@ -453,15 +441,20 @@ export function ResourceDialog({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErrors([]);
+    const submittedValue = { ...value };
+    if (mode === "edit")
+      for (const [key, original] of Object.entries(loadedAssociations.current))
+        if (JSON.stringify(value[key]) === JSON.stringify(original))
+          delete submittedValue[key];
     const body = wrapper
       ? {
-          [wrapper]: value,
+          [wrapper]: submittedValue,
           ...(team && root.properties?.team_id ? { team_id: team } : {}),
         }
-      : value;
+      : submittedValue;
     const problems = [
-      ...validateValue(params, parameterSchema, spec),
-      ...(contentType ? validateValue(body, root, spec) : []),
+      ...validateValue(params, parameterSchema, spec, "", en),
+      ...(contentType ? validateValue(body, root, spec, "", en) : []),
     ];
     if (
       moduleId === "tokens" &&
@@ -469,10 +462,18 @@ export function ResourceDialog({
       !value.scope?.permissions?.length
     )
       problems.push(
-        "自定义权限至少需要选择一项；如需继承，请明确选择“继承账户权限”。",
+        t(
+          "自定义权限至少需要选择一项；如需继承，请明确选择“继承账户权限”。",
+          "Select at least one custom permission, or explicitly choose to inherit account permissions.",
+        ),
       );
     if (moduleId === "catalog" && item?.requires_api_key && !value.api_key)
-      problems.push("此目录服务需要 API Key，请填写该服务的访问凭据");
+      problems.push(
+        t(
+          "此目录服务需要 API Key，请填写该服务的访问凭据",
+          "This catalog service requires an API Key. Enter its access credential.",
+        ),
+      );
     if (problems.length) {
       setErrors(problems);
       return;
@@ -497,12 +498,15 @@ export function ResourceDialog({
         headers,
         body: payload,
       });
-      setResult(data ?? { message: "操作已完成" });
+      setResult(data ?? { message: t("操作已完成", "Operation completed") });
       onSuccess();
     } catch (err) {
       setErrors([
         displayError(err),
-        "请检查下方已填配置。若后端未返回详细原因，请结合日志与审计定位；此前填写的内容已保留。",
+        t(
+          "请检查下方已填配置。若后端未返回详细原因，请结合日志与审计定位；此前填写的内容已保留。",
+          "Review the configuration below. Check logs and audit records if the backend provided no details. Your input has been retained.",
+        ),
       ]);
     } finally {
       setBusy(false);
@@ -520,12 +524,12 @@ export function ResourceDialog({
       <div className="dialog-header">
         <div>
           <h2>{title}</h2>
-          <p>{item?.name || item?.email || item?.uri || profile?.purpose}</p>
+          <p>{item?.name || item?.email || item?.uri || purpose}</p>
         </div>
         <button
           type="button"
           className="icon-button"
-          aria-label="Close"
+          aria-label={t("关闭弹窗", "Close dialog")}
           disabled={busy}
           onClick={onClose}
         >
@@ -539,7 +543,9 @@ export function ResourceDialog({
           <div className="dialog-body">
             {errors.length > 0 && (
               <div className="alert error" role="alert">
-                <strong>请检查以下问题</strong>
+                <strong>
+                  {t("请检查以下问题", "Review the following problems")}
+                </strong>
                 <ul>
                   {errors.map((v, i) => (
                     <li key={i}>{v}</li>
@@ -550,20 +556,24 @@ export function ResourceDialog({
             {loading && (
               <p>
                 {errors.length
-                  ? "未能读取完整配置，请关闭后重试。"
-                  : "正在读取完整配置…"}
+                  ? t(
+                      "未能读取完整配置，请关闭后重试。",
+                      "Could not load the complete configuration. Close and retry.",
+                    )
+                  : t("正在读取完整配置…", "Loading complete configuration…")}
               </p>
             )}
             {!loading && result === undefined && (
               <>
                 {(mode === "create" || mode === "edit") && (
-                  <p className="field-help">{profile?.purpose}</p>
+                  <p className="field-help">{purpose}</p>
                 )}
                 {mode === "edit" && (
                   <p className="field-help">
-                    未填写的凭据保持原值。选择认证方式并填写新凭据才会更换认证；选择
-                    none 会移除认证。 请求头与 OAuth
-                    配置不回填；需要更换时请填写完整的新配置。
+                    {t(
+                      "未填写的凭据保持原值。选择认证方式并填写新凭据才会更换认证；选择 none 会移除认证。请求头与 OAuth 配置不回填；需要更换时请填写完整的新配置。",
+                      "Blank credentials keep their current values. Choose an authentication method and enter new credentials to replace them; none removes authentication. Headers and OAuth configuration are not prefilled. Enter the complete configuration to replace them.",
+                    )}
                   </p>
                 )}
                 {parameters.length > 0 && (
@@ -586,7 +596,10 @@ export function ResourceDialog({
                 )}
                 {!!advancedKeys.length && (
                   <details className="advanced-fields">
-                    <summary>更多配置（可选） · {advancedKeys.length}</summary>
+                    <summary>
+                      {t("更多配置（可选）", "More configuration (optional)")} ·{" "}
+                      {advancedKeys.length}
+                    </summary>
                     <SchemaForm
                       schema={sliceSchema(advancedKeys)}
                       spec={spec}
@@ -600,8 +613,14 @@ export function ResourceDialog({
                   <div className="alert warning">
                     <p>
                       {moduleId === "tokens"
-                        ? "撤销后，使用此 Key 的应用将无法继续访问。请确认已切换应用凭据。"
-                        : `此操作将影响「${item?.name || item?.email || noun}」及其使用者。删除后无法从此页面恢复。`}
+                        ? t(
+                            "撤销后，使用此 Key 的应用将无法继续访问。请确认已切换应用凭据。",
+                            "Revoking this key prevents applications using it from accessing the service. Switch their credentials first.",
+                          )
+                        : t(
+                            `将对「${item?.name || item?.email || noun}」执行「${title}」${params.user_email ? `（成员：${params.user_email}）` : params.request_id ? `（申请：${params.request_id}）` : ""}。请核对操作对象；执行后可能影响相关访问权限。`,
+                            `Execute “${title}” for “${item?.name || item?.email || noun}”${params.user_email ? ` (member: ${params.user_email})` : params.request_id ? ` (request: ${params.request_id})` : ""}. Check the target; this may affect related access permissions.`,
+                          )}
                     </p>
                     <label className="check-label">
                       <input
@@ -610,7 +629,10 @@ export function ResourceDialog({
                         checked={confirmed}
                         onChange={(e) => setConfirmed(e.target.checked)}
                       />
-                      我已确认操作对象和影响
+                      {t(
+                        "我已确认操作对象和影响",
+                        "I confirm the target and impact",
+                      )}
                     </label>
                   </div>
                 )}
@@ -625,9 +647,12 @@ export function ResourceDialog({
                 )}
                 {result?.access_token ? (
                   <div className="key-delivery">
-                    <h3>保存 API Key</h3>
+                    <h3>{t("保存 API Key", "Save API Key")}</h3>
                     <p>
-                      明文仅在此时显示。关闭页面后无法找回，请保存到安全的凭据管理器中。
+                      {t(
+                        "明文仅在此时显示。关闭页面后无法找回，请保存到安全的凭据管理器中。",
+                        "The secret is shown only now and cannot be recovered after closing. Save it in a secure credential manager.",
+                      )}
                     </p>
                     <code>{result.access_token}</code>
                     <button
@@ -638,27 +663,46 @@ export function ResourceDialog({
                           .writeText(result.access_token)
                           .then(() => setCopied(true))
                           .catch(() =>
-                            setErrors(["无法访问剪贴板，请手动复制。"]),
+                            setErrors([
+                              t(
+                                "无法访问剪贴板，请手动复制。",
+                                "Clipboard unavailable. Copy manually.",
+                              ),
+                            ]),
                           )
                       }
                     >
                       <Copy size={16} />
-                      {copied ? "已复制" : "复制 API Key"}
+                      {copied
+                        ? t("已复制", "Copied")
+                        : t("复制 API Key", "Copy API Key")}
                     </button>
                     <RecordDetails
                       value={{
                         name: result.token?.name || value.name,
                         expires_at: result.token?.expires_at,
-                        授权方式: result.token?.resource_scopes?.length
-                          ? "自定义权限，与账户 RBAC 权限取交集"
-                          : "运行时继承账户 RBAC 权限",
-                        权限范围: result.token?.resource_scopes,
-                        服务器范围: result.token?.server_id || "未额外限制",
+                        [t("授权方式", "Authorization")]: result.token
+                          ?.resource_scopes?.length
+                          ? t(
+                              "自定义权限，与账户 RBAC 权限取交集",
+                              "Custom permissions intersected with account RBAC permissions",
+                            )
+                          : t(
+                              "运行时继承账户 RBAC 权限",
+                              "Inherit account RBAC permissions at runtime",
+                            ),
+                        [t("权限范围", "Permission scope")]:
+                          result.token?.resource_scopes,
+                        [t("服务器范围", "Server scope")]:
+                          result.token?.server_id ||
+                          t("未额外限制", "No additional restriction"),
                       }}
                     />
                     {!!result.warnings?.length && (
                       <div className="alert warning" role="alert">
-                        <strong>后端授权提示</strong>
+                        <strong>
+                          {t("后端授权提示", "Backend authorization notices")}
+                        </strong>
                         <ul>
                           {result.warnings.map((warning: string, i: number) => (
                             <li key={i}>{warning}</li>
@@ -677,7 +721,12 @@ export function ResourceDialog({
                 )}
                 {mode === "detail" && (
                   <details>
-                    <summary>查看原始数据（敏感字段已隐藏）</summary>
+                    <summary>
+                      {t(
+                        "查看原始数据（敏感字段已隐藏）",
+                        "View raw data (sensitive fields hidden)",
+                      )}
+                    </summary>
                     <pre>{JSON.stringify(safeDisplay(result), null, 2)}</pre>
                   </details>
                 )}
@@ -717,13 +766,13 @@ export function ResourceDialog({
                 disabled={busy}
               >
                 {busy
-                  ? "正在处理…"
+                  ? t("正在处理…", "Processing…")
                   : mode === "create"
                     ? moduleId === "tokens"
-                      ? "创建 API Key"
-                      : `创建${noun}`
+                      ? t("创建 API Key", "Create API Key")
+                      : t(`创建${noun}`, `Create ${noun}`)
                     : mode === "edit"
-                      ? "保存修改"
+                      ? t("保存修改", "Save changes")
                       : title}
               </button>
             )}

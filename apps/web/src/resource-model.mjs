@@ -381,7 +381,8 @@ export function enrichField(key, original, spec) {
 }
 
 /** Shared by forms and import preview; never send a row with known invalid data. */
-export function validateValue(value, original, spec, path = "") {
+export function validateValue(value, original, spec, path = "", en = false) {
+  const t = (zh, english) => (en ? english : zh);
   let schema = resolveSchema(original, spec);
   const errors = [];
   const alternatives = (original?.anyOf || original?.oneOf || [])
@@ -399,7 +400,7 @@ export function validateValue(value, original, spec, path = "") {
     if (match)
       schema = { ...original, anyOf: undefined, oneOf: undefined, ...match };
   }
-  const at = path || "内容";
+  const at = path || t("内容", "Body");
   if (value === undefined) return errors;
   if (value === null) {
     if (
@@ -410,20 +411,27 @@ export function validateValue(value, original, spec, path = "") {
       )
     )
       return errors;
-    return [`${at} 不能为 null`];
+    return [t(`${at} 不能为 null`, `${at} must not be null`)];
   }
   if (schema.enum && !schema.enum.includes(value))
-    errors.push(`${at}：请选择 ${schema.enum.join(" / ")}`);
+    errors.push(
+      t(
+        `${at}：请选择 ${schema.enum.join(" / ")}`,
+        `${at}: choose ${schema.enum.join(" / ")}`,
+      ),
+    );
   if (schema.type === "object" || schema.properties) {
     if (typeof value !== "object" || Array.isArray(value))
-      return [`${at} 必须是对象`];
+      return [t(`${at} 必须是对象`, `${at} must be an object`)];
     for (const key of schema.required || [])
       if (
         value[key] === undefined ||
         (typeof value[key] === "string" && !value[key].trim()) ||
         value[key] === null
       )
-        errors.push(`${path ? path + "." : ""}${key}：必填`);
+        errors.push(
+          `${path ? path + "." : ""}${key}${t("：必填", ": required")}`,
+        );
     for (const [key, v] of Object.entries(value)) {
       const child = schema.properties?.[key];
       if (child)
@@ -433,19 +441,30 @@ export function validateValue(value, original, spec, path = "") {
             enrichField(key, child, spec),
             spec,
             path ? `${path}.${key}` : key,
+            en,
           ),
         );
       else if (schema.additionalProperties === false)
-        errors.push(`${key}：不支持的字段`);
+        errors.push(t(`${key}：不支持的字段`, `${key}: unsupported field`));
     }
     if (value.visibility === "team" && !value.team_id && !value.teamId)
-      errors.push("团队可见资源必须选择所属团队");
+      errors.push(
+        t(
+          "团队可见资源必须选择所属团队",
+          "Team-visible resources require a team",
+        ),
+      );
     if (
       value.scope === "team" &&
       schema.properties?.scope_id &&
       !value.scope_id
     )
-      errors.push("团队角色分配必须选择适用团队");
+      errors.push(
+        t(
+          "团队角色分配必须选择适用团队",
+          "Team role assignments require an applicable team",
+        ),
+      );
     const auth = value.authType || value.auth_type;
     const needed =
       auth === "basic"
@@ -461,15 +480,34 @@ export function validateValue(value, original, spec, path = "") {
               ]
             : [];
     for (const key of needed.filter((k) => schema.properties?.[k]))
-      if (!value[key]) errors.push(`${key}：此认证方式需要填写`);
+      if (!value[key])
+        errors.push(
+          t(
+            `${key}：此认证方式需要填写`,
+            `${key}: required for this authentication method`,
+          ),
+        );
   } else if (schema.type === "array") {
-    if (!Array.isArray(value)) return [`${at} 必须是数组`];
+    if (!Array.isArray(value))
+      return [t(`${at} 必须是数组`, `${at} must be an array`)];
     if (schema.minItems !== undefined && value.length < schema.minItems)
-      errors.push(`${at} 至少 ${schema.minItems} 项`);
+      errors.push(
+        t(
+          `${at} 至少 ${schema.minItems} 项`,
+          `${at} requires at least ${schema.minItems} items`,
+        ),
+      );
     if (schema.maxItems !== undefined && value.length > schema.maxItems)
-      errors.push(`${at} 最多 ${schema.maxItems} 项`);
+      errors.push(
+        t(
+          `${at} 最多 ${schema.maxItems} 项`,
+          `${at} allows at most ${schema.maxItems} items`,
+        ),
+      );
     value.forEach((v, i) =>
-      errors.push(...validateValue(v, schema.items, spec, `${at}[${i + 1}]`)),
+      errors.push(
+        ...validateValue(v, schema.items, spec, `${at}[${i + 1}]`, en),
+      ),
     );
   } else if (["integer", "number"].includes(schema.type)) {
     if (
@@ -477,29 +515,62 @@ export function validateValue(value, original, spec, path = "") {
       !Number.isFinite(value) ||
       (schema.type === "integer" && !Number.isInteger(value))
     )
-      errors.push(`${at} 必须是${schema.type === "integer" ? "整数" : "数字"}`);
+      errors.push(
+        t(
+          `${at} 必须是${schema.type === "integer" ? "整数" : "数字"}`,
+          `${at} must be ${schema.type === "integer" ? "an integer" : "a number"}`,
+        ),
+      );
     if (schema.minimum !== undefined && value < schema.minimum)
-      errors.push(`${at} 最小值为 ${schema.minimum}`);
+      errors.push(
+        t(
+          `${at} 最小值为 ${schema.minimum}`,
+          `${at} must be at least ${schema.minimum}`,
+        ),
+      );
     if (schema.maximum !== undefined && value > schema.maximum)
-      errors.push(`${at} 最大值为 ${schema.maximum}`);
+      errors.push(
+        t(
+          `${at} 最大值为 ${schema.maximum}`,
+          `${at} must be at most ${schema.maximum}`,
+        ),
+      );
   } else if (schema.type === "boolean" && typeof value !== "boolean")
-    errors.push(`${at} 必须是布尔值`);
+    errors.push(t(`${at} 必须是布尔值`, `${at} must be a boolean`));
   else if (schema.type === "string") {
-    if (typeof value !== "string") return [`${at} 必须是文本`];
+    if (typeof value !== "string")
+      return [t(`${at} 必须是文本`, `${at} must be text`)];
     if (schema.minLength !== undefined && value.length < schema.minLength)
-      errors.push(`${at} 至少 ${schema.minLength} 个字符`);
+      errors.push(
+        t(
+          `${at} 至少 ${schema.minLength} 个字符`,
+          `${at} requires at least ${schema.minLength} characters`,
+        ),
+      );
     if (schema.maxLength !== undefined && value.length > schema.maxLength)
-      errors.push(`${at} 最多 ${schema.maxLength} 个字符`);
+      errors.push(
+        t(
+          `${at} 最多 ${schema.maxLength} 个字符`,
+          `${at} allows at most ${schema.maxLength} characters`,
+        ),
+      );
     if (schema.pattern) {
       try {
         if (!new RegExp(schema.pattern).test(value))
-          errors.push(`${at} 格式不符合要求：${schema.pattern}`);
+          errors.push(
+            t(
+              `${at} 格式不符合要求：${schema.pattern}`,
+              `${at} must match ${schema.pattern}`,
+            ),
+          );
       } catch {
         /* Backend-only regex dialect. */
       }
     }
     if (schema.format === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-      errors.push(`${at}：请输入有效邮箱`);
+      errors.push(
+        t(`${at}：请输入有效邮箱`, `${at}: enter a valid email address`),
+      );
     if (
       value &&
       (schema.format === "uri" ||
@@ -508,9 +579,19 @@ export function validateValue(value, original, spec, path = "") {
       try {
         const u = new URL(value);
         if (!path.endsWith("uri") && !["http:", "https:"].includes(u.protocol))
-          errors.push(`${at} 需要 http:// 或 https:// 地址`);
+          errors.push(
+            t(
+              `${at} 需要 http:// 或 https:// 地址`,
+              `${at} requires an http:// or https:// address`,
+            ),
+          );
       } catch {
-        errors.push(`${at}：请输入包含协议的完整地址`);
+        errors.push(
+          t(
+            `${at}：请输入包含协议的完整地址`,
+            `${at}: enter a complete address including its protocol`,
+          ),
+        );
       }
     }
     if (/ip_restrictions\[\d+\]$/.test(path)) {
@@ -535,7 +616,13 @@ export function validateValue(value, original, spec, path = "") {
           (!/^\d+$/.test(parts[1]) || Number(parts[1]) > bits))
       )
         valid = false;
-      if (!valid) errors.push(`${at}：请输入有效 IP 或 CIDR 网段`);
+      if (!valid)
+        errors.push(
+          t(
+            `${at}：请输入有效 IP 或 CIDR 网段`,
+            `${at}: enter a valid IP address or CIDR range`,
+          ),
+        );
     }
   }
   return errors;
@@ -570,12 +657,18 @@ export function portableRecord(value, original, spec) {
 export function readField(record, key) {
   const snake = key.replace(/[A-Z]/g, (m) => "_" + m.toLowerCase());
   const camel = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-  if (key === "associated_tools")
-    return (
+  if (["associated_tools", "associatedTools"].includes(key)) {
+    const ids =
       record.associatedToolIds ??
-      record.associated_tools ??
-      record.associatedTools
-    );
+      record.associated_tool_ids ??
+      record.associated_tools;
+    if (ids !== undefined) return ids;
+    if (record.associatedTools?.length)
+      throw new Error(
+        "后端未返回关联工具 ID，无法安全回填 / Missing associated tool IDs",
+      );
+    return record.associatedTools;
+  }
   return record[key] ?? record[snake] ?? record[camel];
 }
 

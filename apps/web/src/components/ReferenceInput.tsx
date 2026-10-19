@@ -6,7 +6,11 @@ import {
   permitted,
   type JsonRecord,
 } from "../../../../packages/api-client";
-import { SessionContext } from "../session";
+import { SessionContext, useText } from "../session";
+import {
+  loadAssociationOptions,
+  filterAssociationOptions,
+} from "../association-model.mjs";
 export function ReferenceInput({
   name,
   value,
@@ -21,6 +25,7 @@ export function ReferenceInput({
   scope?: string;
 }) {
   const { user } = useContext(SessionContext);
+  const t = useText();
   const [search, setSearch] = useState("");
   const endpoint =
     name === "server_id"
@@ -72,8 +77,8 @@ export function ReferenceInput({
   return (
     <>
       <input
-        aria-label={`Search ${name} choices`}
-        placeholder="搜索名称或 ID / Search choices"
+        aria-label={t(`搜索 ${name} 选项`, `Search ${name} choices`)}
+        placeholder={t("搜索名称或 ID", "Search name or ID")}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
@@ -84,7 +89,9 @@ export function ReferenceInput({
         onChange={(e) => onChange(e.target.value || undefined)}
       >
         <option value="">
-          {data.isPending ? "正在加载…" : "不指定 / Not specified"}
+          {data.isPending
+            ? t("正在加载…", "Loading…")
+            : t("不指定", "Not specified")}
         </option>
         {value &&
           !options
@@ -109,7 +116,12 @@ export function ReferenceInput({
           ))}
       </select>
       {data.isError && (
-        <small className="error-text">无法加载可选项，请检查权限后重试。</small>
+        <small className="error-text">
+          {t(
+            "无法加载可选项，请检查权限后重试。",
+            "Could not load options. Check permissions and retry.",
+          )}
+        </small>
       )}
     </>
   );
@@ -124,6 +136,7 @@ export function PermissionPicker({
   restricted: boolean;
 }) {
   const { user, permissions } = useContext(SessionContext);
+  const t = useText();
   const [filter, setFilter] = useState("");
   const catalog = useQuery({
     queryKey: ["available-permissions"],
@@ -141,8 +154,8 @@ export function PermissionPicker({
   return (
     <div className="permission-picker">
       <input
-        aria-label="Filter permission choices"
-        placeholder="搜索权限 / Search permissions"
+        aria-label={t("筛选权限选项", "Filter permission choices")}
+        placeholder={t("搜索权限", "Search permissions")}
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
       />
@@ -153,7 +166,7 @@ export function PermissionPicker({
           disabled={!shown.length}
           onClick={() => onChange([...new Set([...value, ...shown])])}
         >
-          全选匹配项 ({shown.length}) / Select matching
+          {t("全选匹配项", "Select matching")} ({shown.length})
         </button>
         <button
           type="button"
@@ -161,7 +174,7 @@ export function PermissionPicker({
           disabled={!shown.some((p) => value.includes(p))}
           onClick={() => onChange(value.filter((p) => !shown.includes(p)))}
         >
-          取消匹配项 / Deselect matching
+          {t("取消匹配项", "Deselect matching")}
         </button>
         <button
           type="button"
@@ -169,7 +182,7 @@ export function PermissionPicker({
           disabled={!value.length}
           onClick={() => onChange([])}
         >
-          清空 / Clear
+          {t("清空", "Clear")}
         </button>
       </div>
       <div className="permission-choices">
@@ -190,167 +203,195 @@ export function PermissionPicker({
           </label>
         ))}
       </div>
-      {!shown.length && <p className="muted">没有匹配权限 / No matches</p>}
-      <small>{value.length} 项已选择 / selected</small>
+      {!shown.length && (
+        <p className="muted">{t("没有匹配权限", "No matching permissions")}</p>
+      )}
+      <small>
+        {t(`已选择 ${value.length} 项`, `${value.length} selected`)}
+      </small>
       {catalog.isError && (
         <small className="error-text">
-          权限目录加载失败 / Failed to load permissions
+          {t("权限目录加载失败", "Failed to load permissions")}
         </small>
       )}
     </div>
   );
 }
 
-const referenceEndpoints: Record<string, string> = {
-  associated_tools: "/v1/tools",
-  associated_resources: "/v1/resources",
-  associated_prompts: "/v1/prompts",
-  associated_a2a_agents: "/v1/a2a",
-  plugin_ids: "/v1/admin/plugins",
-};
 export function ResourcePicker({
   name,
+  spec,
   value,
   onChange,
 }: {
   name: string;
+  spec: JsonRecord;
   value: string[];
   onChange: (next: string[]) => void;
 }) {
+  const t = useText();
+  const { user, team } = useContext(SessionContext);
   const [filter, setFilter] = useState("");
+  const [selection, setSelection] = useState("all");
   const query = useQuery({
-    queryKey: ["association-options", name],
-    queryFn: async () => {
-      const out: JsonRecord[] = [];
-      const seen = new Set<string>();
-      let cursor = "";
-      for (let page = 0; page < 100; page++) {
-        const q = new URLSearchParams({
-          limit: "100",
-          offset: String(page * 100),
-          include_pagination: "true",
-        });
-        if (cursor) q.set("cursor", cursor);
-        const data = await request(referenceEndpoints[name] + "?" + q);
-        const items = listItems(data).map((item: JsonRecord) =>
-          name === "plugin_ids" ? { ...item, id: item.name } : item,
-        );
-        if (
-          items.length &&
-          items.every((item: JsonRecord) =>
-            out.some((prev) => prev.id === item.id),
-          )
-        )
-          return [...new Map(out.map((v) => [v.id, v])).values()];
-        out.push(...items);
-        const next = data?.nextCursor || data?.next_cursor;
-        if (next) {
-          if (seen.has(next)) throw new Error("分页游标重复");
-          seen.add(next);
-          cursor = next;
-        } else if (
-          items.length < 100 ||
-          (data.total !== undefined && out.length >= data.total)
-        )
-          return [...new Map(out.map((v) => [v.id, v])).values()];
-      }
-      throw new Error("选项过多，请使用全部操作指定精确关联");
-    },
+    queryKey: ["association-options", name, user?.email, team],
+    queryFn: ({ signal }) =>
+      loadAssociationOptions(name, spec, request, signal),
     retry: false,
   });
-  const options = query.data || [];
-  const shown = options.filter((v) =>
-    `${v.name} ${v.id} ${v.description || ""}`
-      .toLowerCase()
-      .includes(filter.toLowerCase()),
+  // Failed refetches must not expose stale results as a complete catalog.
+  const options: JsonRecord[] = query.isError ? [] : query.data || [];
+  const shown = filterAssociationOptions(options, value, filter, selection);
+  const unavailable = value.filter(
+    (id) => !options.some((item) => item.id === id),
   );
   return (
     <div className="permission-picker">
       <input
-        aria-label={`Search ${name}`}
+        aria-label={t(`搜索 ${name}`, `Search ${name}`)}
         value={filter}
-        placeholder="搜索名称或 ID / Search"
+        placeholder={t("搜索名称、说明或 ID", "Search name, description or ID")}
         onChange={(e) => setFilter(e.target.value)}
       />
+      <select
+        aria-label={t(`选择状态 ${name}`, `Selection status ${name}`)}
+        value={selection}
+        onChange={(e) => setSelection(e.target.value)}
+      >
+        <option value="all">{t("全部选项", "All options")}</option>
+        <option value="selected">{t("仅已选", "Selected only")}</option>
+        <option value="unselected">{t("仅未选", "Unselected only")}</option>
+      </select>
       <div className="picker-actions">
         <button
           type="button"
           className="text-button"
+          disabled={query.isPending || query.isError || !shown.length}
           onClick={() =>
-            onChange([...new Set([...value, ...shown.map((v) => v.id)])])
+            onChange([
+              ...new Set([
+                ...value,
+                ...shown.map((item: JsonRecord) => item.id),
+              ]),
+            ])
           }
         >
-          全选匹配项 ({shown.length})
+          {t("全选匹配项", "Select matching")} ({shown.length})
         </button>
         <button
           type="button"
           className="text-button"
+          disabled={
+            query.isPending ||
+            query.isError ||
+            !shown.some((item: JsonRecord) => value.includes(item.id))
+          }
           onClick={() =>
-            onChange(value.filter((v) => !shown.some((item) => item.id === v)))
+            onChange(
+              value.filter(
+                (id) => !shown.some((item: JsonRecord) => item.id === id),
+              ),
+            )
           }
         >
-          取消匹配项
+          {t("取消匹配项", "Deselect matching")}
         </button>
         <button
           type="button"
           className="text-button"
+          disabled={!value.length}
           onClick={() => onChange([])}
         >
-          清空
+          {t("清空", "Clear")}
         </button>
       </div>
       {query.isPending ? (
-        <p>正在加载…</p>
+        <p>{t("正在加载…", "Loading…")}</p>
       ) : query.isError ? (
-        <p className="error-text">
-          可选资源加载失败{" "}
+        <p className="error-text" role="alert">
+          {t(
+            "可选资源未能完整加载，已有选择已保留。",
+            "Could not load the complete resource catalog. Existing selections are retained.",
+          )}{" "}
           <button
             type="button"
             className="text-button"
             onClick={() => query.refetch()}
           >
-            重试
+            {t("重试", "Retry")}
           </button>
         </p>
       ) : (
         <div className="permission-choices">
-          {shown.map((item) => (
+          {shown.map((item: JsonRecord) => (
             <label key={item.id} className="check-label">
               <input
                 type="checkbox"
+                aria-label={`${item.name || item.id} · ${item.id}`}
                 checked={value.includes(item.id)}
                 onChange={(e) =>
                   onChange(
                     e.target.checked
-                      ? [...value, item.id]
-                      : value.filter((v) => v !== item.id),
+                      ? [...new Set([...value, item.id])]
+                      : value.filter((id) => id !== item.id),
                   )
                 }
               />
               <span>
                 {item.name || item.id}
-                <small>{item.description}</small>
+                <small>
+                  {item.id}
+                  {item.gatewaySlug || item.gatewayId || item.gateway_id
+                    ? ` · ${t("来源", "Source")}: ${item.gatewaySlug || item.gatewayId || item.gateway_id}`
+                    : ""}
+                </small>
+                {item.description && <small>{item.description}</small>}
               </span>
             </label>
           ))}
         </div>
       )}
       {!query.isPending && !query.isError && !shown.length && (
-        <p className="muted">没有匹配资源；请先在对应栏目创建。</p>
+        <p className="muted">
+          {t(
+            "没有匹配选项，请调整筛选条件。",
+            "No matching options. Adjust the filters.",
+          )}
+        </p>
       )}
-      {value
-        .filter((v) => !options.some((item) => item.id === v))
-        .map((id) => (
-          <label key={id} className="check-label">
-            <input
-              type="checkbox"
-              checked
-              onChange={() => onChange(value.filter((v) => v !== id))}
-            />
-            {id}（当前目录中不可见）
-          </label>
-        ))}
-      <small>已选择 {value.length} 项</small>
+      {!!unavailable.length && (
+        <div className="permission-choices">
+          {unavailable.map((id) => (
+            <label key={id} className="check-label">
+              <input
+                type="checkbox"
+                checked
+                aria-label={id}
+                onChange={() =>
+                  onChange(value.filter((selected) => selected !== id))
+                }
+              />
+              <span>
+                {id}
+                <small>
+                  {query.isPending || query.isError
+                    ? t(
+                        "已有选择，目录尚未加载完成",
+                        "Existing selection; catalog not fully loaded",
+                      )
+                    : t(
+                        "当前目录中不可见，保留此关联",
+                        "Not visible in the current catalog; association retained",
+                      )}
+                </small>
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+      <small aria-live="polite">
+        {t(`已选择 ${value.length} 项`, `${value.length} selected`)}
+      </small>
     </div>
   );
 }

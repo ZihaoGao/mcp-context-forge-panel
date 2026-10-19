@@ -415,17 +415,17 @@ test("ordinary user creates a key, copies the creation response and revokes it t
   await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
     "自定义权限至少需要选择一项",
   );
-  await page.getByLabel("Filter permission choices").fill("tools");
+  await page.getByLabel("筛选权限选项").fill("tools");
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: /全选匹配项.*Select matching/ })
+    .getByRole("button", { name: /全选匹配项/ })
     .click();
   await expect(
     page.locator(".permission-picker input[type=checkbox]").first(),
   ).toBeChecked();
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: /取消匹配项.*Deselect matching/ })
+    .getByRole("button", { name: /取消匹配项/ })
     .click();
   await expect(
     page.locator(".permission-picker input[type=checkbox]").first(),
@@ -600,7 +600,7 @@ test("new role appears immediately in scoped assignment choices and can be revok
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("name", { exact: true }).fill("ux-role-" + run);
   await dialog.getByLabel("scope", { exact: true }).selectOption("global");
-  await dialog.getByLabel("Filter permission choices").fill("tools.read");
+  await dialog.getByLabel("筛选权限选项").fill("tools.read");
   await dialog
     .locator(".permission-choices")
     .getByRole("checkbox")
@@ -854,9 +854,9 @@ test("row menus escape clipping, slow endpoints render as rows, and log filters 
     .getByRole("link", { name: "虚拟服务器", exact: true })
     .click();
   await page.getByLabel("Filter resources").fill(name);
-  const trigger = page.getByLabel("More actions", { exact: true });
+  const trigger = page.getByLabel("更多操作", { exact: true });
   await trigger.click();
-  const menu = page.getByRole("menu", { name: "Resource actions" });
+  const menu = page.getByRole("menu", { name: "资源操作" });
   await expect(menu).toBeVisible();
   expect(await menu.evaluate((el) => el.parentElement === document.body)).toBe(
     true,

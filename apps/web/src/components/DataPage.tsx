@@ -42,6 +42,7 @@ import { ResourceDialog, resourceActionName } from "./ResourceDialog";
 import { TransferPanel } from "./TransferPanel";
 import { GovernancePage } from "./GovernancePage";
 import { resourceProfiles, validateValue } from "../resource-model.mjs";
+import { englishProfiles } from "../resource-copy.mjs";
 import { SchemaForm } from "./SchemaForm";
 import { ConfigurationTransfer } from "./ConfigurationTransfer";
 import { ApiExplorer } from "./ApiExplorer";
@@ -1020,9 +1021,20 @@ export function DataPage({
                                   id: op.method + op.path,
                                   label: resourceActionName(
                                     op,
-                                    (resourceProfiles as Record<string, any>)[
-                                      module.id
-                                    ]?.noun || "资源",
+                                    en
+                                      ? (
+                                          englishProfiles as Record<
+                                            string,
+                                            string[]
+                                          >
+                                        )[module.id]?.[0] || "resource"
+                                      : (
+                                          resourceProfiles as Record<
+                                            string,
+                                            any
+                                          >
+                                        )[module.id]?.noun || "资源",
+                                    en,
                                   ),
                                   onSelect: () => launch(op, item),
                                 }))}
