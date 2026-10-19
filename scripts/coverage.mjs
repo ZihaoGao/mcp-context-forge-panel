@@ -7,6 +7,12 @@ const inventory = JSON.parse(
   await readFile("contracts/contextforge/source-routes.json", "utf8"),
 );
 const domains = [
+  ["/api/logs", "Logs & audit / API workspace"],
+  [
+    "/v1/observability/spans",
+    "API workspace (trace detail uses embedded spans)",
+  ],
+  ["/v1/observability", "Observability / API workspace"],
   ["/v1/auth/", "Login / account / API workspace"],
   ["/v1/rbac/", "Roles & permissions"],
   ["/v1/tokens", "My API keys"],

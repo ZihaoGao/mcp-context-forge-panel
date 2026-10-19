@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -209,8 +209,8 @@ function Table({
           {rows.map((row, index) => (
             <tr
               key={String(
-                row.trace_id ||
-                  row.span_id ||
+                row.span_id ||
+                  row.trace_id ||
                   row.id ||
                   row.correlation_id ||
                   row.timestamp ||
@@ -254,28 +254,57 @@ function Pager({
   pageSize,
   onPage,
   en,
+  hasNext = false,
+  busy = false,
+  onPageSize,
 }: {
   page: number;
-  total: number;
+  total?: number;
   pageSize: number;
   onPage: (page: number) => void;
   en: boolean;
+  hasNext?: boolean;
+  busy?: boolean;
+  onPageSize: (size: number) => void;
 }) {
-  const pages = Math.max(1, Math.ceil(total / pageSize));
-  if (pages <= 1) return null;
+  const pages =
+    total === undefined ? undefined : Math.max(1, Math.ceil(total / pageSize));
   return (
     <div className="table-footer">
       <span>
-        {en
-          ? "Page " + (page + 1) + " of " + pages
-          : "第 " + (page + 1) + " / " + pages + " 页"}{" "}
-        · {total} {en ? "records" : "条"}
+        {pages === undefined
+          ? en
+            ? `Page ${page + 1}`
+            : `第 ${page + 1} 页`
+          : en
+            ? "Page " + (page + 1) + " of " + pages
+            : "第 " + (page + 1) + " / " + pages + " 页"}{" "}
+        {total !== undefined && (
+          <>
+            {" "}
+            · {total} {en ? "records" : "条"}
+          </>
+        )}
       </span>
       <div>
+        <label>
+          {en ? "Rows per page" : "每页条数"}{" "}
+          <select
+            value={pageSize}
+            disabled={busy}
+            onChange={(event) => onPageSize(Number(event.target.value))}
+          >
+            {[20, 50, 100].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           className="icon-button"
-          disabled={page === 0}
+          disabled={busy || page === 0}
           onClick={() => onPage(page - 1)}
           aria-label={en ? "Previous page" : "上一页"}
         >
@@ -284,7 +313,9 @@ function Pager({
         <button
           type="button"
           className="icon-button"
-          disabled={page + 1 >= pages}
+          disabled={
+            busy || (pages === undefined ? !hasNext : page + 1 >= pages)
+          }
           onClick={() => onPage(page + 1)}
           aria-label={en ? "Next page" : "下一页"}
         >
@@ -292,6 +323,93 @@ function Pager({
         </button>
       </div>
     </div>
+  );
+}
+
+function usePaging() {
+  const [page, onPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  return {
+    page,
+    pageSize,
+    onPage,
+    onPageSize: (size: number) => {
+      setPageSize(size);
+      onPage(0);
+    },
+  };
+}
+
+function DetailDialog({
+  title,
+  onClose,
+  en,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  en: boolean;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  useEffect(() => {
+    const dialog = ref.current!;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
+        previousFocus.focus({ preventScroll: true });
+    };
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className="action-dialog governance-dialog"
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <header className="dialog-header">
+        <h2 id={titleId}>{title}</h2>
+        <button type="button" className="button secondary" onClick={onClose}>
+          {en ? "Close" : "关闭"}
+        </button>
+      </header>
+      <div className="dialog-body">{children}</div>
+    </dialog>
+  );
+}
+
+function PagedTable({
+  rows,
+  en,
+  columns,
+}: {
+  rows: JsonRecord[];
+  en: boolean;
+  columns: Column[];
+}) {
+  const paging = usePaging();
+  const page = Math.min(
+    paging.page,
+    Math.max(0, Math.ceil(rows.length / paging.pageSize) - 1),
+  );
+  return (
+    <>
+      <Table
+        rows={rows.slice(page * paging.pageSize, (page + 1) * paging.pageSize)}
+        columns={columns}
+        en={en}
+      />
+      <Pager {...paging} page={page} total={rows.length} en={en} />
+    </>
   );
 }
 
@@ -356,7 +474,10 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
   const [levels, setLevels] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [searchPage, setSearchPage] = useState(0);
+  const searchPaging = usePaging();
+  const auditPaging = usePaging();
+  const securityPaging = usePaging();
+  const [correlationId, setCorrelationId] = useState("");
   const [searchError, setSearchError] = useState("");
   const [actionError, setActionError] = useState("");
   const [submitted, setSubmitted] = useState<LogFilters>({
@@ -377,7 +498,14 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
   const refresh = () =>
     void queryClient.invalidateQueries({ queryKey: ["governance"] });
   const search = useQuery({
-    queryKey: ["governance", "logs", "search", submitted, searchPage],
+    queryKey: [
+      "governance",
+      "logs",
+      "search",
+      submitted,
+      searchPaging.page,
+      searchPaging.pageSize,
+    ],
     queryFn: () =>
       request("/api/logs/search", {
         method: "POST",
@@ -398,21 +526,39 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
           ...(localDateTimeToIso(submitted.endTime)
             ? { end_time: localDateTimeToIso(submitted.endTime) }
             : {}),
-          limit: 100,
-          offset: searchPage * 100,
+          limit: searchPaging.pageSize,
+          offset: searchPaging.page * searchPaging.pageSize,
         }),
       }),
     enabled: canLogs && operationAvailable(spec, "/api/logs/search", "POST"),
   });
   const audit = useQuery({
-    queryKey: ["governance", "logs", "audit"],
-    queryFn: () => request("/api/logs/audit-trails?limit=100&offset=0"),
+    queryKey: [
+      "governance",
+      "logs",
+      "audit",
+      auditPaging.page,
+      auditPaging.pageSize,
+    ],
+    queryFn: () =>
+      request(
+        `/api/logs/audit-trails?limit=${auditPaging.pageSize + 1}&offset=${auditPaging.page * auditPaging.pageSize}`,
+      ),
     enabled:
       canAudit && operationAvailable(spec, "/api/logs/audit-trails", "GET"),
   });
   const security = useQuery({
-    queryKey: ["governance", "logs", "security"],
-    queryFn: () => request("/api/logs/security-events?limit=100&offset=0"),
+    queryKey: [
+      "governance",
+      "logs",
+      "security",
+      securityPaging.page,
+      securityPaging.pageSize,
+    ],
+    queryFn: () =>
+      request(
+        `/api/logs/security-events?limit=${securityPaging.pageSize + 1}&offset=${securityPaging.page * securityPaging.pageSize}`,
+      ),
     enabled:
       canSecurity &&
       operationAvailable(spec, "/api/logs/security-events", "GET"),
@@ -430,19 +576,17 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
       operationAvailable(spec, "/api/logs/performance-metrics", "GET"),
   });
   const trace = useQuery({
-    queryKey: ["governance", "logs", "trace", submitted.correlation],
+    queryKey: ["governance", "logs", "trace", correlationId],
     queryFn: () =>
-      request(`/api/logs/trace/${encodeURIComponent(submitted.correlation)}`),
+      request(`/api/logs/trace/${encodeURIComponent(correlationId)}`),
     enabled:
       canLogs &&
-      !!submitted.correlation &&
+      !!correlationId &&
       operationAvailable(spec, "/api/logs/trace/{correlation_id}", "GET"),
   });
   const searchRows = records(search.data);
   const searchTotal =
-    typeof search.data?.total === "number"
-      ? search.data.total
-      : searchRows.length;
+    typeof search.data?.total === "number" ? search.data.total : undefined;
   const auditRows = records(audit.data);
   const securityRows = records(security.data);
   const activityRows = records(activity.data);
@@ -469,7 +613,7 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
       return;
     }
     setSearchError("");
-    setSearchPage(0);
+    searchPaging.onPage(0);
     setSubmitted({
       searchText,
       correlation,
@@ -661,6 +805,20 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
               </button>
             </div>
             {searchError && <div className="alert error">{searchError}</div>}
+            {canLogs &&
+              submitted.correlation &&
+              operationAvailable(
+                spec,
+                "/api/logs/trace/{correlation_id}",
+                "GET",
+              ) && (
+                <button
+                  className="button secondary"
+                  onClick={() => setCorrelationId(submitted.correlation)}
+                >
+                  {en ? "View correlation detail" : "查看关联详情"}
+                </button>
+              )}
             <QueryState query={search} en={en} />
             {canLogs && (
               <>
@@ -675,15 +833,33 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                     {
                       key: "correlation_id",
                       label: en ? "Correlation" : "关联 ID",
+                      render: (row) =>
+                        row.correlation_id &&
+                        operationAvailable(
+                          spec,
+                          "/api/logs/trace/{correlation_id}",
+                          "GET",
+                        ) ? (
+                          <button
+                            className="text-button"
+                            onClick={() =>
+                              setCorrelationId(String(row.correlation_id))
+                            }
+                          >
+                            {text(row.correlation_id)}
+                          </button>
+                        ) : (
+                          text(row.correlation_id)
+                        ),
                     },
                     { key: "duration_ms", label: en ? "Duration" : "耗时" },
                   ]}
                 />
                 <Pager
-                  page={searchPage}
+                  {...searchPaging}
                   total={searchTotal}
-                  pageSize={100}
-                  onPage={setSearchPage}
+                  hasNext={searchRows.length === searchPaging.pageSize}
+                  busy={search.isFetching}
                   en={en}
                 />
               </>
@@ -703,7 +879,7 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                 <QueryState query={audit} en={en} />
                 <Table
                   en={en}
-                  rows={auditRows}
+                  rows={auditRows.slice(0, auditPaging.pageSize)}
                   columns={[
                     { key: "timestamp", label: en ? "Time" : "时间" },
                     { key: "action", label: en ? "Action" : "操作" },
@@ -712,6 +888,12 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                     { key: "success", label: en ? "Success" : "成功" },
                     { key: "requires_review", label: en ? "Review" : "复核" },
                   ]}
+                />
+                <Pager
+                  {...auditPaging}
+                  hasNext={auditRows.length > auditPaging.pageSize}
+                  busy={audit.isFetching}
+                  en={en}
                 />
               </section>
             )}
@@ -732,7 +914,7 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                 <QueryState query={security} en={en} />
                 <Table
                   en={en}
-                  rows={securityRows}
+                  rows={securityRows.slice(0, securityPaging.pageSize)}
                   columns={[
                     { key: "timestamp", label: en ? "Time" : "时间" },
                     { key: "severity", label: en ? "Severity" : "严重度" },
@@ -741,6 +923,12 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                     { key: "threat_score", label: en ? "Threat" : "威胁分" },
                     { key: "resolved", label: en ? "Resolved" : "已解决" },
                   ]}
+                />
+                <Pager
+                  {...securityPaging}
+                  hasNext={securityRows.length > securityPaging.pageSize}
+                  busy={security.isFetching}
+                  en={en}
                 />
               </section>
             )}
@@ -751,26 +939,33 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   title={en ? "Activity" : "活动流"}
                   subtitle={
                     en
-                      ? "Recent audit and security activity"
-                      : "最近的审计与安全活动"
+                      ? "Latest 100 audit and security records"
+                      : "最近 100 条审计与安全活动"
                   }
                   onRefresh={refresh}
                   busy={activity.isFetching}
                   en={en}
                 />
                 <QueryState query={activity} en={en} />
-                <Table
-                  en={en}
-                  rows={activityRows}
-                  columns={[
-                    { key: "timestamp", label: en ? "Time" : "时间" },
-                    { key: "source", label: en ? "Source" : "来源" },
-                    { key: "title", label: en ? "Title" : "标题" },
-                    { key: "status", label: en ? "Status" : "状态" },
-                    { key: "resource_type", label: en ? "Resource" : "资源" },
-                    { key: "actor", label: en ? "Actor" : "操作者" },
-                  ]}
-                />
+                <div
+                  className="governance-recent-records"
+                  tabIndex={0}
+                  role="region"
+                  aria-label={en ? "Recent activity" : "最近活动"}
+                >
+                  <Table
+                    en={en}
+                    rows={activityRows}
+                    columns={[
+                      { key: "timestamp", label: en ? "Time" : "时间" },
+                      { key: "source", label: en ? "Source" : "来源" },
+                      { key: "title", label: en ? "Title" : "标题" },
+                      { key: "status", label: en ? "Status" : "状态" },
+                      { key: "resource_type", label: en ? "Resource" : "资源" },
+                      { key: "actor", label: en ? "Actor" : "操作者" },
+                    ]}
+                  />
+                </div>
               </section>
             )}
             {canMetrics && (
@@ -799,12 +994,16 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
               </section>
             )}
           </div>
-          {submitted.correlation && canLogs && (
-            <section className="panel governance-detail-panel">
+          {correlationId && canLogs && (
+            <DetailDialog
+              title={en ? "Correlation detail" : "关联详情"}
+              onClose={() => setCorrelationId("")}
+              en={en}
+            >
               <PanelHeader
                 icon={<FileText size={18} />}
                 title={en ? "Correlation detail" : "关联详情"}
-                subtitle={submitted.correlation}
+                subtitle={correlationId}
                 onRefresh={() => void trace.refetch()}
                 busy={trace.isFetching}
                 en={en}
@@ -815,7 +1014,7 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   {JSON.stringify(redact(trace.data), null, 2)}
                 </pre>
               )}
-            </section>
+            </DetailDialog>
           )}
         </>
       )}
@@ -911,6 +1110,7 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
   });
   const [filters, setFilters] = useState(draft);
   const [traceId, setTraceId] = useState("");
+  const tracePaging = usePaging();
   const canAdmin = permitted(session.permissions, "admin.system_config");
   const canMetrics = permitted(session.permissions, "metrics:read");
   const cleanupAvailable = operationAvailable(
@@ -970,27 +1170,19 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
       ),
   });
   const traceQueryString = useMemo(() => {
-    const params = new URLSearchParams({ limit: "100", offset: "0" });
+    const params = new URLSearchParams({
+      limit: String(tracePaging.pageSize + 1),
+      offset: String(tracePaging.page * tracePaging.pageSize),
+    });
     for (const [key, value] of Object.entries(filters))
       if (value) params.set(key, value);
     return params.toString();
-  }, [filters]);
+  }, [filters, tracePaging.page, tracePaging.pageSize]);
   const traces = useQuery({
-    queryKey: ["governance", "observability", "traces", filters],
+    queryKey: ["governance", "observability", "traces", traceQueryString],
     queryFn: () => request(`/v1/observability/traces?${traceQueryString}`),
     enabled:
       canAdmin && operationAvailable(spec, "/v1/observability/traces", "GET"),
-  });
-  const spans = useQuery({
-    queryKey: ["governance", "observability", "spans", traceId],
-    queryFn: () =>
-      request(
-        `/v1/observability/spans?trace_id=${encodeURIComponent(traceId)}&limit=100&offset=0`,
-      ),
-    enabled:
-      canAdmin &&
-      !!traceId &&
-      operationAvailable(spec, "/v1/observability/spans", "GET"),
   });
   const detail = useQuery({
     queryKey: ["governance", "observability", "trace", traceId],
@@ -1013,7 +1205,11 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
       ),
     );
   const traceRows = records(traces.data);
-  const spanRows = records(spans.data);
+  const spanRows = records(detail.data?.spans)
+    .slice()
+    .sort((a, b) =>
+      String(b.start_time || "").localeCompare(String(a.start_time || "")),
+    );
   const performCleanup = async () => {
     if (!window.confirm(en ? "Delete old traces?" : "删除旧的 traces？"))
       return;
@@ -1354,7 +1550,10 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                 ))}
                 <button
                   className="button primary"
-                  onClick={() => setFilters(draft)}
+                  onClick={() => {
+                    setFilters(draft);
+                    tracePaging.onPage(0);
+                  }}
                 >
                   {en ? "Apply filters" : "应用筛选"}
                 </button>
@@ -1362,7 +1561,7 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
               <QueryState query={traces} en={en} />
               <Table
                 en={en}
-                rows={traceRows}
+                rows={traceRows.slice(0, tracePaging.pageSize)}
                 onRow={(row) =>
                   setTraceId(String(row.trace_id || row.id || ""))
                 }
@@ -1387,19 +1586,28 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   { key: "user_email", label: en ? "User" : "用户" },
                 ]}
               />
+              <Pager
+                {...tracePaging}
+                hasNext={traceRows.length > tracePaging.pageSize}
+                busy={traces.isFetching}
+                en={en}
+              />
             </section>
           )}
           {traceId && canAdmin && (
-            <section className="panel governance-detail-panel">
+            <DetailDialog
+              title={en ? "Selected trace" : "选中的 trace"}
+              onClose={() => setTraceId("")}
+              en={en}
+            >
               <PanelHeader
                 icon={<FileText size={18} />}
                 title={en ? "Selected trace" : "选中的 trace"}
                 subtitle={traceId}
                 onRefresh={() => {
                   void detail.refetch();
-                  void spans.refetch();
                 }}
-                busy={detail.isFetching || spans.isFetching}
+                busy={detail.isFetching}
                 en={en}
               />
               <QueryState query={detail} en={en} />
@@ -1435,7 +1643,8 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   </details>
                 </>
               )}
-              <Table
+              <PagedTable
+                key={traceId}
                 en={en}
                 rows={spanRows}
                 columns={[
@@ -1446,7 +1655,7 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
                   { key: "status", label: en ? "Status" : "状态" },
                 ]}
               />
-            </section>
+            </DetailDialog>
           )}
         </>
       )}

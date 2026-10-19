@@ -1596,7 +1596,7 @@
       "operationId": "get_metrics_timeseries_v1_observability_metrics_timeseries_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "Not statically resolved; backend enforces authorization",
       "dependencies": [
         "Depends(get_db)",
@@ -1615,7 +1615,7 @@
       "operationId": "get_metrics_percentiles_v1_observability_metrics_percentiles_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "Not statically resolved; backend enforces authorization",
       "dependencies": [
         "Depends(get_db)",
@@ -1942,7 +1942,7 @@
       "operationId": "list_traces_v1_observability_traces_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -1960,7 +1960,7 @@
       "operationId": "query_traces_advanced_v1_observability_traces_query_post",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -1978,7 +1978,7 @@
       "operationId": "get_trace_v1_observability_traces__trace_id__get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -1996,7 +1996,7 @@
       "operationId": "list_spans_v1_observability_spans_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "API workspace (trace detail uses embedded spans)",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -2014,7 +2014,7 @@
       "operationId": "cleanup_old_traces_v1_observability_traces_cleanup_delete",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -2032,7 +2032,7 @@
       "operationId": "get_stats_v1_observability_stats_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -2050,7 +2050,7 @@
       "operationId": "export_traces_v1_observability_traces_export_post",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -2068,7 +2068,7 @@
       "operationId": "get_query_performance_v1_observability_analytics_query_performance_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Observability / API workspace",
       "permission": "require_permission('admin.system_config')",
       "dependencies": [
         "Depends(get_db)",
@@ -10341,7 +10341,7 @@
       "operationId": "search_logs_api_logs_search_post",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Logs & audit / API workspace",
       "permission": "require_permission('logs:read')",
       "dependencies": [
         "Depends(get_current_user_with_permissions)",
@@ -10359,7 +10359,7 @@
       "operationId": "trace_correlation_id_api_logs_trace__correlation_id__get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Logs & audit / API workspace",
       "permission": "require_permission('logs:read')",
       "dependencies": [
         "Depends(get_current_user_with_permissions)",
@@ -10377,7 +10377,7 @@
       "operationId": "get_security_events_api_logs_security_events_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Logs & audit / API workspace",
       "permission": "require_permission('security:read')",
       "dependencies": [
         "Depends(get_current_user_with_permissions)",
@@ -10395,7 +10395,7 @@
       "operationId": "get_audit_trails_api_logs_audit_trails_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Logs & audit / API workspace",
       "permission": "require_permission('audit:read')",
       "dependencies": [
         "Depends(get_current_user_with_permissions)",
@@ -10413,7 +10413,7 @@
       "operationId": "get_activity_feed_api_logs_activity_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Logs & audit / API workspace",
       "permission": "require_permission('audit:read')",
       "dependencies": [
         "Depends(get_current_user_with_permissions)",
@@ -10431,7 +10431,7 @@
       "operationId": "get_performance_metrics_api_logs_performance_metrics_get",
       "category": "business",
       "reason": "Schema action / 业务操作",
-      "entry": "API workspace",
+      "entry": "Logs & audit / API workspace",
       "permission": "require_permission('metrics:read')",
       "dependencies": [
         "Depends(get_current_user_with_permissions)",

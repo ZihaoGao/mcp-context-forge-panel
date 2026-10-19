@@ -10,6 +10,192 @@ const run = randomUUID().slice(0, 8);
 const serverIds = [];
 let admin, teamId;
 
+for (const width of [1440, 390]) {
+  test(`governance pagination and dialogs at ${width}px`, async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width, height: 844 });
+    const traces = Array.from({ length: 120 }, (_, i) => ({
+      trace_id: `paging-trace-${i}`,
+      name: `Operation ${i}`,
+      status: "ok",
+      start_time: "2026-10-16T10:00:00Z",
+      duration_ms: i,
+    }));
+    const traceRequests = [];
+    let spanRequests = 0;
+    page.on("request", (req) => {
+      if (req.url().includes("/v1/observability/spans?")) spanRequests++;
+    });
+    await page.route("**/v1/observability/traces?*", (route) => {
+      const params = new URL(route.request().url()).searchParams;
+      const offset = Number(params.get("offset"));
+      const limit = Number(params.get("limit"));
+      traceRequests.push({ offset, limit, status: params.get("status") });
+      if (params.get("status") === "error")
+        return route.fulfill({
+          status: 403,
+          json: { detail: "pagination fixture denied" },
+        });
+      return route.fulfill({
+        json:
+          params.get("status") === "empty"
+            ? []
+            : traces.slice(offset, offset + limit),
+      });
+    });
+    await page.route("**/v1/observability/traces/paging-trace-*", (route) =>
+      route.fulfill({
+        json: {
+          ...traces[100],
+          spans: Array.from({ length: 125 }, (_, i) => ({
+            span_id: `span-${i}`,
+            name: `Span ${i}`,
+            events: [{ name: "retained event" }],
+          })),
+        },
+      }),
+    );
+    await login(page);
+    await page.goto(root + "/app/#observability");
+    const explorer = page.locator("section.panel").filter({
+      has: page.getByRole("heading", { name: "Trace 检索", exact: true }),
+    });
+    await expect(explorer.locator("tbody tr")).toHaveCount(20);
+    await explorer.getByLabel("每页条数").selectOption("100");
+    await expect(explorer.locator("tbody tr")).toHaveCount(100);
+    await explorer.getByRole("button", { name: "下一页" }).click();
+    await expect(explorer.locator("tbody tr")).toHaveCount(20);
+    expect(traceRequests.at(-1)).toMatchObject({ offset: 100, limit: 101 });
+    await expect(
+      explorer.getByRole("button", { name: "下一页" }),
+    ).toBeDisabled();
+    const trigger = explorer.getByRole("button", {
+      name: "paging-trace-100",
+      exact: true,
+    });
+    await trigger.scrollIntoViewIfNeeded();
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await trigger.click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator("tbody tr")).toHaveCount(20);
+    await dialog.getByRole("button", { name: "下一页" }).click();
+    await expect(dialog.locator("tbody tr").first()).toContainText("Span 20");
+    await dialog.getByLabel("每页条数").selectOption("100");
+    await expect(dialog.locator("tbody tr")).toHaveCount(100);
+    await dialog.getByRole("button", { name: "下一页" }).click();
+    await expect(dialog.locator("tbody tr")).toHaveCount(25);
+    await expect(dialog.getByRole("button", { name: "下一页" })).toBeDisabled();
+    expect(spanRequests).toBe(0);
+    await expect(dialog.locator("details pre")).toContainText("retained event");
+    const bounds = await dialog.boundingBox();
+    expect(bounds.y).toBeGreaterThanOrEqual(0);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(845);
+    await dialog.screenshot({
+      path: `.cache/reports/pagination-trace-${width}.png`,
+    });
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    expect(
+      Math.abs((await page.evaluate(() => window.scrollY)) - scrollBefore),
+    ).toBeLessThan(5);
+    await expect(explorer).toContainText("第 2 页");
+    await explorer.getByLabel("每页条数").selectOption("20");
+    await expect(explorer).toContainText("第 1 页");
+    await explorer.getByRole("button", { name: "下一页" }).click();
+    await expect(explorer).toContainText("第 2 页");
+    await explorer.getByLabel("状态", { exact: true }).fill("empty");
+    await explorer.getByRole("button", { name: "应用筛选" }).click();
+    await expect(explorer).toContainText("暂无记录");
+    await expect(explorer).toContainText("第 1 页");
+    await expect(
+      explorer.getByRole("button", { name: "下一页" }),
+    ).toBeDisabled();
+    await explorer.getByLabel("状态", { exact: true }).fill("error");
+    await explorer.getByRole("button", { name: "应用筛选" }).click();
+    await expect(explorer.getByRole("alert")).toContainText(
+      "pagination fixture denied",
+    );
+
+    const logRequests = [];
+    const rows = Array.from({ length: 120 }, (_, i) => ({
+      id: i,
+      message: `Log ${i}`,
+      action: `Audit ${i}`,
+      event_type: `Security ${i}`,
+      correlation_id: `correlation-${i}`,
+    }));
+    await page.route("**/api/logs/search", (route) => {
+      const body = route.request().postDataJSON();
+      logRequests.push(body);
+      return route.fulfill({
+        json: {
+          results: rows.slice(body.offset, body.offset + body.limit),
+          total: rows.length,
+        },
+      });
+    });
+    const requests = { "audit-trails": [], "security-events": [] };
+    for (const kind of Object.keys(requests)) {
+      await page.route(`**/api/logs/${kind}?*`, (route) => {
+        const params = new URL(route.request().url()).searchParams;
+        const offset = Number(params.get("offset")),
+          limit = Number(params.get("limit"));
+        requests[kind].push({ offset, limit });
+        return route.fulfill({ json: rows.slice(offset, offset + limit) });
+      });
+    }
+    await page.route("**/api/logs/trace/*", (route) =>
+      route.fulfill({ json: { logs: [{ message: "Correlation fixture" }] } }),
+    );
+    await page.goto(root + "/app/#logs");
+    const logs = page.locator("section.panel").filter({
+      has: page.getByRole("heading", { name: "日志检索", exact: true }),
+    });
+    await expect(logs.locator("tbody tr")).toHaveCount(20);
+    await logs.getByLabel("每页条数").selectOption("100");
+    await expect(logs.locator("tbody tr")).toHaveCount(100);
+    await logs.getByRole("button", { name: "下一页" }).click();
+    await expect(logs.locator("tbody tr").first()).toContainText("Log 100");
+    expect(logRequests.at(-1)).toMatchObject({ offset: 100, limit: 100 });
+    await expect(logs.getByRole("button", { name: "下一页" })).toBeDisabled();
+    await logs
+      .getByRole("button", { name: "correlation-100", exact: true })
+      .click();
+    await expect(dialog).toContainText("Correlation fixture");
+    await dialog.getByRole("button", { name: "关闭" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(logs).toContainText("第 2 / 2 页");
+    await logs.getByRole("button", { name: "检索", exact: true }).click();
+    await expect(logs).toContainText("第 1 / 2 页");
+    for (const [kind, heading] of [
+      ["audit-trails", "审计轨迹"],
+      ["security-events", "安全事件"],
+    ]) {
+      const panel = page.locator("section.panel").filter({
+        has: page.getByRole("heading", { name: heading, exact: true }),
+      });
+      await expect(panel.locator("tbody tr")).toHaveCount(20);
+      await panel.getByLabel("每页条数").selectOption("100");
+      await expect(panel.locator("tbody tr")).toHaveCount(100);
+      await panel.getByRole("button", { name: "下一页" }).click();
+      await expect(panel.locator("tbody tr")).toHaveCount(20);
+      expect(requests[kind].at(-1)).toEqual({ offset: 100, limit: 101 });
+      await expect(
+        panel.getByRole("button", { name: "下一页" }),
+      ).toBeDisabled();
+      await panel.getByRole("button", { name: "上一页" }).click();
+      await expect(panel.locator("tbody tr")).toHaveCount(100);
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  });
+}
+
 test.beforeAll(async () => {
   admin = await request.newContext({
     extraHTTPHeaders: { Origin: new URL(root).origin, "X-Panel-Request": "1" },
@@ -221,20 +407,20 @@ test("observability formats trace identifiers, latency and timezone with aligned
     route.fulfill({ json: [trace] }),
   );
   await page.route(`**/v1/observability/traces/${traceId}`, (route) =>
-    route.fulfill({ json: { ...trace, spans: [] } }),
-  );
-  await page.route("**/v1/observability/spans?*", (route) =>
     route.fulfill({
-      json: [
-        {
-          span_id: spanId,
-          trace_id: traceId,
-          name: "Fixture span name",
-          start_time: trace.start_time,
-          duration_ms: 0,
-          status: "ok",
-        },
-      ],
+      json: {
+        ...trace,
+        spans: [
+          {
+            span_id: spanId,
+            trace_id: traceId,
+            name: "Fixture span name",
+            start_time: trace.start_time,
+            duration_ms: 0,
+            status: "ok",
+          },
+        ],
+      },
     }),
   );
   const buckets = ["2026-10-16T10:00:00+00:00", "2026-10-16T11:00:00+00:00"];
@@ -279,15 +465,15 @@ test("observability formats trace identifiers, latency and timezone with aligned
     traceId,
   );
   await row.getByRole("button", { name: traceId, exact: true }).click();
-  await expect(page.locator(".governance-detail-panel")).toContainText(
-    "Fixture span name",
+  await expect(page.getByRole("dialog")).toContainText("Fixture span name");
+  await expect(page.getByRole("dialog")).toContainText("0 ms");
+  await expect(page.getByRole("dialog").locator("details")).not.toHaveAttribute(
+    "open",
+    "",
   );
-  await expect(page.locator(".governance-detail-panel")).toContainText("0 ms");
-  await expect(
-    page.locator(".governance-detail-panel details"),
-  ).not.toHaveAttribute("open", "");
   await expect(page.locator(".percentile-cards")).toContainText("52.52 ms");
   await expect(page.locator(".percentile-cards")).toContainText("P99");
+  await page.getByRole("dialog").getByRole("button", { name: "关闭" }).click();
   await page.getByText(/按时间桶查看请求数/).click();
   const counts = page
     .locator(".metric-buckets")
