@@ -88,6 +88,7 @@ before(async () => {
       APP_ROOT_PATH: "/forge",
       BACKEND_URL: `http://127.0.0.1:${upstream.address().port}/backend`,
       PUBLIC_ORIGIN: publicOrigin,
+      LOG_LEVEL: "silent",
     }),
   );
   panel.listen(0, "127.0.0.1");

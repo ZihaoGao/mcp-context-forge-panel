@@ -33,14 +33,15 @@ The frontend container does not include the backend, a database, or Redis. The r
 
 ## Configuration
 
-| Variable              | Example                        | Purpose                                                                                |
-| --------------------- | ------------------------------ | -------------------------------------------------------------------------------------- |
-| `APP_ROOT_PATH`       | `/forge`                       | Public path prefix; an empty string serves at the domain root                          |
-| `BACKEND_URL`         | `http://gateway:4444/internal` | Fixed upstream URL, optionally including its own internal path prefix                  |
-| `PUBLIC_ORIGIN`       | `https://tools.example.com`    | Browser-facing scheme, hostname, and port; used for Origin checks and redirects        |
-| `COOKIE_SECURE`       | `true`                         | Enable for HTTPS access to the console; use `false` for local HTTP                     |
-| `TRUSTED_PROXY_CIDRS` | `127.0.0.1/32`                 | Trusted proxy networks whose forwarded client IP headers may be read; empty by default |
-| `PORT` / `HOST`       | `3000` / `0.0.0.0`             | Listening port and address                                                             |
+| Variable              | Example                        | Purpose                                                                                      |
+| --------------------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `APP_ROOT_PATH`       | `/forge`                       | Public path prefix; an empty string serves at the domain root                                |
+| `BACKEND_URL`         | `http://gateway:4444/internal` | Fixed upstream URL, optionally including its own internal path prefix                        |
+| `PUBLIC_ORIGIN`       | `https://tools.example.com`    | Browser-facing scheme, hostname, and port; used for Origin checks and redirects              |
+| `COOKIE_SECURE`       | `true`                         | Enable for HTTPS access to the console; use `false` for local HTTP                           |
+| `TRUSTED_PROXY_CIDRS` | `127.0.0.1/32`                 | Trusted proxy networks whose forwarded client IP headers may be read; empty by default       |
+| `PORT` / `HOST`       | `3000` / `0.0.0.0`             | Listening port and address                                                                   |
+| `LOG_LEVEL`           | `info`                         | `debug`, `info` (default), `warn`, `error`, `silent`; controls access and backend error logs |
 
 The UI is served at `/forge/app/`, and internal console endpoints use `/forge/_panel/`. Other public business paths are forwarded upstream after stripping `/forge`. `/forge/_internal/` is not publicly exposed. LLM requests use the backend's actual API prefix, such as `/forge/llm/v1/chat/completions`. MCP virtual servers connect through `/forge/servers/<id>/mcp`.
 

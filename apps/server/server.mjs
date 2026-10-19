@@ -1,12 +1,20 @@
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import httpProxy from "http-proxy";
 import { readConfig, upstreamPath } from "./config.mjs";
 import { clientIp } from "./client-ip.mjs";
 import { mcpSseTransform } from "./sse.mjs";
+import {
+  createLogger,
+  errorInfo,
+  logPath,
+  backendErrorSummary,
+  observeBackendError,
+  readBackendError,
+} from "./logger.mjs";
 
 const COOKIE = "cf_panel_session";
 const TYPES = {
@@ -51,6 +59,127 @@ async function body(req) {
   }
 }
 export function createPanelServer(config = readConfig(), options = {}) {
+  const logger = options.logger || createLogger({ level: config.logLevel });
+  const requestLogs = new WeakMap();
+  function beginRequest(req, protocol = "http") {
+    const entry = {
+      request_id: randomUUID(),
+      method: req.method,
+      path: logPath(req.url),
+      client_ip: clientIp(req, config.trustedProxies),
+      protocol,
+      started: process.hrtime.bigint(),
+    };
+    requestLogs.set(req, entry);
+    logger.debug(`${protocol}.request`, requestFields(req));
+    return entry;
+  }
+  function requestFields(req) {
+    const entry = requestLogs.get(req);
+    return entry
+      ? {
+          request_id: entry.request_id,
+          method: entry.method,
+          path: entry.path,
+          client_ip: entry.client_ip,
+        }
+      : {};
+  }
+  function backendFields(req, endpoint = req.url, method = req.method) {
+    return {
+      ...requestFields(req),
+      backend_method: method,
+      backend: config.upstream.origin,
+      backend_path: logPath(endpoint),
+    };
+  }
+  function httpError(req, status, endpoint, method) {
+    logger[status >= 500 ? "error" : "warn"]("backend.http_error", {
+      ...backendFields(req, endpoint, method),
+      status,
+    });
+  }
+  function errorDetail(
+    req,
+    status,
+    fields,
+    endpoint = req.url,
+    method = req.method,
+  ) {
+    logger[status >= 500 ? "error" : "warn"]("backend.error_detail", {
+      ...backendFields(req, endpoint, method),
+      status,
+      ...fields,
+    });
+  }
+  async function backendFetch(req, endpoint, init = {}) {
+    const fields = backendFields(req, endpoint, init.method || "GET");
+    logger.debug("backend.request", fields);
+    try {
+      const response = await fetch(new URL(endpoint, config.upstream.origin), {
+        ...init,
+        headers: {
+          ...init.headers,
+          "X-Request-ID": requestLogs.get(req)?.request_id,
+        },
+      });
+      if (response.status >= 400)
+        httpError(req, response.status, endpoint, init.method || "GET");
+      return response;
+    } catch (error) {
+      requestLogs.get(req).failure = "backend_connection_error";
+      requestLogs.get(req).diagnosticLogged = true;
+      logger.error("backend.connection_error", {
+        ...fields,
+        error: errorInfo(error),
+      });
+      throw error;
+    }
+  }
+  async function backendJson(
+    req,
+    response,
+    endpoint = response.url,
+    method = req.method,
+  ) {
+    try {
+      const result = await response.json();
+      if (response.status >= 400)
+        errorDetail(
+          req,
+          response.status,
+          { summary: backendErrorSummary(result) },
+          endpoint,
+          method,
+        );
+      return result;
+    } catch (error) {
+      requestLogs.get(req).diagnosticLogged = true;
+      logger.error("backend.invalid_response", {
+        ...backendFields(req, endpoint, method),
+        status: response.status,
+        reason: "invalid_json",
+        error: { name: error.name },
+      });
+      throw new Error("Invalid JSON response from backend");
+    }
+  }
+  function discardedBackendError(req, response, endpoint, method = "GET") {
+    if (response.status >= 400)
+      readBackendError(response)
+        .then((fields) =>
+          errorDetail(req, response.status, fields, endpoint, method),
+        )
+        .catch(() =>
+          errorDetail(
+            req,
+            response.status,
+            { detail_unavailable: "incomplete" },
+            endpoint,
+            method,
+          ),
+        );
+  }
   const webRoot = path.resolve(options.webRoot || "dist/web");
   const compressedAssets = new Map();
   const proxy = httpProxy.createProxyServer({
@@ -152,14 +281,38 @@ export function createPanelServer(config = readConfig(), options = {}) {
     req.headers["x-forwarded-prefix"] = config.prefix;
     req.headers["x-forwarded-for"] = callerIp;
     req.headers["x-real-ip"] = callerIp;
+    req.headers["x-request-id"] = requestLogs.get(req)?.request_id;
     const incoming = new URL(req.url, "http://panel");
     req.url =
       upstreamPath(
         config,
         incoming.pathname.slice(config.prefix.length) || "/",
       ) + incoming.search;
+    logger.debug("backend.request", backendFields(req));
   }
   proxy.on("proxyRes", (proxyRes, req, res) => {
+    const entry = requestLogs.get(req);
+    proxyRes.headers["x-request-id"] = entry?.request_id;
+    if (proxyRes.statusCode >= 400) {
+      httpError(req, proxyRes.statusCode);
+      observeBackendError(proxyRes, (fields) =>
+        errorDetail(req, proxyRes.statusCode, fields),
+      );
+    }
+    let responseFailed = false;
+    const responseError = (error) => {
+      if (responseFailed || res.destroyed || res.writableEnded) return;
+      responseFailed = true;
+      entry.failure = "backend_response_aborted";
+      logger.error("backend.response_aborted", {
+        ...backendFields(req),
+        status: proxyRes.statusCode,
+        ...(error ? { error: errorInfo(error) } : {}),
+      });
+      res.destroy();
+    };
+    proxyRes.once("aborted", () => responseError());
+    proxyRes.once("error", responseError);
     res.once("close", () => {
       if (!res.writableEnded) proxyRes.destroy();
     });
@@ -197,20 +350,70 @@ export function createPanelServer(config = readConfig(), options = {}) {
       res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
       if (rewrite) {
         const stream = mcpSseTransform(config);
-        stream.on("error", () => res.destroy());
+        stream.on("error", (error) => {
+          entry.failure = "sse_transform_error";
+          logger.error("proxy.sse_error", {
+            ...requestFields(req),
+            error: errorInfo(error),
+          });
+          res.destroy();
+        });
         proxyRes.pipe(stream).pipe(res);
       } else proxyRes.pipe(res);
     }
   });
-  proxy.on("error", (_err, _req, res) => {
+  proxy.on("error", (error, req, res) => {
+    if (res.destroyed || req.aborted) {
+      logger.debug("proxy.client_closed", {
+        ...requestFields(req),
+        error: errorInfo(error),
+      });
+      return;
+    }
+    requestLogs.get(req).failure = "backend_connection_error";
+    logger.error("backend.connection_error", {
+      ...backendFields(req),
+      error: errorInfo(error),
+    });
     if ("writeHead" in res && !res.headersSent)
       json(res, 502, { detail: "Backend unavailable" });
     else res.destroy();
   });
   const server = http.createServer(async (req, res) => {
+    const entry = beginRequest(req);
+    res.setHeader("X-Request-ID", entry.request_id);
+    let logged = false;
+    function access(completed) {
+      if (logged) return;
+      logged = true;
+      const status = completed || res.headersSent ? res.statusCode : 499;
+      const level =
+        entry.failure || status >= 500
+          ? "error"
+          : completed && status >= 400
+            ? "warn"
+            : "info";
+      logger[level]("http.access", {
+        ...requestFields(req),
+        status,
+        duration_ms:
+          Math.round(Number(process.hrtime.bigint() - entry.started) / 1e3) /
+          1e3,
+        completed,
+        ...(entry.failure ? { failure: entry.failure } : {}),
+      });
+    }
+    res.once("finish", () => access(true));
+    res.once("close", () => access(res.writableFinished));
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "same-origin");
-    const url = new URL(req.url, "http://panel");
+    let url;
+    try {
+      url = new URL(req.url, "http://panel");
+    } catch {
+      logger.warn("http.invalid_url", requestFields(req));
+      return json(res, 400, { detail: "Invalid request URL" });
+    }
     if (url.pathname === "/" && ["GET", "HEAD"].includes(req.method)) {
       res.writeHead(302, {
         Location: `${config.prefix}/app/`,
@@ -251,7 +454,8 @@ export function createPanelServer(config = readConfig(), options = {}) {
       }
       if (local === "/_panel/login" && req.method === "POST") {
         const input = await body(req);
-        const response = await fetch(
+        const response = await backendFetch(
+          req,
           new URL(
             upstreamPath(config, "/v1/auth/email/login"),
             config.upstream.origin,
@@ -270,7 +474,7 @@ export function createPanelServer(config = readConfig(), options = {}) {
             redirect: "manual",
           },
         );
-        const result = await response.json();
+        const result = await backendJson(req, response);
         if (!response.ok)
           return json(res, response.status, {
             detail: result.detail || "Login failed",
@@ -278,10 +482,15 @@ export function createPanelServer(config = readConfig(), options = {}) {
         if (
           typeof result.access_token !== "string" ||
           !/^[A-Za-z0-9._~-]+$/.test(result.access_token)
-        )
+        ) {
+          logger.error("backend.invalid_response", {
+            ...backendFields(req, response.url),
+            reason: "missing_or_invalid_access_token",
+          });
           return json(res, 502, {
             detail: "Invalid backend authentication response",
           });
+        }
         issueSession(result.access_token, result.expires_in, res);
         return json(res, 200, { user: result.user });
       }
@@ -292,7 +501,8 @@ export function createPanelServer(config = readConfig(), options = {}) {
           !/^[A-Za-z0-9._~-]+$/.test(input.token)
         )
           return json(res, 400, { detail: "Invalid token" });
-        const response = await fetch(
+        const response = await backendFetch(
+          req,
           new URL(
             upstreamPath(config, "/v1/auth/email/me"),
             config.upstream.origin,
@@ -302,17 +512,22 @@ export function createPanelServer(config = readConfig(), options = {}) {
             signal: AbortSignal.timeout(30000),
           },
         );
-        if (!response.ok)
+        if (!response.ok) {
+          discardedBackendError(req, response, response.url);
           return json(res, response.status, {
             detail: "Token authentication failed",
           });
+        }
         issueSession(input.token, 3600, res);
-        return json(res, 200, { user: await response.json() });
+        return json(res, 200, {
+          user: await backendJson(req, response, response.url, "GET"),
+        });
       }
       if (local === "/_panel/refresh" && req.method === "POST") {
         const token = sessionFor(req)?.token;
         if (!token) return json(res, 401, { detail: "Session required" });
-        const response = await fetch(
+        const response = await backendFetch(
+          req,
           new URL(
             upstreamPath(config, "/v1/auth/refresh"),
             config.upstream.origin,
@@ -324,18 +539,25 @@ export function createPanelServer(config = readConfig(), options = {}) {
             redirect: "manual",
           },
         );
-        if (!response.ok)
+        if (!response.ok) {
+          discardedBackendError(req, response, response.url, "POST");
           return json(res, response.status, {
             detail: "Session could not be refreshed",
           });
-        const result = await response.json();
+        }
+        const result = await backendJson(req, response);
         if (
           typeof result.access_token !== "string" ||
           !/^[A-Za-z0-9._~-]+$/.test(result.access_token)
-        )
+        ) {
+          logger.error("backend.invalid_response", {
+            ...backendFields(req, response.url),
+            reason: "missing_or_invalid_access_token",
+          });
           return json(res, 502, {
             detail: "Invalid backend authentication response",
           });
+        }
         sessions.delete(cookies(req.headers.cookie)[COOKIE]);
         issueSession(result.access_token, result.expires_in, res);
         return json(res, 200, { ok: true });
@@ -345,7 +567,8 @@ export function createPanelServer(config = readConfig(), options = {}) {
         sessions.delete(cookies(req.headers.cookie)[COOKIE]);
         res.setHeader("Set-Cookie", sessionCookie("", 0));
         if (token) {
-          const response = await fetch(
+          const response = await backendFetch(
+            req,
             new URL(
               upstreamPath(config, "/v1/auth/logout"),
               config.upstream.origin,
@@ -357,10 +580,12 @@ export function createPanelServer(config = readConfig(), options = {}) {
               redirect: "manual",
             },
           );
-          if (!response.ok && response.status !== 401)
+          if (!response.ok && response.status !== 401) {
+            discardedBackendError(req, response, response.url, "POST");
             return json(res, 502, {
               detail: "Local session cleared; backend revocation failed",
             });
+          }
         }
         return json(res, 200, { ok: true });
       }
@@ -407,7 +632,8 @@ export function createPanelServer(config = readConfig(), options = {}) {
       if (local.startsWith("/_panel/"))
         return json(res, 404, { detail: "Not found" });
       if (local.startsWith("/v1/auth/sso/callback/") && req.method === "GET") {
-        const callback = await fetch(
+        const callback = await backendFetch(
+          req,
           new URL(
             upstreamPath(config, local) + url.search,
             config.upstream.origin,
@@ -441,7 +667,8 @@ export function createPanelServer(config = readConfig(), options = {}) {
           .join("=")
           .replace(/^"|"$/g, "");
         if (token && /^[A-Za-z0-9._~-]+$/.test(token)) {
-          const validated = await fetch(
+          const validated = await backendFetch(
+            req,
             new URL(
               upstreamPath(config, "/v1/auth/email/me"),
               config.upstream.origin,
@@ -456,7 +683,9 @@ export function createPanelServer(config = readConfig(), options = {}) {
             res.writeHead(302, { Location: `${config.prefix}/app/#dashboard` });
             return res.end();
           }
+          discardedBackendError(req, validated, validated.url);
         }
+        discardedBackendError(req, callback, callback.url);
         res.writeHead(302, { Location: `${config.prefix}/app/#sso-error` });
         return res.end();
       }
@@ -555,8 +784,16 @@ export function createPanelServer(config = readConfig(), options = {}) {
       if (req.rewriteMcpSse) req.headers["accept-encoding"] = "identity";
       proxy.web(req, res, { selfHandleResponse: req.rewriteMcpSse });
     } catch (error) {
+      const status = error.status || 502;
+      if (status >= 500) entry.failure ||= "request_error";
+      if (!entry.diagnosticLogged)
+        logger[status >= 500 ? "error" : "warn"]("http.request_error", {
+          ...requestFields(req),
+          status,
+          error: errorInfo(error),
+        });
       if (!res.headersSent)
-        json(res, error.status || 502, {
+        json(res, status, {
           detail: error.status
             ? error.message
             : "Request could not be completed",
@@ -564,11 +801,56 @@ export function createPanelServer(config = readConfig(), options = {}) {
       else res.destroy();
     }
   });
+  proxy.on("proxyReqWs", (outgoing, req) => {
+    outgoing.once("upgrade", (upstream) => {
+      upstream.headers["x-request-id"] = requestLogs.get(req).request_id;
+      requestLogs.get(req).wsStatus = upstream.statusCode;
+      logger.info("ws.open", {
+        ...requestFields(req),
+        status: upstream.statusCode,
+      });
+    });
+    outgoing.once("response", (upstream) => {
+      upstream.headers["x-request-id"] = requestLogs.get(req).request_id;
+      // http-proxy writes this rejection directly to the raw client socket.
+      // IncomingMessage has already removed chunk framing; delimit by close.
+      delete upstream.headers["transfer-encoding"];
+      delete upstream.headers.trailer;
+      upstream.headers.connection = "close";
+      requestLogs.get(req).wsStatus = upstream.statusCode;
+      if (upstream.statusCode >= 400) {
+        httpError(req, upstream.statusCode);
+        observeBackendError(upstream, (fields) =>
+          errorDetail(req, upstream.statusCode, fields),
+        );
+      }
+    });
+  });
   server.on("upgrade", (req, socket, head) => {
+    const entry = beginRequest(req, "ws");
+    socket.once("close", () => {
+      const level =
+        entry.failure || entry.wsStatus >= 500
+          ? "error"
+          : entry.rejected || entry.wsStatus >= 400
+            ? "warn"
+            : "info";
+      logger[level]("ws.access", {
+        ...requestFields(req),
+        status: entry.wsStatus || null,
+        duration_ms:
+          Math.round(Number(process.hrtime.bigint() - entry.started) / 1e3) /
+          1e3,
+        upgraded: entry.wsStatus === 101,
+        ...(entry.failure ? { failure: entry.failure } : {}),
+        ...(entry.rejected ? { rejected: entry.rejected } : {}),
+      });
+    });
     let local;
     try {
       local = decodeURIComponent(new URL(req.url, "http://panel").pathname);
     } catch {
+      entry.rejected = "invalid_path";
       return socket.destroy();
     }
     if (
@@ -576,8 +858,10 @@ export function createPanelServer(config = readConfig(), options = {}) {
       local.startsWith(`${config.prefix}/_internal/`) ||
       local.startsWith(`${config.prefix}/_panel/`) ||
       local.startsWith(`${config.prefix}/app/`)
-    )
+    ) {
+      entry.rejected = "private_path";
       return socket.destroy();
+    }
     // Browser WebSockets cannot set the explicit session opt-in header.
     delete req.headers["x-panel-request"];
     proxyRequest(req);

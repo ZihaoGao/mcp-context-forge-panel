@@ -1,4 +1,5 @@
 import { trustedProxies } from "./client-ip.mjs";
+import { normalizeLogLevel } from "./logger.mjs";
 export function normalizePrefix(value = "") {
   if (!value || value === "/") return "";
   if (
@@ -33,6 +34,7 @@ export function readConfig(env = process.env) {
     secure: env.COOKIE_SECURE === "true",
     port: Number(env.PORT || 3000),
     host: env.HOST || "0.0.0.0",
+    logLevel: normalizeLogLevel(env.LOG_LEVEL),
   };
 }
 export function upstreamPath(config, path) {
