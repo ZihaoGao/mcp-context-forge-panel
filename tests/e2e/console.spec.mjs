@@ -338,6 +338,9 @@ test("connection guide copies selected client configurations and performs a real
       .getByLabel("MCP API Key", { exact: true })
       .fill("invalid-fixture-key");
     await expect(connectionPanel.locator("pre")).toContainText(server.id);
+    await connectionPanel
+      .getByRole("button", { name: "Close connection", exact: true })
+      .click();
     await page
       .getByRole("row")
       .filter({ hasText: "p1-switch-" + run })
@@ -798,7 +801,13 @@ test("governance overviews are distinct from all actions and settings validate h
   await expect(
     page.getByRole("button", { name: "应用", exact: true }),
   ).toHaveCount(0);
-  const transfer = page.locator(".transfer-panel");
+  await page
+    .getByRole("button", { name: "原生配置备份与迁移", exact: true })
+    .click();
+  const transfer = page.getByRole("dialog", {
+    name: "原生配置备份与迁移",
+    exact: true,
+  });
   await transfer.locator("input[type=file]").setInputFiles({
     name: "native.json",
     mimeType: "application/json",

@@ -1185,8 +1185,23 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
 }
-.governance-dialog {
+.action-dialog.workflow-dialog {
   width: min(1100px, calc(100vw - 30px));
+  padding: 0;
+  margin: auto;
+}
+.resource-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  max-width: 100%;
+}
+.resource-tags .badge {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
 .governance-recent-records {
   max-height: 420px;
@@ -2200,6 +2215,7 @@ textarea::placeholder {
 }
 @media (max-width: 760px) {
   .action-dialog,
+  .action-dialog.workflow-dialog,
   .action-dialog.resource-dialog {
     width: 100%;
     max-width: 100%;

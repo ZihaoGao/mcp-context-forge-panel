@@ -1,3 +1,5 @@
+import { WorkflowDialog } from "./WorkflowDialog";
+import { ResourceTags } from "./ResourceTags";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SessionContext } from "../session";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -380,6 +382,7 @@ export function DataPage({
     }
   }
   async function executeBatch(targets = selected) {
+    if (busy) return;
     setBusy(true);
     setError("");
     setBatchResults([]);
@@ -543,8 +546,8 @@ export function DataPage({
                   aria-label="Filter resources"
                   placeholder={
                     en
-                      ? "Search all pages by name, description or ID…"
-                      : "跨页搜索名称、描述或 ID…"
+                      ? "Search all pages by name, description, tags or ID…"
+                      : "跨页搜索名称、描述、标签或 ID…"
                   }
                   disabled={busy}
                   value={search}
@@ -562,7 +565,7 @@ export function DataPage({
               <div className="toolbar-right">
                 <button
                   className="button secondary"
-                  onClick={() => setTransfer(!transfer)}
+                  onClick={() => setTransfer(true)}
                 >
                   <Download size={16} />
                   {en ? "Import / export" : "导入 / 导出"}
@@ -786,6 +789,7 @@ export function DataPage({
                     </div>
                     <h3>{title(item)}</h3>
                     <p>{item.description || "—"}</p>
+                    <ResourceTags tags={item.tags} en={en} />
                     <span
                       className={`badge ${status(item) === false ? "neutral" : "success"}`}
                     >
@@ -930,6 +934,7 @@ export function DataPage({
                                   item.id ||
                                   "—"}
                               </small>
+                              <ResourceTags tags={item.tags} en={en} />
                             </div>
                           </div>
                         </td>
@@ -1066,6 +1071,7 @@ export function DataPage({
           </section>
           {transfer && (
             <TransferPanel
+              onClose={() => setTransfer(false)}
               moduleId={module.id}
               spec={spec}
               create={mayImport ? transferWrite : undefined}
@@ -1142,23 +1148,42 @@ export function DataPage({
             </div>
           )}
           {batchAction && (
-            <section className="panel batch-panel">
-              <div className="section-heading">
-                <h3>
-                  {en ? "Review bulk action" : "确认批量操作"} · {batchAction}
-                </h3>
+            <WorkflowDialog
+              title={`${en ? "Review bulk action" : "确认批量操作"} · ${batchAction}`}
+              footer={
                 <button
-                  className="icon-button"
-                  disabled={busy}
-                  aria-label="Close batch"
-                  onClick={() => {
-                    setBatchAction("");
-                    setBatchResults([]);
-                  }}
+                  className="button primary"
+                  disabled={busy || !selected.length}
+                  onClick={() => executeBatch()}
                 >
-                  <X size={18} />
+                  {busy
+                    ? en
+                      ? "Running…"
+                      : "执行中…"
+                    : batchResults.length
+                      ? en
+                        ? "Retry failed targets"
+                        : "重试失败项"
+                      : en
+                        ? "Confirm execution"
+                        : "确认执行"}
                 </button>
-              </div>
+              }
+              className="batch-panel"
+              closeLabel="Close batch"
+              en={en}
+              busy={busy}
+              onClose={() => {
+                setBatchAction("");
+                setBatchResults([]);
+                setError("");
+              }}
+            >
+              {error && (
+                <div role="alert" className="alert error">
+                  {error}
+                </div>
+              )}
               <p className="muted">
                 {en
                   ? `${selected.length} frozen targets. Individual calls can partially succeed.`
@@ -1218,23 +1243,7 @@ export function DataPage({
                   </small>
                 </div>
               )}
-              <button
-                className="button primary"
-                disabled={busy || !selected.length}
-                onClick={() => executeBatch()}
-              >
-                {busy
-                  ? en
-                    ? "Running…"
-                    : "执行中…"
-                  : batchResults.length
-                    ? en
-                      ? "Retry failed targets"
-                      : "重试失败项"
-                    : en
-                      ? "Confirm execution"
-                      : "确认执行"}
-              </button>
+
               {batchResults.length > 0 && (
                 <div className="batch-results">
                   {batchResults.map((r, i) => (
@@ -1248,7 +1257,7 @@ export function DataPage({
                   ))}
                 </div>
               )}
-            </section>
+            </WorkflowDialog>
           )}
         </>
       )}
@@ -1291,19 +1300,15 @@ export function DataPage({
         />
       )}
       {connection && (
-        <div className="panel connection-result">
-          <div className="section-heading">
-            <h3>{title(connection)} · MCP</h3>
-            <button
-              className="icon-button"
-              aria-label="Close connection"
-              onClick={() => setConnection(undefined)}
-            >
-              <X size={18} />
-            </button>
-          </div>
+        <WorkflowDialog
+          title={`${title(connection)} · MCP`}
+          className="connection-result"
+          closeLabel="Close connection"
+          en={en}
+          onClose={() => setConnection(undefined)}
+        >
           <McpConnection key={connection.id} serverId={connection.id} />
-        </div>
+        </WorkflowDialog>
       )}
     </>
   );

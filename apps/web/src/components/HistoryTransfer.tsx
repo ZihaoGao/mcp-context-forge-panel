@@ -1,16 +1,20 @@
+import { WorkflowDialog } from "./WorkflowDialog";
 import { useState } from "react";
 import { type JsonRecord, displayError } from "../../../../packages/api-client";
 import { downloadJson, safeDisplay } from "../resource-model.mjs";
 import { RecordDetails } from "./ResourceDialog";
 
 /** A local inspection tool, deliberately separate from backend data ingestion. */
-export function HistoryTransfer({
+function HistoryTransferDialog({
   kind,
   value,
+  onClose,
 }: {
   kind: "logs" | "observability";
   value: JsonRecord;
+  onClose: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
   const [snapshot, setSnapshot] = useState<JsonRecord>();
   const [filter, setFilter] = useState("");
   const [error, setError] = useState("");
@@ -25,6 +29,7 @@ export function HistoryTransfer({
     setError("");
     setSnapshot(undefined);
     if (!file) return;
+    setBusy(true);
     try {
       if (file.size > 5 * 1024 * 1024) throw new Error("文件最大为 5 MiB");
       const parsed = JSON.parse(await file.text());
@@ -40,6 +45,8 @@ export function HistoryTransfer({
       setSnapshot(safeDisplay(parsed.data));
     } catch (err) {
       setError(displayError(err));
+    } finally {
+      setBusy(false);
     }
   }
   const matched = snapshot
@@ -52,8 +59,12 @@ export function HistoryTransfer({
       )
     : undefined;
   return (
-    <section className="panel transfer-panel">
-      <h3>查询快照 · 导入与导出</h3>
+    <WorkflowDialog
+      title="查询快照 · 导入与导出"
+      className="transfer-panel"
+      busy={busy}
+      onClose={onClose}
+    >
       <p className="field-help">
         导出当前查询已加载的数据（含当前页）。后端没有写入历史日志或指标的接口；导入仅在本地查看，不会写回后端。已知凭据字段会被隐藏。
       </p>
@@ -83,6 +94,7 @@ export function HistoryTransfer({
       <label className="field">
         导入快照到本地查看
         <input
+          disabled={busy}
           type="file"
           accept=".json,application/json"
           onChange={(e) => void read(e.target.files?.[0])}
@@ -113,6 +125,32 @@ export function HistoryTransfer({
           </button>
         </div>
       )}
-    </section>
+    </WorkflowDialog>
+  );
+}
+
+export function HistoryTransfer({
+  kind,
+  value,
+  en,
+}: {
+  kind: "logs" | "observability";
+  value: JsonRecord;
+  en: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button className="button secondary" onClick={() => setOpen(true)}>
+        {en ? "Query snapshots: import / export" : "查询快照：导入 / 导出"}
+      </button>
+      {open && (
+        <HistoryTransferDialog
+          kind={kind}
+          value={value}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { WorkflowDialog } from "./WorkflowDialog";
 import { useState } from "react";
 import {
   request,
@@ -56,6 +57,7 @@ export function TransferPanel({
   loadAll,
   onSuccess,
   en,
+  onClose,
 }: {
   moduleId: string;
   spec: JsonRecord;
@@ -65,6 +67,7 @@ export function TransferPanel({
   loadAll: () => Promise<JsonRecord[] | undefined>;
   onSuccess: () => void;
   en: boolean;
+  onClose: () => void;
 }) {
   const profile = (resourceProfiles as Record<string, any>)[moduleId];
   const content = create?.requestBody?.content || {};
@@ -139,7 +142,12 @@ export function TransferPanel({
     setBusy(true);
     try {
       const source = all ? await loadAll() : records;
-      if (!source) return;
+      if (!source)
+        throw new Error(
+          en
+            ? "Could not load all matching records. Close this dialog to review the list error, then retry."
+            : "无法加载全部匹配项，请关闭弹窗查看列表错误后重试。",
+        );
       const out: JsonRecord[] = [];
       for (const row of source) {
         let full = row;
@@ -171,6 +179,7 @@ export function TransferPanel({
   }
   async function readFile(file?: File) {
     if (!file) return;
+    setBusy(true);
     setError("");
     setRows([]);
     setResults([]);
@@ -194,10 +203,13 @@ export function TransferPanel({
       setRows(items);
     } catch (err) {
       setError(displayError(err));
+    } finally {
+      setBusy(false);
     }
   }
   async function importRows() {
-    if (!writable || !approved || problems.some((v) => v.length)) return;
+    if (busy || !writable || !approved || problems.some((v) => v.length))
+      return;
     setBusy(true);
     setResults([]);
     setError("");
@@ -233,13 +245,34 @@ export function TransferPanel({
     }
   }
   return (
-    <section className="panel transfer-panel">
-      <h3>{profile?.noun} · 导入与导出</h3>
+    <WorkflowDialog
+      title={`${profile?.noun || moduleId} · ${en ? "Import / export" : "导入与导出"}`}
+      className="transfer-panel"
+      busy={busy}
+      onClose={onClose}
+      en={en}
+      footer={
+        writable && !!rows.length ? (
+          <button
+            className="button primary"
+            disabled={
+              busy ||
+              !approved ||
+              problems.some((v) => v.length) ||
+              !!results.length
+            }
+            onClick={importRows}
+          >
+            {busy ? "正在导入…" : "确认导入"}
+          </button>
+        ) : undefined
+      }
+    >
       <p className="field-help">
         导出{writable ? "可创建配置" : "只读快照"}，自动移除凭据。关联的资源 ID
         不会跨环境自动转换。
         {moduleId === "tokens"
-          ? "导入会签发新 Key，无法还原旧 Key；成功后在本页逐个复制明文。"
+          ? "导入会签发新 Key，无法还原旧 Key；成功后在弹窗中逐个复制明文。"
           : moduleId === "users"
             ? "导出不包含密码；导入前需在文件中补充初始密码。"
             : ""}
@@ -383,23 +416,11 @@ export function TransferPanel({
                     : "确认创建以上资源"}
                 （逐项执行，可能部分成功）
               </label>
-              <button
-                className="button primary"
-                disabled={
-                  busy ||
-                  !approved ||
-                  problems.some((v) => v.length) ||
-                  !!results.length
-                }
-                onClick={importRows}
-              >
-                {busy ? "正在导入…" : "确认导入"}
-              </button>
             </>
           )}
           {writable && moduleId === "tokens" && (
             <p className="alert warning">
-              批量创建后请逐个复制下方 Key，离开此栏目后无法重新取得明文。
+              批量创建后请逐个复制下方 Key，关闭弹窗后无法重新取得明文。
             </p>
           )}
         </>
@@ -450,7 +471,7 @@ export function TransferPanel({
           ))}
         </div>
       )}
-    </section>
+    </WorkflowDialog>
   );
 }
 function redactSnapshot(value: any): any {

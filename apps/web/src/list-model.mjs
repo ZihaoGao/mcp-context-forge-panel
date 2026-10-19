@@ -1,6 +1,24 @@
 import { listItems, recordId } from "../../../packages/api-client/contract.mjs";
 import { readField } from "./resource-model.mjs";
 
+export function resourceTags(tags, includeIds = false) {
+  if (!Array.isArray(tags)) return [];
+  return [
+    ...new Set(
+      tags
+        .flatMap((tag) => {
+          if (typeof tag === "string") return [tag];
+          if (!tag || typeof tag !== "object" || Array.isArray(tag)) return [];
+          const label = typeof tag.label === "string" ? tag.label.trim() : "";
+          const id = typeof tag.id === "string" ? tag.id.trim() : "";
+          return includeIds ? [label, id] : [label || id];
+        })
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export function resourceStatus(item) {
   return (
     item.is_active ??
@@ -27,6 +45,7 @@ export function matchesResource(
     item.uri,
     item.id,
     item.description,
+    ...resourceTags(item.tags, true),
   ]
     .filter(Boolean)
     .join(" ")

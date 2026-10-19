@@ -1,3 +1,4 @@
+import { WorkflowDialog } from "./WorkflowDialog";
 import { useContext, useState } from "react";
 import {
   request,
@@ -19,6 +20,39 @@ const types: Record<string, string> = {
   roots: "Roots",
 };
 export function ConfigurationTransfer({ spec }: { spec: JsonRecord }) {
+  const [open, setOpen] = useState(false);
+  const { permissions } = useContext(SessionContext);
+  const available = [
+    ["/v1/export", "get", "admin.export"],
+    ["/v1/import", "post", "admin.import"],
+  ].some(
+    ([path, method, permission]) =>
+      permitted(permissions, permission) &&
+      spec.paths?.[path]?.[method] &&
+      spec.paths[path][method]["x-panel-available"] !== false,
+  );
+  if (!available) return null;
+  return (
+    <>
+      <button className="button secondary" onClick={() => setOpen(true)}>
+        原生配置备份与迁移
+      </button>
+      {open && (
+        <ConfigurationTransferDialog
+          spec={spec}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+function ConfigurationTransferDialog({
+  spec,
+  onClose,
+}: {
+  spec: JsonRecord;
+  onClose: () => void;
+}) {
   const { permissions } = useContext(SessionContext);
   const available = (path: string, method: string) =>
     spec.paths?.[path]?.[method] &&
@@ -67,6 +101,7 @@ export function ConfigurationTransfer({ spec }: { spec: JsonRecord }) {
     setData(undefined);
     setError("");
     if (!file) return;
+    setBusy(true);
     try {
       if (file.size > 10 * 1024 * 1024) throw new Error("文件最大为 10 MiB");
       const data = JSON.parse(await file.text());
@@ -92,10 +127,13 @@ export function ConfigurationTransfer({ spec }: { spec: JsonRecord }) {
       setData(data);
     } catch (err) {
       setError(displayError(err));
+    } finally {
+      setBusy(false);
     }
   }
   async function importConfig(dry: boolean) {
-    if (!canImport || !data || (!dry && (!preview || !confirmed))) return;
+    if (busy || !canImport || !data || (!dry && (!preview || !confirmed)))
+      return;
     setError("");
     setBusy(true);
     try {
@@ -123,8 +161,34 @@ export function ConfigurationTransfer({ spec }: { spec: JsonRecord }) {
     !preview.errors?.length &&
     !(preview.progress?.failed > 0);
   return (
-    <section className="panel transfer-panel">
-      <h3>原生配置备份与迁移</h3>
+    <WorkflowDialog
+      title="原生配置备份与迁移"
+      footer={
+        canImport ? (
+          <>
+            <button
+              className="button secondary"
+              disabled={!data || busy}
+              onClick={() => importConfig(true)}
+            >
+              后端预检查（不修改资源）
+            </button>
+            {validPreview && (
+              <button
+                className="button primary"
+                disabled={!confirmed || busy || !!result}
+                onClick={() => importConfig(false)}
+              >
+                执行配置导入
+              </button>
+            )}
+          </>
+        ) : undefined
+      }
+      className="transfer-panel"
+      busy={busy}
+      onClose={onClose}
+    >
       <p className="field-help">
         使用后端原生格式保留资源依赖关系。目前 v1.0.11
         支持下列六类实体；用户、角色、Key 等请在各自栏目使用模板。
@@ -253,13 +317,7 @@ export function ConfigurationTransfer({ spec }: { spec: JsonRecord }) {
                 .join(" · ")}
             </p>
           )}
-          <button
-            className="button secondary"
-            disabled={!data || busy}
-            onClick={() => importConfig(true)}
-          >
-            后端预检查（不修改资源）
-          </button>
+
           {preview && (
             <div className="governance-preview">
               <h4>预检查结果</h4>
@@ -275,13 +333,6 @@ export function ConfigurationTransfer({ spec }: { spec: JsonRecord }) {
                     />
                     确认按上述冲突策略导入；可能部分成功
                   </label>
-                  <button
-                    className="button primary"
-                    disabled={!confirmed || busy || !!result}
-                    onClick={() => importConfig(false)}
-                  >
-                    执行配置导入
-                  </button>
                 </>
               )}
             </div>
@@ -300,6 +351,6 @@ export function ConfigurationTransfer({ spec }: { spec: JsonRecord }) {
           {error}
         </div>
       )}
-    </section>
+    </WorkflowDialog>
   );
 }

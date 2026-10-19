@@ -1,4 +1,5 @@
-import { useContext, useEffect, useId, useMemo, useRef, useState } from "react";
+import { WorkflowDialog as DetailDialog } from "./WorkflowDialog";
+import { useContext, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -340,53 +341,6 @@ function usePaging() {
   };
 }
 
-function DetailDialog({
-  title,
-  onClose,
-  en,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  en: boolean;
-  children: React.ReactNode;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
-  useEffect(() => {
-    const dialog = ref.current!;
-    const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    dialog.showModal();
-    return () => {
-      dialog.close();
-      document.body.style.overflow = previousOverflow;
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
-        previousFocus.focus({ preventScroll: true });
-    };
-  }, []);
-  return (
-    <dialog
-      ref={ref}
-      className="action-dialog governance-dialog"
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-    >
-      <header className="dialog-header">
-        <h2 id={titleId}>{title}</h2>
-        <button type="button" className="button secondary" onClick={onClose}>
-          {en ? "Close" : "关闭"}
-        </button>
-      </header>
-      <div className="dialog-body">{children}</div>
-    </dialog>
-  );
-}
-
 function PagedTable({
   rows,
   en,
@@ -657,6 +611,17 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
           </p>
         </div>
         <div className="toolbar-right">
+          <HistoryTransfer
+            en={en}
+            kind="logs"
+            value={{
+              logs: search.data,
+              audit: audit.data,
+              security: security.data,
+              activity: activity.data,
+              performance: performance.data,
+            }}
+          />
           {canAdminExport &&
             operationAvailable(spec, "/v1/admin/logs/export", "GET") && (
               <button
@@ -1018,16 +983,6 @@ function LogsPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
           )}
         </>
       )}
-      <HistoryTransfer
-        kind="logs"
-        value={{
-          logs: search.data,
-          audit: audit.data,
-          security: security.data,
-          activity: activity.data,
-          performance: performance.data,
-        }}
-      />
     </div>
   );
 }
@@ -1252,6 +1207,16 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
           </p>
         </div>
         <div className="toolbar-right">
+          <HistoryTransfer
+            en={en}
+            kind="observability"
+            value={{
+              traces: traces.data,
+              timeseries: timeseries.data,
+              percentiles: percentiles.data,
+              stats: stats.data,
+            }}
+          />
           {canAdmin && (cleanupAvailable || exportAvailable) && (
             <>
               {exportAvailable && (
@@ -1659,15 +1624,6 @@ function ObservabilityPanel({ spec, en }: { spec: JsonRecord; en: boolean }) {
           )}
         </>
       )}
-      <HistoryTransfer
-        kind="observability"
-        value={{
-          traces: traces.data,
-          timeseries: timeseries.data,
-          percentiles: percentiles.data,
-          stats: stats.data,
-        }}
-      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   listPath,
   loadResourcePages,
   matchesResource,
+  resourceTags,
 } from "../../apps/web/src/list-model.mjs";
 import {
   formatDuration,
@@ -54,7 +55,11 @@ test("cross-page search follows cursors and deduplicates overlapping records", a
         : {
             data: [
               { id: "b" },
-              { id: "c", description: "target beyond the first page" },
+              {
+                id: "c",
+                description: "target beyond the first page",
+                tags: [{ id: "tag-id", label: "Production" }],
+              },
             ],
           };
     },
@@ -64,10 +69,43 @@ test("cross-page search follows cursors and deduplicates overlapping records", a
     ["a", "b", "c"],
   );
   assert.match(paths[1], /cursor=second/);
+  assert.deepEqual(
+    all
+      .filter((item) => matchesResource(item, { search: " PRODUCTION " }))
+      .map((item) => item.id),
+    ["c"],
+  );
+  assert.deepEqual(
+    all
+      .filter((item) => matchesResource(item, { search: "tag-id" }))
+      .map((item) => item.id),
+    ["c"],
+  );
   assert.equal(
     all.filter((item) => matchesResource(item, { search: "TARGET" }))[0].id,
     "c",
   );
+});
+
+test("tags normalize labels and ids without searching arbitrary object data", () => {
+  const tags = [
+    " alpha ",
+    "alpha",
+    { id: "hidden-id", label: "Beta" },
+    { id: "fallback" },
+    null,
+    {},
+    5,
+    { secret: "not-a-tag" },
+  ];
+  assert.deepEqual(resourceTags(tags), ["alpha", "Beta", "fallback"]);
+  assert.equal(matchesResource({ tags }, { search: "HIDDEN-ID" }), true);
+  assert.equal(matchesResource({ tags }, { search: "not-a-tag" }), false);
+  assert.equal(matchesResource({}, { search: "beta" }), false);
+  assert.deepEqual(resourceTags(null), []);
+  assert.deepEqual(resourceTags([{ label: " ", id: " fallback " }]), [
+    "fallback",
+  ]);
 });
 
 test("cross-page loading supports offset, skip and page responses", async () => {
