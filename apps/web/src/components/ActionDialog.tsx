@@ -12,6 +12,7 @@ import {
 } from "../../../../packages/api-client/contract.mjs";
 import { SchemaForm } from "./SchemaForm";
 import { TokenPermissionContext } from "./TokenPermissions";
+import { toolWriteBody } from "../tool-auth.mjs";
 
 export type Operation = JsonRecord & { path: string; method: string };
 function requestDefaults(
@@ -176,7 +177,12 @@ export function ActionDialog({
         );
         extraHeaders.set("Content-Type", contentType);
       } else if (contentType) {
-        body = JSON.stringify(value);
+        body = JSON.stringify(
+          ["POST", "PUT", "PATCH"].includes(operation.method) &&
+            /^\/v1\/tools(?:\/\{[^}]+\})?\/?$/.test(operation.path)
+            ? toolWriteBody(value, en)
+            : value,
+        );
         extraHeaders.set("Content-Type", contentType);
       }
       if (streaming || value.stream === true) {

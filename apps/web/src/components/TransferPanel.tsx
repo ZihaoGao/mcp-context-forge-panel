@@ -1,4 +1,5 @@
 import { WorkflowDialog } from "./WorkflowDialog";
+import { toolWriteBody } from "../tool-auth.mjs";
 import { useState } from "react";
 import {
   request,
@@ -263,7 +264,7 @@ export function TransferPanel({
               encodeURIComponent(String(register ? row.catalog_id : row.name)),
             ),
             create!.method,
-            payload(row),
+            tools ? toolWriteBody(payload(row), en) : payload(row),
           );
           if (result?.access_token)
             setIssued((prev) => [

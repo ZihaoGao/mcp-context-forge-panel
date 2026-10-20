@@ -1,4 +1,5 @@
 import { resolveSchema } from "../../../packages/api-client/contract.mjs";
+import { toolAuthenticationProblems } from "./tool-auth.mjs";
 
 // Each resource has a different first task. Keep these choices explicit rather
 // than exposing every API property as a required-looking field.
@@ -56,6 +57,7 @@ export const resourceProfiles = {
       "request_type",
       "inputSchema",
       "outputSchema",
+      "auth",
       "visibility",
       "team_id",
     ],
@@ -381,7 +383,14 @@ export function enrichField(key, original, spec) {
 }
 
 /** Shared by forms and import preview; never send a row with known invalid data. */
-export function validateValue(value, original, spec, path = "", en = false) {
+export function validateValue(
+  value,
+  original,
+  spec,
+  path = "",
+  en = false,
+  context = {},
+) {
   const t = (zh, english) => (en ? english : zh);
   let schema = resolveSchema(original, spec);
   const errors = [];
@@ -447,12 +456,22 @@ export function validateValue(value, original, spec, path = "", en = false) {
       else if (schema.additionalProperties === false)
         errors.push(t(`${key}：不支持的字段`, `${key}: unsupported field`));
     }
-    if (value.visibility === "team" && !value.team_id && !value.teamId)
+    if (
+      value.visibility === "team" &&
+      !value.team_id &&
+      !value.teamId &&
+      !context.teamId
+    )
       errors.push(
-        t(
-          "团队可见资源必须选择所属团队",
-          "Team-visible resources require a team",
-        ),
+        context.teamReadOnly
+          ? t(
+              "此工具未分配团队，当前接口不支持更换所属团队；请选择 private 或 public。",
+              "This tool has no assigned team and this endpoint cannot change its team; choose private or public.",
+            )
+          : t(
+              "团队可见资源必须选择所属团队",
+              "Team-visible resources require a team",
+            ),
       );
     if (
       value.scope === "team" &&
@@ -466,6 +485,8 @@ export function validateValue(value, original, spec, path = "", en = false) {
         ),
       );
     const auth = value.authType || value.auth_type;
+    if (schema.title === "AuthenticationValues")
+      errors.push(...toolAuthenticationProblems(value, en));
     const needed =
       auth === "basic"
         ? ["authUsername", "auth_username", "authPassword", "auth_password"]

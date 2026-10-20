@@ -53,6 +53,12 @@ Trace ID 读取 `trace_id`，可用键盘进入详情和复制；Span 操作名�
 
 ### 工具接入与 REST 定义
 
+REST 工具的认证放在主要配置中，支持 Basic、Bearer 和自定义请求头；按方式显示所需输入，切换方式会清除旧输入，凭据不完整时阻止提交。编辑时显示当前认证方式，GET 返回的掩码、密文和明文用户名均不回填到凭据输入。保持认证选项空白会保留已有凭据；明确选择 `none` 才清除认证。旧版前端曾把凭据写入读取用的嵌套字段，已受影响的工具需要重新输入凭据并保存。
+
+v1.0.11 的工具认证写入契约与 OpenAPI 展示的 `AuthenticationValues` 读取结构有区别：创建时在 `tool` 内发送 `auth_type` 与对应的 `auth_username` / `auth_password`、`auth_token` 或 `auth_headers: [{key, value}]`；更新时发送在请求体根层。后端 `schemas.py` 的 `ToolCreate.assemble_auth` / `ToolUpdate.assemble_auth` 负责构造认证头和加密，前端不把嵌套 `username` / `password` / `token` 当作已编码认证写入。移除认证显式发送 `auth: {authType: "none", authValue: ""}`，因为只发送顶层 `auth_type: "none"` 不会清除已有配置。资源表单、接口工作台和 REST 导入共用写入映射。
+
+工具创建时可选所属团队；请求体的 `team_id` 与表单当前选择一致，不由顶部团队筛选覆盖。v1.0.11 `ToolUpdate` 不接受团队变更：编辑表单显示完整 GET 返回的既有团队并保持只读，以该归属校验 `team` 可见性，PUT 不夹带团队字段。未分配团队的工具不能在编辑时改为团队可见，界面禁用该选项并说明需在创建时指定团队。该流程不提供后端未支持的团队迁移。
+
 工具列表、手机卡片和工具详情提供「测试调用」，需要 `tools.read`、`tools.execute`，且完整详情与 `/rpc` 在运行时可用。打开时重新 GET 完整工具记录，使用后端发布的 `name` 和 `inputSchema`（兼容 `input_schema`），不把 `originalName` 当作调用名称，也不使用列表中的旧 Schema。读取失败、缺少 Schema 或工具停用时禁止调用。
 
 测试参数按独立 JSON Schema 渲染必填项、默认值、字符串、数值、整数、布尔、保留原类型的枚举、嵌套对象和数组；支持本地 `$defs` / `definitions` 引用。工具参数不套用控制台资源字段的权限、认证或可见性推断。联合类型、复杂组合、开放对象和深层递归字段保留 JSON 编辑，整个参数对象可随时切换 JSON 模式以填写额外字段。无效 JSON 不得提交旧的有效值。使用不依赖动态代码执行的 JSON Schema 校验器，兼容现有 CSP；不支持的 Schema 会明确提示交由后端完整校验，后端始终负责最终规则、权限与资源归属。

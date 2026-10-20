@@ -67,6 +67,12 @@ export function SchemaForm({
           ([key]) => s.required?.includes(key) || common.includes(key),
         );
   function update(key: string, next: unknown) {
+    if (s.title === "AuthenticationValues" && key === "authType") {
+      setDrafts({});
+      setErrors({});
+      onChange(next === undefined ? {} : { authType: next });
+      return;
+    }
     const copy = { ...value };
     if (key === "scope" && typeof next === "string" && s.properties?.role_id) {
       delete copy.role_id;
@@ -116,7 +122,12 @@ export function SchemaForm({
       {visible.map(([key, original]) => {
         const canonical = canonicalField(key);
         const field = enrichField(key, original, spec);
-        const required = s.required?.includes(key);
+        const required =
+          s.required?.includes(key) ||
+          (s.title === "AuthenticationValues" &&
+            ((value.authType === "basic" &&
+              ["username", "password"].includes(key)) ||
+              (value.authType === "bearer" && key === "token")));
         const complex =
           field.type === "object" || field.type === "array" || field.properties;
         const copy =
@@ -333,7 +344,13 @@ export function SchemaForm({
               >
                 <option value="">—</option>
                 {field.enum.map((option: any) => (
-                  <option key={option} value={option}>
+                  <option
+                    key={option}
+                    value={option}
+                    disabled={field["x-panel-disabled-values"]?.includes(
+                      option,
+                    )}
+                  >
                     {String(option)}
                     {key === "visibility"
                       ? (

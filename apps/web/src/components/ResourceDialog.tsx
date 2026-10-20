@@ -30,6 +30,7 @@ import {
 } from "../resource-copy.mjs";
 import { associationEndpoints } from "../association-model.mjs";
 import { restToolProblems } from "../tool-workflows.mjs";
+import { toolEditContext, toolWriteBody } from "../tool-auth.mjs";
 import { GatewayRegistrationResult } from "./GatewayRegistrationResult";
 export { resourceActionName } from "../resource-actions.mjs";
 
@@ -336,6 +337,12 @@ export function ResourceDialog({
   );
   const [confirmed, setConfirmed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [toolContext, setToolContext] = useState<JsonRecord>();
+  const toolTeamReadOnly =
+    moduleId === "tools" &&
+    mode === "edit" &&
+    !schema.properties?.team_id &&
+    !schema.properties?.teamId;
   const [permissionMode, setPermissionMode] = useState(
     initial?.scope?.permissions?.length ? "custom" : "inherit",
   );
@@ -392,6 +399,7 @@ export function ResourceDialog({
           if (mode === "detail") setResult(data);
           else {
             const source = data?.[wrapper || ""] || data;
+            if (moduleId === "tools") setToolContext(toolEditContext(source));
             const normalized: JsonRecord = {};
             for (const key of Object.keys(schema.properties || {})) {
               const v = readField(source, key);
@@ -459,13 +467,20 @@ export function ResourceDialog({
                   ...schema.properties[k],
                   enum: ["GET", "POST", "PUT", "DELETE", "PATCH"],
                 }
-              : schema.properties[k],
+              : toolTeamReadOnly && k === "visibility" && !toolContext?.teamId
+                ? {
+                    ...schema.properties[k],
+                    "x-panel-disabled-values": ["team"],
+                  }
+                : schema.properties[k],
         ]),
     ),
     required: schema.required?.filter((k: string) => keys.includes(k)),
   });
   const advancedKeys = Object.keys(schema.properties || {}).filter(
-    (k) => !primaryKeys.includes(k),
+    (k) =>
+      !primaryKeys.includes(k) &&
+      !(moduleId === "tools" && ["auth_headers", "authHeaders"].includes(k)),
   );
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -475,15 +490,26 @@ export function ResourceDialog({
       for (const [key, original] of Object.entries(loadedAssociations.current))
         if (JSON.stringify(value[key]) === JSON.stringify(original))
           delete submittedValue[key];
+    const selectedTeam =
+      schema.properties?.team_id || schema.properties?.teamId
+        ? readField(submittedValue, "team_id")
+        : team;
     const body = wrapper
       ? {
           [wrapper]: submittedValue,
-          ...(team && root.properties?.team_id ? { team_id: team } : {}),
+          ...(root.properties?.team_id && selectedTeam
+            ? { team_id: selectedTeam }
+            : {}),
         }
       : submittedValue;
     const problems = [
       ...validateValue(params, parameterSchema, spec, "", en),
-      ...(contentType ? validateValue(body, root, spec, "", en) : []),
+      ...(contentType
+        ? validateValue(body, root, spec, "", en, {
+            teamId: toolTeamReadOnly ? toolContext?.teamId : undefined,
+            teamReadOnly: toolTeamReadOnly,
+          })
+        : []),
       ...(restCreate ? restToolProblems(submittedValue, en) : []),
     ];
     if (
@@ -511,7 +537,11 @@ export function ResourceDialog({
     setBusy(true);
     try {
       let payload: BodyInit | undefined = contentType
-        ? JSON.stringify(body)
+        ? JSON.stringify(
+            moduleId === "tools" && ["create", "edit"].includes(mode)
+              ? toolWriteBody(body, en)
+              : body,
+          )
         : undefined;
       const headers: Record<string, string> = {};
       if (contentType === "application/x-www-form-urlencoded") {
@@ -603,6 +633,46 @@ export function ResourceDialog({
                     {t(
                       "未填写的凭据保持原值。选择认证方式并填写新凭据才会更换认证；选择 none 会移除认证。请求头与 OAuth 配置不回填；需要更换时请填写完整的新配置。",
                       "Blank credentials keep their current values. Choose an authentication method and enter new credentials to replace them; none removes authentication. Headers and OAuth configuration are not prefilled. Enter the complete configuration to replace them.",
+                    )}
+                  </p>
+                )}
+                {toolTeamReadOnly && (
+                  <label className="field full">
+                    <span>
+                      {t(
+                        "所属团队（创建时确定）",
+                        "Team (assigned on creation)",
+                      )}
+                    </span>
+                    <input
+                      aria-label="Tool team"
+                      readOnly
+                      value={
+                        toolContext?.teamName ||
+                        toolContext?.teamId ||
+                        t("未分配团队", "No team assigned")
+                      }
+                    />
+                    <small className="field-help">
+                      {toolContext?.teamId
+                        ? t(
+                            "此接口保留现有团队归属，不支持更换团队。",
+                            "This endpoint preserves the existing team assignment and cannot change it.",
+                          )
+                        : t(
+                            "未分配团队的工具不能改为团队可见。请在创建工具时选择团队。",
+                            "A tool without a team cannot become team-visible. Assign a team when creating it.",
+                          )}
+                    </small>
+                  </label>
+                )}
+                {moduleId === "tools" && mode === "edit" && (
+                  <p className="field-help">
+                    {t("当前认证方式", "Current authentication")}:{" "}
+                    <strong>{toolContext?.authType || "none"}</strong> ·{" "}
+                    {t(
+                      "凭据不回填；不修改认证选项会保留现有凭据。",
+                      "Credentials are not prefilled. Leave authentication unchanged to preserve them.",
                     )}
                   </p>
                 )}
