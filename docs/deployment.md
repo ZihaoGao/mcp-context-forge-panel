@@ -1,5 +1,18 @@
 # 部署与代理配置
 
+## 镜像构建代理
+
+Dockerfile 的两个阶段均支持 `http_proxy`、`https_proxy`、`no_proxy` 构建参数，供构建命令（包括两次 `npm ci`）读取为环境变量。按需传入：
+
+```sh
+docker build -f deploy/Dockerfile -t contextforge-panel:local \
+  --build-arg http_proxy=http://host.docker.internal:7890 \
+  --build-arg https_proxy=http://host.docker.internal:7890 \
+  --build-arg no_proxy=localhost,127.0.0.1,.internal .
+```
+
+代理地址需从构建容器内可达；示例中的 `host.docker.internal` 适用于 Docker Desktop 宿主机代理。这些参数不写入最终镜像的运行环境。`FROM` 基础镜像拉取使用的代理需在 Docker daemon / BuildKit 配置中设置。
+
 ## 公共前缀与后端前缀
 
 `APP_ROOT_PATH` 表示控制台服务的公共前缀，不要求与后端自己的 `APP_ROOT_PATH` 相同。代理始终剥离公共前缀一次，再添加 `BACKEND_URL` 的 pathname。
