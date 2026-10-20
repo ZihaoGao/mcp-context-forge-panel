@@ -6,6 +6,7 @@ import {
   inputDefaults,
   inputValidator,
   toolCall,
+  toolCallId,
   toolCallError,
 } from "../../apps/web/src/tool-test.mjs";
 
@@ -121,4 +122,35 @@ test("calls use the published invocation name and keep exact argument types", ()
     /execution error/,
   );
   assert.equal(toolCallError({ result: { content: [] } }), "");
+});
+
+test("request IDs work with or without Web Crypto and remain distinct at the same timestamp", (t) => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+  t.after(() => {
+    if (original) Object.defineProperty(globalThis, "crypto", original);
+    else delete globalThis.crypto;
+  });
+  const nativeCrypto = {
+    randomUUID() {
+      assert.equal(this, nativeCrypto);
+      return "native-request-id";
+    },
+  };
+  Object.defineProperty(globalThis, "crypto", {
+    configurable: true,
+    value: nativeCrypto,
+  });
+  assert.equal(toolCallId(), "native-request-id");
+  t.mock.method(Date, "now", () => 1234567890);
+  t.mock.method(Math, "random", () => 0.5);
+  const ids = [];
+  for (const crypto of [{}, undefined]) {
+    Object.defineProperty(globalThis, "crypto", {
+      configurable: true,
+      value: crypto,
+    });
+    for (let index = 0; index < 100; index++) ids.push(toolCallId());
+  }
+  assert.ok(ids.every((id) => typeof id === "string" && id.length > 0));
+  assert.equal(new Set(ids).size, ids.length);
 });

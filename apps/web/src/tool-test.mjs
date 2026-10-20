@@ -82,6 +82,17 @@ export function inputValidator(schema) {
   }
 }
 
+let fallbackRequestSequence = 0;
+
+/** Correlation IDs are not credentials and need no secure-context API. */
+export function toolCallId() {
+  const browserCrypto = globalThis.crypto;
+  if (typeof browserCrypto?.randomUUID === "function")
+    return browserCrypto.randomUUID();
+  fallbackRequestSequence += 1;
+  return `tool-${Date.now().toString(36)}-${fallbackRequestSequence.toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function toolCall(tool, args, id) {
   if (!tool.name || typeof tool.name !== "string")
     throw new Error("工具缺少调用名称 / Missing tool invocation name");

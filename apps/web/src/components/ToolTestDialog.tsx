@@ -14,6 +14,7 @@ import {
   inputValidator,
   toolSchema,
   toolCall,
+  toolCallId,
   toolCallError,
 } from "../tool-test.mjs";
 
@@ -83,7 +84,7 @@ export function ToolTestDialog({
     const control = new AbortController();
     controller.current = control;
     try {
-      const body = toolCall(tool, value, crypto.randomUUID());
+      const body = toolCall(tool, value, toolCallId());
       const errors = validation?.errors(value) || [];
       if (errors.length) throw new Error(errors.join("\n"));
       setBusy(true);

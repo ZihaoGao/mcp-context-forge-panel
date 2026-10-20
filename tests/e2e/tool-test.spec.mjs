@@ -391,3 +391,43 @@ test("disabled tools cannot execute and a missing runtime RPC endpoint hides the
     page.getByRole("button", { name: "测试调用", exact: true }),
   ).toHaveCount(0);
 });
+
+test("tool calls still submit when crypto.randomUUID is unavailable", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window.crypto, "randomUUID", {
+      value: undefined,
+      configurable: true,
+    });
+  });
+  const calls = await fixture(page, {
+    detail: { ...tool, inputSchema: { type: "object", properties: {} } },
+  });
+  expect(await page.evaluate(() => typeof window.crypto.randomUUID)).toBe(
+    "undefined",
+  );
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.getByRole("button", { name: "测试调用", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("arguments", { exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "调用工具", exact: true }).click();
+  await expect(dialog.locator(".result")).toContainText(
+    "fixture invocation result",
+  );
+  await dialog.getByRole("button", { name: "调用工具", exact: true }).click();
+  await expect.poll(() => calls.length).toBe(2);
+  await expect(dialog.locator(".result")).toContainText(
+    "fixture invocation result",
+  );
+  expect(calls[0].id).toEqual(expect.any(String));
+  expect(calls[0].id.length).toBeGreaterThan(0);
+  expect(calls[1].id).not.toBe(calls[0].id);
+  expect(calls.map((call) => call.params)).toEqual([
+    { name: tool.name, arguments: {} },
+    { name: tool.name, arguments: {} },
+  ]);
+  await expect(dialog.getByRole("alert")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
