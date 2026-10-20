@@ -6,6 +6,8 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { createPanelServer } from "../../apps/server/server.mjs";
 import { readConfig } from "../../apps/server/config.mjs";
+import { restToolExamples } from "../../apps/web/src/tool-workflows.mjs";
+import { Validator } from "@cfworker/json-schema";
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.resolve(".cache/browsers");
 const { chromium } = await import("@playwright/test");
@@ -18,14 +20,21 @@ const authSecrets = {
   bearer: { token: randomSecret() },
   custom: { key: randomSecret() },
 };
+const restAuthSecrets = {
+  basic: { username: randomSecret(), password: randomSecret() },
+  bearer: { token: randomSecret() },
+  custom: randomSecret(),
+};
 let expectedBearer = authSecrets.bearer.token;
 const invocations = [];
 const protectedCalls = [];
+const restRequests = [];
 const upstream = createServer(async (req, res) => {
   let text = "";
   for await (const chunk of req) text += chunk;
   const data = JSON.parse(text || "{}");
-  const pathname = new URL(req.url || "/", "http://127.0.0.1").pathname;
+  const requestUrl = new URL(req.url || "/", "http://127.0.0.1");
+  const pathname = requestUrl.pathname;
   if (pathname === "/echo") {
     invocations.push(data);
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -40,6 +49,63 @@ const upstream = createServer(async (req, res) => {
   }
 
   let authorized = false;
+  const examplePath =
+    pathname === "/products" ||
+    /^\/customers\/[^/]+\/orders$/.test(pathname) ||
+    /^\/orders\/[^/]+$/.test(pathname);
+  if (examplePath) {
+    if (pathname === "/products") {
+      authorized = req.headers["x-api-key"] === restAuthSecrets.custom;
+    } else if (pathname.startsWith("/customers/")) {
+      authorized =
+        req.headers.authorization === `Bearer ${restAuthSecrets.bearer.token}`;
+    } else {
+      const expected = `Basic ${Buffer.from(
+        `${restAuthSecrets.basic.username}:${restAuthSecrets.basic.password}`,
+      ).toString("base64")}`;
+      authorized = req.headers.authorization === expected;
+    }
+    restRequests.push({
+      method: req.method,
+      path: pathname,
+      query: Object.fromEntries(requestUrl.searchParams),
+      body: req.method === "GET" ? null : data,
+      authorized,
+    });
+    if (!authorized) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    if (pathname === "/products") {
+      res.end(
+        JSON.stringify({
+          products: [
+            {
+              id: "coffee-001",
+              name: "Coffee",
+              price: 12.5,
+              stock: 8,
+              internal_code: "inventory-a",
+            },
+            {
+              id: "tea-002",
+              name: "Tea",
+              price: 7,
+              stock: 14,
+              internal_code: "inventory-b",
+            },
+          ],
+          page: 1,
+          total: 2,
+        }),
+      );
+    } else {
+      res.end(JSON.stringify({ accepted: true }));
+    }
+    return;
+  }
   if (pathname === "/auth/basic") {
     const expected = `Basic ${Buffer.from(
       `${authSecrets.basic.username}:${authSecrets.basic.password}`,
@@ -73,7 +139,7 @@ const panel = createPanelServer(
 );
 panel.listen(3002, "127.0.0.1");
 await once(panel, "listening");
-let browser, cookie, tokenId, teamId;
+let browser, cookie, tokenId, executeTokenId, teamId;
 const toolIds = new Set();
 async function api(url, method = "GET", body) {
   const response = await fetch(root + url, {
@@ -107,6 +173,19 @@ const noTeamKey = (value) => {
       !["team_id", "teamId"].includes(key) && noTeamKey(nested),
   );
 };
+function toolOutputFromRpc(payload) {
+  const result = payload.result;
+  if (result?.structuredContent !== undefined) return result.structuredContent;
+  for (const item of result?.content || []) {
+    if (item.type !== "text" || typeof item.text !== "string") continue;
+    try {
+      return JSON.parse(item.text);
+    } catch {
+      // Try another text item before reporting an invalid JSON tool result.
+    }
+  }
+  throw new Error("REST tool call did not return a JSON result");
+}
 
 try {
   await api("/_panel/login", "POST", {
@@ -505,6 +584,311 @@ try {
   );
   await invokeProtected(bearerCase.name, false);
 
+  safeCheck(
+    restToolExamples.length === 3 &&
+      restToolExamples.map((example) => example.id).join(",") ===
+        "search_products,create_order,update_order_status",
+    "The REST example catalog must contain the three supported workflows",
+  );
+  const exampleTools = restToolExamples.map((example) => {
+    const tool = structuredClone(example.tool);
+    tool.name = `tool_example_${example.id}_${randomUUID().slice(0, 8)}`;
+    tool.visibility = "public";
+    const rawPath = tool.url.replace(/^https?:\/\/[^/]+/, "");
+    tool.url = `http://127.0.0.1:${port}${rawPath}`;
+    if (example.id === "search_products")
+      tool.auth.authHeaders[0].value = restAuthSecrets.custom;
+    else if (example.id === "create_order")
+      tool.auth.token = restAuthSecrets.bearer.token;
+    else if (example.id === "update_order_status") {
+      tool.auth.username = restAuthSecrets.basic.username;
+      tool.auth.password = restAuthSecrets.basic.password;
+    }
+    return { ...example, tool };
+  });
+
+  const executeToken = await api("/v1/tokens", "POST", {
+    name: "tool-example-execute-" + randomUUID().slice(0, 8),
+    expires_in_days: 1,
+    scope: { permissions: ["tools.read", "tools.execute"] },
+  });
+  executeTokenId = executeToken.token.id;
+  safeCheck(
+    Boolean(executeToken.access_token),
+    "Could not create a scoped token for REST example execution",
+  );
+
+  await page.goto(root + "/app/#tools");
+  await page
+    .getByRole("button", { name: "REST 工具导入 / 导出", exact: true })
+    .click();
+  const transferDialog = page.getByRole("dialog");
+  await transferDialog.locator('input[type="file"]').setInputFiles({
+    name: "rest-examples.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        format: "contextforge-panel",
+        version: 1,
+        resource: "tools",
+        kind: "create",
+        records: exampleTools.map(({ tool }) => tool),
+      }),
+    ),
+  });
+  const approval = transferDialog.getByRole("checkbox", {
+    name: /确认创建以上资源/,
+  });
+  await approval.waitFor();
+  await approval.check();
+  const importResponses = [];
+  const collectImportResponse = (response) => {
+    if (
+      /\/v1\/tools\/?$/.test(new URL(response.url()).pathname) &&
+      response.request().method() === "POST"
+    )
+      importResponses.push(response);
+  };
+  page.on("response", collectImportResponse);
+  await transferDialog
+    .getByRole("button", { name: "确认导入", exact: true })
+    .click();
+  await transferDialog
+    .locator(".batch-results > div")
+    .nth(exampleTools.length - 1)
+    .waitFor();
+  page.off("response", collectImportResponse);
+  const importResults = await transferDialog
+    .locator(".batch-results > div")
+    .allTextContents();
+  safeCheck(
+    importResults.length === exampleTools.length &&
+      importResults.every((result) => result.includes("成功")),
+    "The browser import did not create all three REST examples",
+  );
+  safeCheck(
+    importResponses.length === exampleTools.length,
+    "Browser import did not issue exactly three REST tool create requests",
+  );
+  const imported = await Promise.all(
+    importResponses.map(async (response) => {
+      safeCheck(response.ok(), "A REST example create request failed");
+      return unwrap(await response.json());
+    }),
+  );
+  for (const createdTool of imported) {
+    safeCheck(Boolean(createdTool.id), "REST example create returned no ID");
+    toolIds.add(createdTool.id);
+  }
+  const endpointPath = (value) => {
+    if (typeof value !== "string") return null;
+    try {
+      const parsed = new URL(value);
+      return decodeURIComponent(parsed.pathname) + parsed.search;
+    } catch {
+      return null;
+    }
+  };
+  const importedByExample = new Map();
+  for (const createdTool of imported) {
+    const originalName =
+      createdTool.originalName ?? createdTool.original_name ?? null;
+    let example = exampleTools.find(
+      (candidate) =>
+        originalName === candidate.tool.name || originalName === candidate.id,
+    );
+    if (!example) {
+      const createdEndpoint = endpointPath(createdTool.url);
+      if (createdEndpoint)
+        example = exampleTools.find(
+          (candidate) => endpointPath(candidate.tool.url) === createdEndpoint,
+        );
+    }
+    safeCheck(
+      Boolean(example) && !importedByExample.has(example.id),
+      "Could not uniquely match an imported REST tool by original name or endpoint URL",
+    );
+    importedByExample.set(example.id, createdTool);
+  }
+  const savedByExample = new Map();
+  for (const example of exampleTools) {
+    const createdTool = importedByExample.get(example.id);
+    safeCheck(
+      Boolean(createdTool),
+      "A REST example was not found after import",
+    );
+    const savedTool = unwrap(
+      await api(`/v1/tools/${encodeURIComponent(createdTool.id)}`),
+    );
+    safeCheck(
+      typeof savedTool.name === "string" && savedTool.name.length > 0,
+      `${example.id} detail response returned no callable tool name`,
+    );
+    savedByExample.set(example.id, savedTool);
+    safeCheck(
+      authTypeOf(savedTool) === example.tool.auth.authType,
+      `${example.id} authentication type was not persisted`,
+    );
+    if (example.id === "search_products") {
+      assert.deepEqual(
+        savedTool.outputSchema ?? savedTool.output_schema,
+        example.tool.outputSchema,
+        "GET outputSchema did not persist from the REST example",
+      );
+      safeCheck(
+        (savedTool.jsonpath_filter ?? savedTool.jsonpathFilter) ===
+          example.tool.jsonpath_filter,
+        "GET jq filter did not persist from the REST example",
+      );
+    }
+  }
+  await transferDialog
+    .getByRole("button", { name: "关闭", exact: true })
+    .click();
+
+  async function callImportedTool(name, args) {
+    const response = await fetch(root + "/rpc", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${executeToken.access_token}`,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "rest-example-" + randomUUID(),
+        method: "tools/call",
+        params: { name, arguments: args },
+      }),
+    });
+    const payload = await response.json();
+    safeCheck(
+      response.status === 200,
+      `${name} RPC call did not return HTTP 200`,
+    );
+    let errorMessage = String(
+      payload.error?.message ||
+        payload.result?.content?.find((item) => item.type === "text")?.text ||
+        "Unspecified tool error",
+    );
+    for (const secret of [
+      restAuthSecrets.custom,
+      restAuthSecrets.bearer.token,
+      restAuthSecrets.basic.username,
+      restAuthSecrets.basic.password,
+      Buffer.from(
+        `${restAuthSecrets.basic.username}:${restAuthSecrets.basic.password}`,
+      ).toString("base64"),
+      executeToken.access_token,
+    ])
+      errorMessage = errorMessage.replaceAll(secret, "[redacted]");
+    safeCheck(
+      !payload.error && payload.result?.isError !== true,
+      `${name} RPC call returned an error: ${errorMessage.slice(0, 600)}`,
+    );
+    return payload;
+  }
+
+  const upstreamProducts = [
+    {
+      id: "coffee-001",
+      name: "Coffee",
+      price: 12.5,
+      stock: 8,
+      internal_code: "inventory-a",
+    },
+    {
+      id: "tea-002",
+      name: "Tea",
+      price: 7,
+      stock: 14,
+      internal_code: "inventory-b",
+    },
+  ];
+  for (const example of exampleTools) {
+    const before = restRequests.length;
+    const payload = await callImportedTool(
+      savedByExample.get(example.id).name,
+      example.arguments,
+    );
+    safeCheck(
+      restRequests.length === before + 1,
+      `${example.id} did not call the local REST upstream exactly once`,
+    );
+    const observed = restRequests.at(-1);
+    const pathParameters = [...example.tool.url.matchAll(/\{([^{}]+)\}/g)].map(
+      (match) => match[1],
+    );
+    const expectedPath = example.tool.url
+      .replace(/^https?:\/\/[^/]+/, "")
+      .replace(/\{([^{}]+)\}/g, (_placeholder, key) =>
+        encodeURIComponent(String(example.arguments[key])),
+      );
+    const expectedBody =
+      example.tool.request_type === "GET"
+        ? null
+        : Object.fromEntries(
+            Object.entries(example.arguments).filter(
+              ([key]) => !pathParameters.includes(key),
+            ),
+          );
+    const expectedQuery =
+      example.tool.request_type === "GET"
+        ? Object.fromEntries(
+            Object.entries(example.arguments).map(([key, value]) => [
+              key,
+              String(value),
+            ]),
+          )
+        : {};
+    assert.deepEqual(observed, {
+      method: example.tool.request_type,
+      path: expectedPath,
+      query: expectedQuery,
+      body: expectedBody,
+      authorized: true,
+    });
+    if (example.tool.request_type !== "GET")
+      safeCheck(
+        pathParameters.every((key) => !Object.hasOwn(observed.body, key)),
+        `${example.id} duplicated a path parameter in its JSON body`,
+      );
+    if (example.id === "search_products") {
+      const filteredOutput = toolOutputFromRpc(payload);
+      assert.deepEqual(filteredOutput, [
+        { id: "coffee-001", name: "Coffee", price: 12.5 },
+        { id: "tea-002", name: "Tea", price: 7 },
+      ]);
+      const outputValidator = new Validator(
+        example.tool.outputSchema,
+        "2020-12",
+        false,
+      );
+      safeCheck(
+        outputValidator.validate(filteredOutput).valid,
+        "GET jq output does not conform to its outputSchema",
+      );
+    }
+  }
+  safeCheck(
+    !restAuthSecrets.custom ||
+      !restRequests.some((request) =>
+        JSON.stringify(request).includes(restAuthSecrets.custom),
+      ),
+    "Sanitized REST request report contains the API Key",
+  );
+  safeCheck(
+    !restRequests.some((request) =>
+      JSON.stringify(request).includes(restAuthSecrets.bearer.token),
+    ) &&
+      !restRequests.some((request) =>
+        JSON.stringify(request).includes(restAuthSecrets.basic.username),
+      ) &&
+      !restRequests.some((request) =>
+        JSON.stringify(request).includes(restAuthSecrets.basic.password),
+      ),
+    "Sanitized REST request report contains authentication credentials",
+  );
+
   const teamToolName = `tool_team_${randomUUID().slice(0, 8)}`;
   const teamTool = await createBrowserTool({
     toolName: teamToolName,
@@ -554,12 +938,17 @@ try {
       "Unrelated browser edits preserved live credentials for all auth methods",
       "Bearer credentials could be replaced and explicitly cleared",
       "Cleared Bearer credentials no longer authorize the protected endpoint",
+      "Browser imported all three catalog REST examples with runtime credentials",
+      "GET query, custom-header auth, jq output, and outputSchema were verified through /rpc",
+      "POST and PATCH replaced path parameters, preserved nested JSON types, and used Bearer/Basic auth",
+      "Each example reached the local upstream exactly once; reports retain no credentials",
       "Browser assigned a real team on create and changed visibility without submitting team_id on update",
     ],
     protectedCalls: protectedCalls.map(({ path, authorized }) => ({
       path,
       authorized,
     })),
+    restRequests,
     boundary:
       "Local controlled REST upstream only; no external MCP/A2A credentials or providers tested",
   };
@@ -571,6 +960,11 @@ try {
 } finally {
   for (const id of toolIds)
     await api("/v1/tools/" + encodeURIComponent(id), "DELETE").catch(() => {});
+  if (executeTokenId)
+    await api(
+      "/v1/tokens/" + encodeURIComponent(executeTokenId),
+      "DELETE",
+    ).catch(() => {});
   if (tokenId)
     await api("/v1/tokens/" + encodeURIComponent(tokenId), "DELETE").catch(
       () => {},

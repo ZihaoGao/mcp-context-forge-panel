@@ -2,10 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
-  restToolTemplate,
+  restToolExamples,
   restToolProblems,
   isLocalRestTool,
 } from "../../apps/web/src/tool-workflows.mjs";
+import { toolWriteBody } from "../../apps/web/src/tool-auth.mjs";
+import {
+  inputValidator,
+  inputDefaults,
+} from "../../apps/web/src/tool-test.mjs";
 import {
   resourceBody,
   portableRecord,
@@ -27,8 +32,97 @@ const { root, schema, wrapper } = resourceBody(
   spec.paths["/v1/tools"].post.requestBody.content["application/json"].schema,
   spec,
 );
+const restToolTemplate = restToolExamples[1].tool;
 
-test("REST example is a valid creation payload with a meaningful HTTP input", () => {
+test("REST examples are valid ToolCreate records with valid invocation arguments", () => {
+  assert.deepEqual(
+    restToolExamples.map((example) => example.id),
+    ["search_products", "create_order", "update_order_status"],
+  );
+
+  for (const example of restToolExamples) {
+    assert.deepEqual(
+      validateValue(
+        wrapper ? { [wrapper]: example.tool } : example.tool,
+        root,
+        spec,
+      ),
+      [],
+      `${example.id} must satisfy the /v1/tools ToolCreate schema`,
+    );
+    assert.deepEqual(restToolProblems(example.tool), [], example.id);
+    assert.deepEqual(
+      inputValidator(example.tool.inputSchema).errors(example.arguments),
+      [],
+      `${example.id} arguments must satisfy inputSchema`,
+    );
+  }
+
+  const update = restToolExamples.find(
+    (example) => example.id === "update_order_status",
+  );
+  const noteSchema = update.tool.inputSchema.properties.note;
+  assert.equal(update.tool.inputSchema.required.includes("note"), false);
+  assert.equal(noteSchema.default, undefined);
+  const omittedNote = { ...update.arguments };
+  delete omittedNote.note;
+  assert.deepEqual(
+    inputValidator(update.tool.inputSchema).errors(omittedNote),
+    [],
+  );
+  assert.equal(
+    Object.hasOwn(inputDefaults(update.tool.inputSchema), "note"),
+    false,
+  );
+});
+
+test("REST example credentials map to backend auth fields and stay out of portable exports", () => {
+  for (const example of restToolExamples) {
+    const { tool } = example;
+    const written = toolWriteBody(tool);
+    const auth = tool.auth;
+    assert.equal(written.auth_type, auth.authType, example.id);
+    assert.equal(Object.hasOwn(written, "auth"), false, example.id);
+
+    if (auth.authType === "authheaders") {
+      const expectedHeaders = auth.authHeaders?.length
+        ? auth.authHeaders.map(({ key, value }) => ({ key: key.trim(), value }))
+        : [{ key: auth.authHeaderKey.trim(), value: auth.authHeaderValue }];
+      assert.deepEqual(written.auth_headers, expectedHeaders, example.id);
+    } else if (auth.authType === "bearer") {
+      assert.equal(written.auth_token, auth.token, example.id);
+    } else if (auth.authType === "basic") {
+      assert.equal(written.auth_username, auth.username, example.id);
+      assert.equal(written.auth_password, auth.password, example.id);
+    }
+
+    const portable = portableRecord(tool, schema, spec);
+    const serialized = JSON.stringify(portable);
+    assert.equal(Object.hasOwn(portable, "auth"), false, example.id);
+    for (const key of [
+      "auth_headers",
+      "auth_token",
+      "auth_username",
+      "auth_password",
+    ])
+      assert.equal(
+        Object.hasOwn(portable, key),
+        false,
+        `${example.id}: ${key}`,
+      );
+    for (const value of [
+      auth.authHeaderValue,
+      auth.authHeaders?.[0]?.value,
+      auth.token,
+      auth.username,
+      auth.password,
+    ]) {
+      if (value) assert.equal(serialized.includes(value), false, example.id);
+    }
+  }
+});
+
+test("REST example remains a valid creation payload with a meaningful HTTP input", () => {
   assert.deepEqual(
     validateValue(
       wrapper ? { [wrapper]: restToolTemplate } : restToolTemplate,
@@ -38,7 +132,7 @@ test("REST example is a valid creation payload with a meaningful HTTP input", ()
     [],
   );
   assert.deepEqual(restToolProblems(restToolTemplate), []);
-  assert.equal(restToolTemplate.inputSchema.required[0], "order_id");
+  assert.equal(restToolTemplate.inputSchema.required[0], "customer_id");
   assert.equal(restToolTemplate.integration_type, "REST");
   assert.equal(restToolTemplate.request_type, "POST");
 });

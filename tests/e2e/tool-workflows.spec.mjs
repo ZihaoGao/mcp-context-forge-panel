@@ -1,6 +1,7 @@
 import { test, expect, request } from "@playwright/test";
 import { mkdir, readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
+import { restToolExamples } from "../../apps/web/src/tool-workflows.mjs";
 
 const credentials = JSON.parse(
   await readFile(".cache/test-credentials.json", "utf8"),
@@ -469,14 +470,57 @@ test("tool transfer separates REST definitions from snapshots and blocks MCP/A2A
 
   const [templateDownload] = await Promise.all([
     page.waitForEvent("download"),
-    dialog.getByRole("button", { name: /模板/ }).click(),
+    dialog
+      .getByRole("button", {
+        name: /下载 REST 示例模板|Download REST example template/,
+      })
+      .click(),
   ]);
-  const template = JSON.parse(
-    await readFile(await templateDownload.path(), "utf8"),
+  const templateBuffer = await readFile(await templateDownload.path());
+  const template = JSON.parse(templateBuffer.toString("utf8"));
+  expect(template.records.map((item) => item.name)).toEqual([
+    "search_products",
+    "create_order",
+    "update_order_status",
+  ]);
+  expect(template.records).toHaveLength(3);
+  expect(template.examples.map((item) => item.id)).toEqual(
+    restToolExamples.map((item) => item.id),
   );
-  expect(template.records[0].name).toBe("lookup_order");
-  expect(template.records[0].integration_type).toBe("REST");
-  expect(template.records[0].url).toContain("/orders/lookup");
+  for (const example of template.examples) {
+    expect(Object.hasOwn(example, "tool")).toBe(false);
+    expect(example.arguments).toEqual(
+      restToolExamples.find((item) => item.id === example.id).arguments,
+    );
+  }
+
+  const templateTools = Object.fromEntries(
+    template.records.map((tool) => [tool.name, tool]),
+  );
+  const authType = (tool) => tool.auth?.authType ?? tool.auth_type;
+  expect(templateTools.search_products.request_type).toBe("GET");
+  expect(templateTools.search_products.url).toContain("/products");
+  for (const query of ["keyword", "page", "page_size", "sort"])
+    expect(templateTools.search_products.inputSchema.properties).toHaveProperty(
+      query,
+    );
+  expect(authType(templateTools.search_products)).toBe("authheaders");
+  expect(templateTools.create_order.request_type).toBe("POST");
+  expect(templateTools.create_order.url).toContain(
+    "/customers/{customer_id}/orders",
+  );
+  expect(authType(templateTools.create_order)).toBe("bearer");
+  expect(templateTools.update_order_status.request_type).toBe("PATCH");
+  expect(templateTools.update_order_status.url).toContain("/orders/{order_id}");
+  expect(authType(templateTools.update_order_status)).toBe("basic");
+
+  await dialog.locator("input[type=file]").setInputFiles({
+    name: "rest-examples.json",
+    mimeType: "application/json",
+    buffer: templateBuffer,
+  });
+  await expect(dialog.locator("tbody tr")).toHaveCount(3);
+  expect(tools.writes).toEqual([]);
 
   const [definitionDownload] = await Promise.all([
     page.waitForEvent("download"),
@@ -491,6 +535,22 @@ test("tool transfer separates REST definitions from snapshots and blocks MCP/A2A
   expect(definitions.records.map((item) => item.name)).toEqual([
     "local-rest-tool",
   ]);
+  const definitionText = JSON.stringify(definitions);
+  for (const secret of [
+    "fixture-url-user",
+    "fixture-url-password",
+    "fixture-auth-user",
+    "fixture-auth-password",
+    "fixture-auth-token",
+  ])
+    expect(definitionText).not.toContain(secret);
+  for (const record of definitions.records) {
+    expect(Object.hasOwn(record, "auth")).toBe(false);
+    expect(Object.hasOwn(record, "auth_headers")).toBe(false);
+    expect(Object.hasOwn(record, "auth_token")).toBe(false);
+    expect(Object.hasOwn(record, "auth_username")).toBe(false);
+    expect(Object.hasOwn(record, "auth_password")).toBe(false);
+  }
   await expect(dialog).toContainText(/跳过.*2|2.*跳过/);
 
   const [snapshotDownload] = await Promise.all([
@@ -569,6 +629,47 @@ test("tool transfer separates REST definitions from snapshots and blocks MCP/A2A
   const confirm = dialog.getByRole("button", { name: /确认.*导入|Import/ });
   await expect(confirm).toBeDisabled();
   expect(tools.writes).toEqual([]);
+});
+
+test("REST examples stay readable in English at phone width", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await stubToolApi(page);
+  await login(page);
+  await page.goto(root + "/app/#tools");
+  await page.getByLabel("Change language").click();
+  await page
+    .getByRole("button", { name: /REST tool import \/ export/ })
+    .click();
+
+  const dialog = page.getByRole("dialog");
+  const instructions = dialog.locator("details").first();
+  await expect(instructions.locator("summary").first()).toHaveText(
+    "How to fill in the REST template",
+  );
+  await instructions.locator("summary").first().click();
+  const examples = instructions.locator("details");
+  await expect(examples).toHaveCount(3);
+
+  for (const example of restToolExamples) {
+    const details = examples.filter({ hasText: example.title.en });
+    await expect(details).toHaveCount(1);
+    await details.locator("summary").click();
+    await expect(details).toContainText(example.purpose.en);
+    await expect(details).toContainText(example.replace.en);
+    await expect(details).toContainText(example.tool.name);
+    for (const key of Object.keys(example.arguments))
+      await expect(details).toContainText(key);
+  }
+
+  const dimensions = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth,
+    body: document.body.scrollWidth,
+    viewport: innerWidth,
+  }));
+  expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1);
+  expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
 });
 
 for (const width of [1440, 390]) {

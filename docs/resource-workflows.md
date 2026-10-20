@@ -69,7 +69,15 @@ v1.0.11 的工具认证写入契约与 OpenAPI 展示的 `AuthenticationValues` 
 
 工具页的「接入 MCP 服务」进入 `#gateways?connect=1` 并立即打开现有网关创建弹窗，消费创建意图后清除 URL 参数；入口按网关创建权限和接口可用性显示，不额外要求网关读取权限。连接错误保留配置以便修正，成功返回网关后按后端 `status`、`reachable` 展示已连接、等待发现或尚未就绪，不能把异步登记当成发现成功。发现数量通过完整分页工具清单按网关 ID 统计；接口声明支持时发送 `gateway_id` 缩小范围，并在客户端按精确 ID 再过滤，只代表当前账户可读取的数据。读取失败不显示零值。有网关读取能力时可以手动刷新，先 GET 网关详情再读取清单，不额外执行写入或自动重注册。「查看发现的工具」返回 `#tools?gateway=<ID>`，按精确来源 ID 跨页筛选；该条件也用于批选和导出，且可以单独清除。没有工具读取能力时不读取清单，也不提供返回工具的按钮。连接与发现均不证明实际工具调用成功。
 
-「创建 REST 工具」与「REST 工具导入 / 导出」只创建本地 REST HTTP 工具；创建表单不提供 MCP / A2A 类型或上游网关绑定。导入仍使用下文 `contextforge-panel` version 1、`resource: tools` 的包裹格式，兼容已有本地 REST 定义与未显式指定类型的旧记录（按 REST / POST 补齐）。模板使用 `lookup_order` 的 POST JSON 示例，解释 URL、HTTP 方法、`inputSchema` 与 `records` 的关系；它不是 OpenAPI / Swagger 文档，也不是 MCP 客户端配置。预检查拦截 MCP / A2A 类型、来源网关 / gRPC 关联、非 HTTP 请求方法与缺失 URL，不能通过 `allow_auto` 绕过类型限制。混合文件逐行报告问题，修正前不执行任何创建请求。
+「创建 REST 工具」与「REST 工具导入 / 导出」只创建本地 REST HTTP 工具；创建表单不提供 MCP / A2A 类型或上游网关绑定。导入仍使用下文 `contextforge-panel` version 1、`resource: tools` 的包裹格式，兼容已有本地 REST 定义与未显式指定类型的旧记录（按 REST / POST 补齐）。模板包含以下三个综合示例，页面分别提供用途、需要替换的字段、完整工具定义和调用参数；下载文件的 `records` 仅含工具配置，顶层 `examples` 保存说明及调用参数，不会作为工具字段提交。只保留需要的记录，使用前替换 URL 与认证占位符。预检查拦截 MCP / A2A 类型、来源网关 / gRPC 关联、非 HTTP 请求方法与缺失 URL，不能通过 `allow_auto` 绕过类型限制。混合文件逐行报告问题，修正前不执行任何创建请求。
+
+| 示例                  | 请求与认证                                          | 参数与响应                                                                                                                   |
+| --------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `search_products`     | GET `/products`，自定义 `X-API-Key` 请求头          | 动态 query：关键词、页码、分页大小、排序；必填、默认值、枚举与数值边界；jq 逐项提取产品字段，`outputSchema` 校验匹配结果数组 |
+| `create_order`        | POST `/customers/{customer_id}/orders`，Bearer 认证 | `customer_id` 替换路径并从 body 移除；剩余 JSON 含商品数组、数量、嵌套地址和加急布尔值                                       |
+| `update_order_status` | PATCH `/orders/{order_id}`，Basic 认证              | `order_id` 替换路径；JSON body 发送状态枚举及可选备注，省略备注与发送空字符串不同                                            |
+
+`inputSchema` 描述调用参数，参数中包含 URL 的 `{name}` 占位符。GET 的剩余参数进入 query，POST / PATCH 的剩余参数进入 JSON body。调用参数示例显式给出所需默认值；JSON Schema 的 `default` 不保证由后端自动填入。`jsonpath_filter` 是后端沿用的字段名，实际填写 jq 表达式；后端将 jq 匹配结果收集为数组，因此示例用 `.products[] | {id, name, price}` 逐项生成结果，并用数组类型的 `outputSchema` 校验。模板的本地预检查不证明端点、认证或工具调用成功；它也不是 OpenAPI / Swagger 或 MCP 客户端配置。
 
 REST 定义导出仅包含本地 REST 工具，混合范围跳过服务管理工具并明确报告数量；没有合适记录时提示改用快照，不输出空的可创建包。独立「导出工具清单快照」覆盖所有类型，标记 `kind: snapshot`，经过脱敏且禁止作为创建配置导入。两种导出均支持已选 / 当前页和跨页全部匹配项。REST 定义排除凭据，需要重新配置认证；MCP 服务备份与迁移使用系统设置的原生流程迁移网关配置，再由网关发现工具，不逐项重建发现记录。
 

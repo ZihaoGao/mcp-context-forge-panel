@@ -25,7 +25,7 @@ import type { Operation } from "./ActionDialog";
 import {
   isLocalRestTool,
   restToolProblems,
-  restToolTemplate,
+  restToolExamples,
 } from "../tool-workflows.mjs";
 
 function sample(schema: JsonRecord, spec: JsonRecord, key = ""): any {
@@ -114,8 +114,8 @@ export function TransferPanel({
     kind,
     notes: tools
       ? t(
-          "REST 定义仅用于创建本地 REST 工具；snapshot 仅为工具清单，不能恢复 MCP 连接。不包含凭据，导入后需重新配置认证。MCP 迁移请使用系统设置的原生配置迁移。",
-          "REST definitions create local REST tools only. Snapshots are inventories and cannot restore MCP connections. Credentials are excluded; reconfigure authentication after import. Use native configuration migration in Settings for MCP services.",
+          "REST 定义仅用于创建本地 REST 工具；snapshot 仅为工具清单，不能恢复 MCP 连接。导出会移除认证；模板只含认证占位符，使用前请替换。MCP 迁移请使用系统设置的原生配置迁移。",
+          "REST definitions create local REST tools only. Snapshots are inventories and cannot restore MCP connections. Exports remove authentication; templates contain placeholders to replace before use. Use native configuration migration in Settings for MCP services.",
         )
       : `不包含明文凭据。关联 ID 仅适用于原环境；跨环境请重新选择。${updateExisting ? "导入修改已安装插件的运行模式。" : register ? "导入注册目录中的现有服务。" : "导入只创建，不覆盖已有项。"}`,
     records: items,
@@ -394,32 +394,43 @@ export function TransferPanel({
           onClick={() =>
             downloadJson(`${moduleId}-template.json`, {
               ...envelope(
-                [
-                  writable
-                    ? tools
-                      ? restToolTemplate
-                      : {
-                          ...sample(schema, spec),
-                          ...(profile?.defaults || {}),
-                          ...(updateExisting
-                            ? { name: "已安装插件名称" }
-                            : register
-                              ? { catalog_id: "目录服务 ID" }
-                              : {}),
-                        }
-                    : {},
-                ],
+                tools && writable
+                  ? restToolExamples.map((example) => example.tool)
+                  : [
+                      writable
+                        ? {
+                            ...sample(schema, spec),
+                            ...(profile?.defaults || {}),
+                            ...(updateExisting
+                              ? { name: "已安装插件名称" }
+                              : register
+                                ? { catalog_id: "目录服务 ID" }
+                                : {}),
+                          }
+                        : {},
+                    ],
                 writable ? "create" : "snapshot",
               ),
               instructions:
                 tools && writable
                   ? t(
-                      "这是本面板的 REST 工具定义格式，不是 OpenAPI 文档或 MCP 客户端连接配置。示例 lookup_order 使用 POST 发送包含 order_id 的 JSON 请求。将 url 改为真实 REST API 地址，按接口修改 inputSchema；先完成本地预检查，再确认创建。预检查不验证端点连接、认证或工具调用。",
-                      "This is the panel’s REST tool definition format, not an OpenAPI document or MCP client configuration. lookup_order POSTs a JSON body containing order_id. Replace url with your REST API endpoint and adapt inputSchema. Preview before confirming creation. Local checks do not verify connectivity, authentication or execution.",
+                      "records 包含搜索商品 GET、创建订单 POST、修改订单 PATCH 三个综合示例。只保留需要的记录，替换 URL 和认证占位符。examples 提供用途、需替换字段和调用参数，不作为工具配置导入。jsonpath_filter 填写 jq 表达式，outputSchema 匹配过滤后的结果。先预检查，再确认创建；预检查不验证连接、认证或调用。",
+                      "records contains three examples: product search GET, order creation POST and order update PATCH. Keep the records you need and replace URLs and authentication placeholders. examples contains purpose, replacement guidance and call arguments, not tool configuration. jsonpath_filter uses jq; outputSchema matches the filtered result. Preview before confirming creation; local checks do not verify connectivity, authentication or execution.",
                     )
                   : writable
                     ? "编辑 records 数组中的字段，保存后选择文件预检查。不要把生产凭据提交到 Git。"
                     : "此栏目没有可创建资源的后端接口。可导入快照在本地查看，不会写入后端。",
+              ...(tools && writable
+                ? {
+                    examples: restToolExamples.map((example) => ({
+                      id: example.id,
+                      title: t(example.title.zh, example.title.en),
+                      purpose: t(example.purpose.zh, example.purpose.en),
+                      replace: t(example.replace.zh, example.replace.en),
+                      arguments: example.arguments,
+                    })),
+                  }
+                : {}),
             })
           }
         >
@@ -435,11 +446,26 @@ export function TransferPanel({
           </summary>
           <p className="field-help">
             {t(
-              "模板示例按 order_id 查询订单：将 url 换成你的 API 地址，选择 request_type，并用 inputSchema 描述请求参数。records 中每项创建一个 REST 工具；不支持直接上传 OpenAPI / Swagger 文档或 MCP 客户端配置。",
-              "The example looks up an order by order_id: replace url with your API address, select request_type and describe request parameters in inputSchema. Each records entry creates one REST tool. OpenAPI / Swagger documents and MCP client configurations are not accepted.",
+              "三个示例分别组合 GET query + API Key、POST path / body + Bearer、PATCH path / body + Basic。records 中每项创建一个 REST 工具；examples 是说明与调用参数。只保留需要的记录，替换 URL 与认证占位符后预检查。jsonpath_filter 使用 jq，outputSchema 描述过滤后的响应。",
+              "The three examples combine GET query + API Key, POST path / body + Bearer, and PATCH path / body + Basic. Each records entry creates one REST tool; examples contains guidance and call arguments. Keep the records you need, replace URLs and authentication placeholders, then preview. jsonpath_filter uses jq; outputSchema describes the filtered response.",
             )}
           </p>
-          <pre>{JSON.stringify(restToolTemplate, null, 2)}</pre>
+          {restToolExamples.map((example) => (
+            <details key={example.id}>
+              <summary>
+                {example.tool.request_type} ·{" "}
+                {t(example.title.zh, example.title.en)}
+              </summary>
+              <p>{t(example.purpose.zh, example.purpose.en)}</p>
+              <p className="field-help">
+                {t(example.replace.zh, example.replace.en)}
+              </p>
+              <h4>{t("工具定义", "Tool definition")}</h4>
+              <pre>{JSON.stringify(example.tool, null, 2)}</pre>
+              <h4>{t("调用参数示例", "Call arguments")}</h4>
+              <pre>{JSON.stringify(example.arguments, null, 2)}</pre>
+            </details>
+          ))}
         </details>
       )}
       {notice && (
