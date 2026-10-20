@@ -7,10 +7,12 @@ import { createPanelServer } from "../../apps/server/server.mjs";
 import { readConfig, normalizePrefix } from "../../apps/server/config.mjs";
 
 let upstream, panel, origin, lastRequest, browserCookie;
+let upstreamRequestCount = 0;
 let streamClosed;
 const publicOrigin = "http://localhost:3000";
 before(async () => {
   upstream = http.createServer(async (req, res) => {
+    upstreamRequestCount++;
     let body = "";
     for await (const chunk of req) body += chunk;
     lastRequest = { url: req.url, headers: req.headers, body };
@@ -169,6 +171,21 @@ test("browser session requires explicit opt-in; external bearer wins; panel cook
   ).json();
   assert.equal(external.headers.authorization, "Bearer external.jwt");
 });
+test("session metadata identifies interactive sessions and rejects unknown cookies", async () => {
+  const anonymous = await fetch(origin + "/forge/_panel/session");
+  assert.equal(anonymous.status, 401);
+
+  const session = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: browserCookie },
+  });
+  assert.equal(session.status, 200);
+  assert.deepEqual(await session.json(), { mode: "interactive" });
+
+  const unknown = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: "cf_panel_session=unknown-local-session" },
+  });
+  assert.equal(unknown.status, 401);
+});
 test("rejects cross-origin and missing-origin browser mutations before hitting backend", async () => {
   for (const source of ["", "https://attacker.example"]) {
     const r = await fetch(origin + "/forge/v1/tokens", {
@@ -269,11 +286,92 @@ test("logout clears cookie and revokes upstream session; refresh rotates without
   assert.equal(logout.status, 200);
   assert.match(logout.headers.get("set-cookie"), /Max-Age=0/);
   assert.equal(lastRequest.url, "/backend/v1/auth/logout");
-  assert.equal(lastRequest.headers.authorization, "Bearer signed.session.jwt");
+  assert.equal(
+    lastRequest.headers.authorization === "Bearer signed.session.jwt",
+    true,
+  );
   const replay = await fetch(origin + "/forge/v1/tools", {
     headers: { Cookie: headers.Cookie, "X-Panel-Request": "1" },
   });
   assert.equal(replay.status, 401);
+});
+test("token connection refresh and disconnect stay local, while the borrowed key can reconnect", async () => {
+  // This value intentionally resembles the JWT returned by the password-login
+  // fixture: all credentials supplied to token-login are borrowed credentials.
+  const borrowedToken = "signed.session.jwt";
+  const connect = () =>
+    fetch(origin + "/forge/_panel/token-login", {
+      method: "POST",
+      headers: { Origin: publicOrigin, "Content-Type": "application/json" },
+      body: JSON.stringify({ token: borrowedToken }),
+    });
+  const first = await connect();
+  assert.equal(first.status, 200);
+  const cookie = first.headers.get("set-cookie").split(";")[0];
+
+  const session = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: cookie },
+  });
+  assert.equal(session.status, 200);
+  assert.deepEqual(await session.json(), { mode: "token" });
+
+  const proxied = await fetch(origin + "/forge/v1/tools", {
+    headers: { Cookie: cookie, "X-Panel-Request": "1" },
+  });
+  assert.equal(proxied.status, 200);
+  const proxiedData = await proxied.json();
+  assert.equal(
+    proxiedData.headers.authorization === `Bearer ${borrowedToken}`,
+    true,
+  );
+
+  const requestCount = upstreamRequestCount;
+  const refresh = await fetch(origin + "/forge/_panel/refresh", {
+    method: "POST",
+    headers: { Origin: publicOrigin, Cookie: cookie },
+  });
+  assert.equal(refresh.status, 403);
+  assert.equal(upstreamRequestCount, requestCount);
+  const stillToken = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: cookie },
+  });
+  assert.equal(stillToken.status, 200);
+  assert.deepEqual(await stillToken.json(), { mode: "token" });
+
+  const beforeDisconnect = upstreamRequestCount;
+  const disconnect = await fetch(origin + "/forge/_panel/logout", {
+    method: "POST",
+    headers: { Origin: publicOrigin, Cookie: cookie },
+  });
+  assert.equal(disconnect.status, 200);
+  assert.match(disconnect.headers.get("set-cookie"), /Max-Age=0/);
+  assert.equal(upstreamRequestCount, beforeDisconnect);
+
+  const oldCookie = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: cookie },
+  });
+  assert.equal(oldCookie.status, 401);
+
+  const reconnected = await connect();
+  assert.equal(reconnected.status, 200);
+  const reconnectedCookie = reconnected.headers.get("set-cookie").split(";")[0];
+  const reconnectedSession = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: reconnectedCookie },
+  });
+  assert.equal(reconnectedSession.status, 200);
+  assert.deepEqual(await reconnectedSession.json(), { mode: "token" });
+
+  const beforeSecondDisconnect = upstreamRequestCount;
+  const secondDisconnect = await fetch(origin + "/forge/_panel/logout", {
+    method: "POST",
+    headers: { Origin: publicOrigin, Cookie: reconnectedCookie },
+  });
+  assert.equal(secondDisconnect.status, 200);
+  assert.equal(upstreamRequestCount, beforeSecondDisconnect);
+  const staleReconnect = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: reconnectedCookie },
+  });
+  assert.equal(staleReconnect.status, 401);
 });
 test("WebSocket upgrades retain public path mapping", async () => {
   const ws = new WebSocket(origin.replace("http:", "ws:") + "/forge/ws");
@@ -311,12 +409,27 @@ test("SSO callback creates an opaque session and redirects into the new console"
   const cookie = response.headers.get("set-cookie");
   assert.ok(cookie);
   assert.ok(!cookie.includes("signed.sso.jwt"));
+  const session = await fetch(origin + "/forge/_panel/session", {
+    headers: { Cookie: cookie.split(";")[0] },
+  });
+  assert.equal(session.status, 200);
+  assert.deepEqual(await session.json(), { mode: "interactive" });
   const data = await (
     await fetch(origin + "/forge/v1/tools", {
       headers: { Cookie: cookie.split(";")[0], "X-Panel-Request": "1" },
     })
   ).json();
-  assert.equal(data.headers.authorization, "Bearer signed.sso.jwt");
+  assert.equal(data.headers.authorization === "Bearer signed.sso.jwt", true);
+  const logout = await fetch(origin + "/forge/_panel/logout", {
+    method: "POST",
+    headers: { Origin: publicOrigin, Cookie: cookie.split(";")[0] },
+  });
+  assert.equal(logout.status, 200);
+  assert.equal(lastRequest.url === "/backend/v1/auth/logout", true);
+  assert.equal(
+    lastRequest.headers.authorization === "Bearer signed.sso.jwt",
+    true,
+  );
 });
 test("encoded private WebSocket routes are rejected", async () => {
   const ws = new WebSocket(

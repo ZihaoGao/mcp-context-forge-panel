@@ -46,7 +46,7 @@ results.push("Admin login through panel; JWT not exposed");
 const run = randomUUID().slice(0, 8);
 const email = `panel-user-${run}@example.com`;
 const password = fixturePassword();
-let serverId, tokenId, roleId, teamId;
+let serverId, tokenId, panelTokenId, roleId, teamId, userCookie;
 const user = await call("/v1/auth/email/admin/users", {
   method: "POST",
   cookie: admin.cookie,
@@ -65,6 +65,7 @@ try {
     body: { email, password },
   });
   assert.equal(login.status, 200, JSON.stringify(login.data));
+  userCookie = login.cookie;
   const me = await call("/v1/auth/email/me", { cookie: login.cookie });
   assert.equal(me.status, 200);
   assert.equal(me.data.is_admin, false);
@@ -214,6 +215,105 @@ try {
   });
   assert.equal(teamDenied.status, 403);
   results.push("Non-member denied access to private team members");
+
+  const serverScopedConnection = await call("/_panel/token-login", {
+    method: "POST",
+    body: { token: apiKey },
+  });
+  assert.equal(serverScopedConnection.status, 403);
+  const scopedKeyStillWorks = await call("/v1/servers/" + serverId, {
+    token: apiKey,
+  });
+  assert.equal(scopedKeyStillWorks.status, 200);
+  results.push("Server-scoped API key cannot use the panel identity endpoint");
+
+  const panelKey = await call("/v1/tokens", {
+    method: "POST",
+    cookie: login.cookie,
+    body: {
+      name: `panel-session-key-${run}`,
+      expires_in_days: 1,
+    },
+  });
+  assert.equal(panelKey.status, 201);
+  panelTokenId = panelKey.data.token.id;
+  const panelApiKey = panelKey.data.access_token;
+
+  const tokenConnection = await call("/_panel/token-login", {
+    method: "POST",
+    body: { token: panelApiKey },
+  });
+  assert.equal(tokenConnection.status, 200);
+  assert.ok(tokenConnection.cookie);
+  const tokenSession = await call("/_panel/session", {
+    cookie: tokenConnection.cookie,
+  });
+  assert.equal(tokenSession.status, 200);
+  assert.equal(tokenSession.data.mode, "token");
+
+  const tokenRefresh = await call("/_panel/refresh", {
+    method: "POST",
+    cookie: tokenConnection.cookie,
+  });
+  assert.equal(tokenRefresh.status, 403);
+  const afterRefresh = await call("/_panel/session", {
+    cookie: tokenConnection.cookie,
+  });
+  assert.equal(afterRefresh.status, 200);
+  assert.equal(afterRefresh.data.mode, "token");
+  const tokenManagementDenied = await call("/v1/tokens", {
+    cookie: tokenConnection.cookie,
+  });
+  assert.equal(tokenManagementDenied.status, 403);
+
+  const disconnected = await call("/_panel/logout", {
+    method: "POST",
+    cookie: tokenConnection.cookie,
+  });
+  assert.equal(disconnected.status, 200);
+  const staleTokenSession = await call("/_panel/session", {
+    cookie: tokenConnection.cookie,
+  });
+  assert.equal(staleTokenSession.status, 401);
+
+  const afterDisconnect = await call("/v1/servers/" + serverId, {
+    token: panelApiKey,
+  });
+  assert.equal(
+    afterDisconnect.status,
+    200,
+    JSON.stringify(afterDisconnect.data),
+  );
+  const keyCatalog = await call("/v1/tokens?include_inactive=true", {
+    cookie: login.cookie,
+  });
+  assert.equal(keyCatalog.status, 200);
+  const listedKey = keyCatalog.data.tokens.find(
+    (item) => item.id === panelTokenId,
+  );
+  assert.ok(listedKey);
+  assert.equal(listedKey.is_revoked, false);
+  assert.equal(listedKey.revoked_at, null);
+
+  const reconnectedToken = await call("/_panel/token-login", {
+    method: "POST",
+    body: { token: panelApiKey },
+  });
+  assert.equal(reconnectedToken.status, 200);
+  const reconnectedSession = await call("/_panel/session", {
+    cookie: reconnectedToken.cookie,
+  });
+  assert.equal(reconnectedSession.status, 200);
+  assert.equal(reconnectedSession.data.mode, "token");
+  const reconnectedDisconnect = await call("/_panel/logout", {
+    method: "POST",
+    cookie: reconnectedToken.cookie,
+  });
+  assert.equal(reconnectedDisconnect.status, 200);
+  results.push(
+    "API key connection cannot refresh or manage keys; disconnect preserves the key and allows reconnect",
+  );
+
   const revoked = await call("/v1/tokens/" + tokenId, {
     method: "DELETE",
     cookie: login.cookie,
@@ -223,6 +323,17 @@ try {
   const after = await call("/v1/servers/" + serverId, { token: apiKey });
   assert.equal(after.status, 401, JSON.stringify(after.data));
   results.push("Revoked API key rejected by real backend");
+
+  const panelKeyRevoked = await call("/v1/tokens/" + panelTokenId, {
+    method: "DELETE",
+    cookie: login.cookie,
+  });
+  assert.equal(panelKeyRevoked.status, 204);
+  panelTokenId = undefined;
+  const panelKeyAfterRevoke = await call("/v1/servers/" + serverId, {
+    token: panelApiKey,
+  });
+  assert.equal(panelKeyAfterRevoke.status, 401);
   const logout = await call("/_panel/logout", {
     method: "POST",
     cookie: login.cookie,
@@ -232,6 +343,11 @@ try {
   assert.equal(oldSession.status, 401);
   results.push("Logout revokes old backend session");
 } finally {
+  if (panelTokenId)
+    await call("/v1/tokens/" + panelTokenId, {
+      method: "DELETE",
+      cookie: userCookie || admin.cookie,
+    });
   if (serverId)
     await call("/v1/servers/" + serverId, {
       method: "DELETE",

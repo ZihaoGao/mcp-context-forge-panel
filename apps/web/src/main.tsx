@@ -36,6 +36,7 @@ import {
   request,
   send,
   displayError,
+  ApiError,
   permitted,
   type JsonRecord,
   type UserProfile,
@@ -147,7 +148,16 @@ function Login({
       setToken("");
       onLogin();
     } catch (err) {
-      setError(displayError(err));
+      setError(
+        tokenMode &&
+          err instanceof ApiError &&
+          err.status === 403 &&
+          err.detail === "Token authentication failed"
+          ? en
+            ? "This token's permissions or scope do not allow a panel connection. Use a token that can read account information, or sign in with email or SSO."
+            : "此 Token 的权限或范围不允许连接面板。请使用可读取账户信息的 Token，或通过邮箱或 SSO 登录。"
+          : displayError(err),
+      );
     } finally {
       setBusy(false);
     }
@@ -247,13 +257,13 @@ function Login({
               className={tokenMode ? "active" : ""}
               onClick={() => setTokenMode(true)}
             >
-              {en ? "Existing token" : "已有 Token"}
+              API Token
             </button>
           </div>
           {tokenMode ? (
             <>
               <label className="field">
-                Token
+                API Token
                 <textarea
                   required
                   rows={4}
@@ -264,8 +274,8 @@ function Login({
               </label>
               <small className="muted">
                 {en
-                  ? "API tokens cannot create or manage other keys. Use an interactive login for key management."
-                  : "API Token 无法创建或管理其他 Key，管理 Key 请使用邮箱登录。"}
+                  ? "Connect with this token's permissions. Disconnecting does not revoke the original token. To manage keys, sign in with email or SSO."
+                  : "按此 Token 的权限连接，断开连接不会撤销原始 Token。管理 Key 请使用邮箱或 SSO 登录。"}
               </small>
             </>
           ) : (
@@ -300,7 +310,21 @@ function Login({
             </div>
           )}
           <button className="button primary login-submit" disabled={busy}>
-            {busy ? (en ? "Signing in…" : "登录中…") : en ? "Sign in" : "登录"}
+            {tokenMode
+              ? busy
+                ? en
+                  ? "Connecting…"
+                  : "连接中…"
+                : en
+                  ? "Connect"
+                  : "连接"
+              : busy
+                ? en
+                  ? "Signing in…"
+                  : "登录中…"
+                : en
+                  ? "Sign in"
+                  : "登录"}
             <ArrowRight size={17} />
           </button>
           <div className="login-links">
@@ -380,37 +404,40 @@ function Dashboard({
   permissions,
   team,
   en,
+  tokenConnection,
 }: {
   user: JsonRecord;
   permissions: string[];
   team: string;
   en: boolean;
+  tokenConnection: boolean;
 }) {
+  const overviewModules = modules.filter(
+    (m) =>
+      ["servers", "gateways", "tools", "tokens"].includes(m.id) &&
+      !(tokenConnection && m.id === "tokens"),
+  );
   const counts = useQuery({
-    queryKey: ["overview", team, permissions],
+    queryKey: ["overview", team, permissions, tokenConnection],
     queryFn: async () =>
       Promise.all(
-        modules
-          .filter((m) =>
-            ["servers", "gateways", "tools", "tokens"].includes(m.id),
-          )
-          .map(async (m) => {
-            if (!permitted(permissions, `${m.permission}.read`))
-              return { ...m, count: "—" };
-            try {
-              const data = await request(
-                `${m.path}${m.id === "tokens" ? "?limit=100&include_inactive=true" : "?include_pagination=true&limit=100&include_inactive=true" + (team ? "&team_id=" + encodeURIComponent(team) : "")}`,
-              );
-              const items = listItems(data);
-              return {
-                ...m,
-                count:
-                  data.total ?? `${items.length}${data.nextCursor ? "+" : ""}`,
-              };
-            } catch {
-              return { ...m, count: "—" };
-            }
-          }),
+        overviewModules.map(async (m) => {
+          if (!permitted(permissions, `${m.permission}.read`))
+            return { ...m, count: "—" };
+          try {
+            const data = await request(
+              `${m.path}${m.id === "tokens" ? "?limit=100&include_inactive=true" : "?include_pagination=true&limit=100&include_inactive=true" + (team ? "&team_id=" + encodeURIComponent(team) : "")}`,
+            );
+            const items = listItems(data);
+            return {
+              ...m,
+              count:
+                data.total ?? `${items.length}${data.nextCursor ? "+" : ""}`,
+            };
+          } catch {
+            return { ...m, count: "—" };
+          }
+        }),
       ),
     retry: false,
   });
@@ -429,11 +456,13 @@ function Dashboard({
               ? "Your models, tools and access — all in one workspace."
               : "在同一个工作空间里，连接模型、管理工具、掌握访问权限。"}
           </p>
-          <a className="button primary" href="#tokens">
-            <KeyRound size={16} />
-            {en ? "Manage API keys" : "管理我的 API Key"}
-            <ArrowUpRight size={15} />
-          </a>
+          {!tokenConnection && (
+            <a className="button primary" href="#tokens">
+              <KeyRound size={16} />
+              {en ? "Manage API keys" : "管理我的 API Key"}
+              <ArrowUpRight size={15} />
+            </a>
+          )}
         </div>
         <div className="welcome-graphic" aria-hidden="true">
           <div className="orbit orbit-one" />
@@ -454,12 +483,7 @@ function Dashboard({
       </section>
       <div className="stat-grid">
         {(
-          counts.data ||
-          modules
-            .filter((m) =>
-              ["servers", "gateways", "tools", "tokens"].includes(m.id),
-            )
-            .map((m) => ({ ...m, count: "…" }))
+          counts.data || overviewModules.map((m) => ({ ...m, count: "…" }))
         ).map((m) => (
           <a key={m.id} className="stat-card" href={"#" + m.id}>
             <div>
@@ -510,16 +534,18 @@ function Dashboard({
                 : "为应用分配必要权限，并设置有效期",
               icon: KeyRound,
             },
-          ].map((step, i) => (
-            <a className="getting-started" href={"#" + step.id} key={step.id}>
-              <span className="step-number">0{i + 1}</span>
-              <div>
-                <strong>{en ? step.en : step.zh}</strong>
-                <p>{step.sub}</p>
-              </div>
-              <ArrowRight size={17} />
-            </a>
-          ))}
+          ]
+            .filter((step) => !(tokenConnection && step.id === "tokens"))
+            .map((step, i) => (
+              <a className="getting-started" href={"#" + step.id} key={step.id}>
+                <span className="step-number">0{i + 1}</span>
+                <div>
+                  <strong>{en ? step.en : step.zh}</strong>
+                  <p>{step.sub}</p>
+                </div>
+                <ArrowRight size={17} />
+              </a>
+            ))}
         </section>
         <section className="panel access-summary">
           <div className="section-heading">
@@ -571,10 +597,17 @@ function App() {
   const [action, setAction] = useState<Operation>();
   const session = useQuery({
     queryKey: ["session", sessionVersion],
-    queryFn: () => request<UserProfile>("/v1/auth/email/me"),
+    queryFn: async () => {
+      const [user, connection] = await Promise.all([
+        request<UserProfile>("/v1/auth/email/me"),
+        request<{ mode: "token" | "interactive" }>("/_panel/session"),
+      ]);
+      return { ...user, panelMode: connection.mode };
+    },
     retry: false,
   });
   const authenticated = !!session.data && !unauthorized;
+  const tokenConnection = session.data?.panelMode === "token";
   const permissionQuery = useQuery({
     queryKey: ["my-permissions", team, sessionVersion],
     queryFn: () =>
@@ -652,13 +685,14 @@ function App() {
     );
   const module = modules.find((m) => m.id === route);
   const navVisible = (m: (typeof modules)[number]) =>
-    m.anyPermissions
+    !(tokenConnection && m.id === "tokens") &&
+    (m.anyPermissions
       ? m.anyPermissions.some((p) => permitted(permissions, p))
       : !m.permission ||
         permitted(
           permissions,
           m.permission.includes(".") ? m.permission : m.permission + ".read",
-        );
+        ));
   const navGroups = [
     { id: "workspace", zh: "工作空间", en: "WORKSPACE" },
     { id: "resources", zh: "资源管理", en: "RESOURCES" },
@@ -797,6 +831,11 @@ function App() {
               >
                 <Globe size={18} />
               </button>
+              {tokenConnection && (
+                <a className="badge neutral" href="#profile">
+                  API Token
+                </a>
+              )}
               <a className="avatar" title={session.data.email} href="#profile">
                 {(session.data.full_name ||
                   session.data.email ||
@@ -891,6 +930,7 @@ function App() {
                 permissions={permissions}
                 team={team}
                 en={en}
+                tokenConnection={tokenConnection}
               />
             ) : route === "api" ? (
               <ApiExplorer spec={spec} en={en} />
@@ -909,12 +949,25 @@ function App() {
                     </h3>
                     <button className="button secondary" onClick={logout}>
                       <LogOut size={16} />
-                      {en ? "Sign out" : "退出登录"}
+                      {tokenConnection
+                        ? en
+                          ? "Disconnect"
+                          : "断开连接"
+                        : en
+                          ? "Sign out"
+                          : "退出登录"}
                     </button>
                   </div>
                   <p>
                     {session.data.full_name} · {session.data.email}
                   </p>
+                  {tokenConnection && (
+                    <p className="muted">
+                      {en
+                        ? "Connected with an API Token. Disconnecting clears this panel session without revoking the original token. This connection lasts up to one hour or until the token expires. To manage keys, sign in with email or SSO."
+                        : "当前通过 API Token 连接。断开连接仅清除面板会话，不会撤销原始 Token。连接最长保留一小时，且不超过 Token 有效期。管理 Key 请使用邮箱或 SSO 登录。"}
+                    </p>
+                  )}
                   <div className="permission-chips">
                     {permissions.map((p) => (
                       <code key={p}>{p}</code>
@@ -937,6 +990,18 @@ function App() {
                 </section>
                 <ApiExplorer spec={spec} filter="/v1/rbac/my/" en={en} />
               </>
+            ) : route === "tokens" && tokenConnection ? (
+              <section className="panel prose">
+                <p>
+                  {en
+                    ? "To manage keys, disconnect and sign in with email or SSO. Disconnecting does not revoke the original token."
+                    : "管理 Key 请先断开连接，再使用邮箱或 SSO 登录。断开连接不会撤销原始 Token。"}
+                </p>
+                <button className="button secondary" onClick={logout}>
+                  <LogOut size={16} />
+                  {en ? "Disconnect" : "断开连接"}
+                </button>
+              </section>
             ) : module ? (
               <>
                 {route === "rbac" && (

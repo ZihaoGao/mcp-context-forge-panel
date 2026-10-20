@@ -93,6 +93,7 @@ Set `COOKIE_SECURE` according to whether browsers access the console over HTTPS;
 ## Features
 
 - Resource catalog: CRUD, details, related actions, and bulk operations for MCP gateways, virtual servers, Tools, Resources, Prompts, A2A, and Roots.
+- API Token connection: use an existing token within its backend permissions; disconnect clears only the panel session and preserves the original key. Token connections last up to one hour or token expiry and do not refresh the credential. Use email or SSO sign-in for key management.
 - My API Keys: create team- or server-scoped keys within existing permissions, set expiration and permissions, copy the plaintext key at creation, and view, update, revoke, or inspect usage.
 - Roles and permissions: role CRUD, permission catalog, user role lookup, assignment, and revocation by scope.
 - Teams and users: accounts, members, invitations, join requests, and related operations.

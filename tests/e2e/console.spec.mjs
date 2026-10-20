@@ -13,6 +13,7 @@ let password;
 let admin;
 const servers = [];
 const roles = [];
+const tokens = [];
 test.beforeAll(async () => {
   email = `browser-user-${randomUUID().slice(0, 8)}@example.com`;
   password = fixturePassword();
@@ -37,6 +38,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => {
   if (admin) {
+    for (const id of tokens) await admin.delete(root + "/v1/tokens/" + id);
     for (const id of servers) await admin.delete(root + "/v1/servers/" + id);
     for (const id of roles) {
       await admin.delete(
@@ -96,6 +98,97 @@ test("login distinguishes an incorrect origin from invalid credentials and root 
   await expect(
     page.getByRole("alert").filter({ hasText: "请使用登录页" }),
   ).toContainText("访问地址与部署配置不一致");
+});
+
+test("API Token connection disconnects locally and can reconnect with the same key", async ({
+  page,
+}) => {
+  const keyResponse = await admin.post(root + "/v1/tokens", {
+    data: {
+      name: "browser-token-" + run,
+      expires_in_days: 1,
+      user_email: email,
+    },
+  });
+  expect(keyResponse.status()).toBe(201);
+  const key = await keyResponse.json();
+  tokens.push(key.token.id);
+
+  const external = await request.newContext({
+    extraHTTPHeaders: { Authorization: "Bearer " + key.access_token },
+  });
+  try {
+    const connect = async () => {
+      await page.goto(root + "/app/");
+      await page
+        .getByRole("button", { name: "API Token", exact: true })
+        .click();
+      await page
+        .getByLabel("API Token", { exact: true })
+        .fill(key.access_token);
+      await page.getByRole("button", { name: "连接", exact: true }).click();
+      const badge = page
+        .locator("header")
+        .getByRole("link", { name: "API Token", exact: true });
+      await expect(badge).toBeVisible();
+      await page.goto(root + "/app/#profile");
+      const profile = page.locator("section.panel.prose").first();
+      await expect(profile).toContainText(
+        "断开连接仅清除面板会话，不会撤销原始 Token。",
+      );
+      await expect(
+        page.getByRole("button", { name: "断开连接", exact: true }),
+      ).toBeVisible();
+      await page.reload();
+      await expect(
+        page
+          .locator("header")
+          .getByRole("link", { name: "API Token", exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "断开连接", exact: true }),
+      ).toBeVisible();
+      await page.goto(root + "/app/#tokens");
+      await expect(page.locator(".panel.prose")).toContainText(
+        "管理 Key 请先断开连接",
+      );
+    };
+    const disconnect = async () => {
+      await page.getByRole("button", { name: "断开连接", exact: true }).click();
+      await expect(
+        page.getByRole("button", { name: "API Token", exact: true }),
+      ).toBeVisible();
+    };
+
+    await connect();
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(
+        page
+          .locator("header")
+          .getByRole("link", { name: "API Token", exact: true }),
+      ).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+    }
+    await page.setViewportSize({ width: 1280, height: 720 });
+    const managementDenied = await external.get(root + "/v1/tokens");
+    expect(managementDenied.status()).toBe(403);
+    await disconnect();
+
+    const afterDisconnect = await external.get(root + "/v1/servers");
+    expect(afterDisconnect.status()).toBe(200);
+
+    await connect();
+    await disconnect();
+    const afterReconnectDisconnect = await external.get(root + "/v1/servers");
+    expect(afterReconnectDisconnect.status()).toBe(200);
+  } finally {
+    await external.dispose();
+  }
 });
 
 test("mobile resource forms keep the header and complete actions visible while only the body scrolls", async ({

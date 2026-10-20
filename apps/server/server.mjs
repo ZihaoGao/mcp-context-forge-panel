@@ -205,7 +205,7 @@ export function createPanelServer(config = readConfig(), options = {}) {
     if (id) sessions.delete(id);
     return undefined;
   }
-  function issueSession(token, seconds, res) {
+  function issueSession(token, seconds, res, mode = "interactive") {
     if (sessions.size >= 10000)
       throw Object.assign(new Error("Session capacity reached"), {
         status: 503,
@@ -229,7 +229,7 @@ export function createPanelServer(config = readConfig(), options = {}) {
     if (remaining <= 0)
       throw Object.assign(new Error("Backend token expired"), { status: 401 });
     const age = Math.max(1, Math.min(remaining, 86400));
-    sessions.set(id, { token, expires: Date.now() + age * 1000 });
+    sessions.set(id, { token, mode, expires: Date.now() + age * 1000 });
     res.setHeader("Set-Cookie", sessionCookie(id, age));
   }
   const sessionCookie = (token, maxAge) =>
@@ -452,6 +452,11 @@ export function createPanelServer(config = readConfig(), options = {}) {
           `window.__PANEL_CONFIG__=${JSON.stringify({ prefix: config.prefix, version: "1.0.11", publicOrigin: expectedOrigin })};`,
         );
       }
+      if (local === "/_panel/session" && req.method === "GET") {
+        const session = sessionFor(req);
+        if (!session) return json(res, 401, { detail: "Session required" });
+        return json(res, 200, { mode: session.mode });
+      }
       if (local === "/_panel/login" && req.method === "POST") {
         const input = await body(req);
         const response = await backendFetch(
@@ -518,14 +523,22 @@ export function createPanelServer(config = readConfig(), options = {}) {
             detail: "Token authentication failed",
           });
         }
-        issueSession(input.token, 3600, res);
+        // Imported credentials are borrowed: disconnect must never revoke them,
+        // even when the supplied JWT happens to be an interactive session token.
+        issueSession(input.token, 3600, res, "token");
         return json(res, 200, {
           user: await backendJson(req, response, response.url, "GET"),
         });
       }
       if (local === "/_panel/refresh" && req.method === "POST") {
-        const token = sessionFor(req)?.token;
-        if (!token) return json(res, 401, { detail: "Session required" });
+        const session = sessionFor(req);
+        if (!session) return json(res, 401, { detail: "Session required" });
+        if (session.mode === "token")
+          return json(res, 403, {
+            detail:
+              "Token connections cannot be refreshed. Reconnect with a valid token.",
+          });
+        const token = session.token;
         const response = await backendFetch(
           req,
           new URL(
@@ -563,10 +576,10 @@ export function createPanelServer(config = readConfig(), options = {}) {
         return json(res, 200, { ok: true });
       }
       if (local === "/_panel/logout" && req.method === "POST") {
-        const token = sessionFor(req)?.token;
+        const session = sessionFor(req);
         sessions.delete(cookies(req.headers.cookie)[COOKIE]);
         res.setHeader("Set-Cookie", sessionCookie("", 0));
-        if (token) {
+        if (session?.mode === "interactive") {
           const response = await backendFetch(
             req,
             new URL(
@@ -575,7 +588,7 @@ export function createPanelServer(config = readConfig(), options = {}) {
             ),
             {
               method: "POST",
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { Authorization: `Bearer ${session.token}` },
               signal: AbortSignal.timeout(10000),
               redirect: "manual",
             },
