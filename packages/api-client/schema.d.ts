@@ -20061,7 +20061,25 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description Initialize body consumed by mcpgateway/main.py:4006 and session_registry.py:2116. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description Required protocol version; the handler also accepts protocol_version. */
+          protocolVersion: string;
+          /**
+           * Client Capabilities
+           * @description Capabilities supported by the client.
+           * @default {}
+           */
+          capabilities?: {
+            [key: string]: unknown;
+          };
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -20081,7 +20099,40 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description JSON-RPC ping request consumed by mcpgateway/main.py:4038. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * @description JSON-RPC protocol version.
+           * @default 2.0
+           * @enum {string}
+           */
+          jsonrpc: "2.0";
+          /**
+           * @description Request identifier. The backend also accepts integer identifiers.
+           * @default 1
+           */
+          id?: string | number;
+          /**
+           * @description JSON-RPC method to invoke.
+           * @default ping
+           * @enum {string}
+           */
+          method: "ping";
+          /**
+           * Parameters
+           * @description Method-specific JSON parameters.
+           * @default {}
+           */
+          params?: {
+            [key: string]: unknown;
+          };
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -20101,7 +20152,32 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description JSON-RPC notification consumed by mcpgateway/main.py:4066. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * @default 2.0
+           * @enum {string}
+           */
+          jsonrpc: "2.0";
+          /** @enum {string} */
+          method:
+            | "notifications/initialized"
+            | "notifications/cancelled"
+            | "notifications/message";
+          /**
+           * Parameters
+           * @description Notification parameters.
+           */
+          params?: {
+            [key: string]: unknown;
+          };
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -20123,7 +20199,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler parses this JSON body directly from Request. */
+    requestBody: {
+      content: {
+        "application/json": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -20154,7 +20237,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler parses this JSON body directly from Request. */
+    requestBody: {
+      content: {
+        "application/json": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -22568,7 +22658,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler parses this JSON body directly from Request. */
+    requestBody: {
+      content: {
+        "application/json": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -27918,7 +28015,23 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Run an administrator LLM connectivity test. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * @default models
+           * @enum {string}
+           */
+          test_type?: "models" | "chat";
+          model_id?: string;
+          /** @default Hello! Please respond with a short greeting. */
+          message?: string;
+          /** @default 100 */
+          max_tokens?: number;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -28542,7 +28655,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -28652,7 +28772,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -28685,7 +28812,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -28718,7 +28852,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -28786,7 +28927,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -28854,7 +29002,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -28955,7 +29110,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29039,7 +29201,14 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29079,7 +29248,14 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29132,7 +29308,14 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29221,7 +29404,14 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29404,7 +29594,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29541,7 +29738,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29607,7 +29811,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29640,7 +29851,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29673,7 +29891,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29739,7 +29964,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -29941,7 +30173,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -30163,7 +30402,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -30396,7 +30642,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31371,7 +31624,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31404,7 +31664,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31437,7 +31704,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31468,7 +31742,22 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Generate tool schemas from a target API and its OpenAPI document. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** Format: uri */
+          url: string;
+          /** @default GET */
+          request_type?: string;
+          /**
+           * @description Optional direct OpenAPI URL; blank enables discovery.
+           * @default
+           */
+          openapi_url?: string;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31501,7 +31790,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31534,7 +31830,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31662,7 +31965,15 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Discover OAuth/OIDC metadata for an issuer URL. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** Format: uri */
+          issuer: string;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31732,7 +32043,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31765,7 +32083,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31868,7 +32193,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31901,7 +32233,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -31934,7 +32273,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32002,7 +32348,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32035,7 +32388,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32068,7 +32428,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32205,7 +32572,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32509,7 +32883,15 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Bulk tool import accepts a JSON array or URL-encoded form fields; the form handler may also accept a file upload. */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ToolCreate"][];
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32540,7 +32922,15 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Bulk tool import accepts a JSON array or URL-encoded form fields; the form handler may also accept a file upload. */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ToolCreate"][];
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32760,7 +33150,23 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Export selected entities and optionally their dependencies. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * Entity selections
+           * @description Entity IDs to export by type.
+           * @default {}
+           */
+          entity_selections?: {
+            [key: string]: unknown;
+          };
+          /** @default true */
+          include_dependencies?: boolean;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32791,7 +33197,20 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Preview a configuration import document. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * Import data
+           * @description Configuration import document.
+           */
+          data: {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32822,7 +33241,35 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Import configuration data with conflict and selection options. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * Import data
+           * @description Configuration import document.
+           */
+          import_data: {
+            [key: string]: unknown;
+          };
+          /**
+           * @default update
+           * @enum {string}
+           */
+          conflict_strategy?: "skip" | "update" | "rename" | "fail";
+          /** @default false */
+          dry_run?: boolean;
+          rekey_secret?: string;
+          /**
+           * Selected entities
+           * @description Optional entity selection.
+           */
+          selected_entities?: {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -32987,7 +33434,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -33020,7 +33474,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -33053,7 +33514,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -33086,7 +33554,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -33119,7 +33594,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Optional query sent to the A2A agent test operation. */
+    requestBody: {
+      content: {
+        "application/json": {
+          query?: string;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -33626,7 +34108,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler reads URL-encoded form fields directly from Request. Field names are not declared in OpenAPI; enter the fields as a JSON object. */
+    requestBody?: {
+      content: {
+        "application/x-www-form-urlencoded": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -36415,7 +36904,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler parses this JSON body directly from Request. */
+    requestBody: {
+      content: {
+        "application/json": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -36669,7 +37165,36 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description JSON-RPC 2.0 request consumed by mcpgateway/main.py:11422. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * @description JSON-RPC protocol version.
+           * @default 2.0
+           * @enum {string}
+           */
+          jsonrpc: "2.0";
+          /**
+           * @description Request identifier. The backend also accepts integer identifiers.
+           * @default 1
+           */
+          id?: string | number;
+          /** @description JSON-RPC method to invoke. */
+          method: string;
+          /**
+           * Parameters
+           * @description Method-specific JSON parameters.
+           * @default {}
+           */
+          params?: {
+            [key: string]: unknown;
+          };
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -36700,7 +37225,36 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description JSON-RPC 2.0 request consumed by mcpgateway/main.py:11422. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * @description JSON-RPC protocol version.
+           * @default 2.0
+           * @enum {string}
+           */
+          jsonrpc: "2.0";
+          /**
+           * @description Request identifier. The backend also accepts integer identifiers.
+           * @default 1
+           */
+          id?: string | number;
+          /** @description JSON-RPC method to invoke. */
+          method: string;
+          /**
+           * Parameters
+           * @description Method-specific JSON parameters.
+           * @default {}
+           */
+          params?: {
+            [key: string]: unknown;
+          };
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -38369,13 +38923,34 @@ export interface operations {
   create_mcp_app_session_appbridge_sessions_post: {
     parameters: {
       query?: never;
-      header?: never;
+      header?: {
+        /** @description MCP session identifier (or provide mcpSessionId in the body). */
+        "mcp-session-id"?: string;
+        /** @description Alternative MCP session identifier header. */
+        "x-mcp-session-id"?: string;
+        /** @description Server identifier (or provide serverId in the body). */
+        "x-contextforge-server-id"?: string;
+      };
       path?: never;
       cookie?: {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Create a session for an authorized MCP App resource. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description URI of the MCP App resource. */
+          resourceUri: string;
+          /** @description Server identifier; alternatively pass x-contextforge-server-id. */
+          serverId?: string;
+          /** @description MCP session identifier; alternatively pass mcp-session-id. */
+          mcpSessionId?: string;
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -38400,7 +38975,14 @@ export interface operations {
   handle_mcp_app_session_rpc_appbridge_sessions__app_session_id__rpc_post: {
     parameters: {
       query?: never;
-      header?: never;
+      header?: {
+        /** @description MCP session identifier (or provide mcpSessionId in the request body). */
+        "mcp-session-id"?: string;
+        /** @description Alternative MCP session identifier header. */
+        "x-mcp-session-id"?: string;
+        /** @description Optional server identifier used to verify the bound app session. */
+        "x-contextforge-server-id"?: string;
+      };
       path: {
         app_session_id: string;
       };
@@ -38408,7 +38990,40 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description JSON-RPC request consumed by mcpgateway/main.py:10908. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * @description JSON-RPC protocol version.
+           * @default 2.0
+           * @enum {string}
+           */
+          jsonrpc: "2.0";
+          /**
+           * @description Request identifier. The backend also accepts integer identifiers.
+           * @default 1
+           */
+          id?: string | number;
+          /** @description JSON-RPC method to invoke. */
+          method: string;
+          /**
+           * Parameters
+           * @description Method-specific JSON parameters.
+           * @default {}
+           */
+          params?: {
+            [key: string]: unknown;
+          };
+          /** @description MCP session identifier; alternatively pass mcp-session-id or x-mcp-session-id. */
+          mcpSessionId?: string;
+          /** @description Optional server identifier; alternatively pass x-contextforge-server-id. */
+          serverId?: string;
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -38590,7 +39205,14 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description The v1.0.11 handler parses this JSON body directly from Request. */
+    requestBody: {
+      content: {
+        "application/json": {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -38621,7 +39243,23 @@ export interface operations {
         jwt_token?: string | null;
       };
     };
-    requestBody?: never;
+    /** @description Set the runtime log level. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @enum {string} */
+          level:
+            | "debug"
+            | "info"
+            | "notice"
+            | "warning"
+            | "error"
+            | "critical"
+            | "alert"
+            | "emergency";
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -39717,7 +40355,25 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description Initialize body consumed by mcpgateway/main.py:4006 and session_registry.py:2116. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @description Required protocol version; the handler also accepts protocol_version. */
+          protocolVersion: string;
+          /**
+           * Client Capabilities
+           * @description Capabilities supported by the client.
+           * @default {}
+           */
+          capabilities?: {
+            [key: string]: unknown;
+          };
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {
@@ -39737,7 +40393,32 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    /** @description JSON-RPC notification consumed by mcpgateway/main.py:4066. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /**
+           * @default 2.0
+           * @enum {string}
+           */
+          jsonrpc: "2.0";
+          /** @enum {string} */
+          method:
+            | "notifications/initialized"
+            | "notifications/cancelled"
+            | "notifications/message";
+          /**
+           * Parameters
+           * @description Notification parameters.
+           */
+          params?: {
+            [key: string]: unknown;
+          };
+        } & {
+          [key: string]: unknown;
+        };
+      };
+    };
     responses: {
       /** @description Successful Response */
       200: {

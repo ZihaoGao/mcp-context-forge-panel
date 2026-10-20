@@ -2400,3 +2400,13 @@ textarea::placeholder {
     justify-self: stretch;
   }
 }
+
+.tool-input-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.tool-call-error {
+  white-space: pre-wrap;
+}

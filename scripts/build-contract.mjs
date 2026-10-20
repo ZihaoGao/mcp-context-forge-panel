@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { supplementRequestBodies } from "../packages/api-client/contract.mjs";
 const spec = JSON.parse(
   await readFile("contracts/contextforge/openapi.json", "utf8"),
 );
@@ -12,6 +13,7 @@ spec.components.schemas = {
   ...spec.components.schemas,
   ...optional.components?.schemas,
 };
+Object.assign(spec, supplementRequestBodies(spec));
 const inventory = JSON.parse(
   await readFile("contracts/contextforge/source-routes.json", "utf8"),
 );

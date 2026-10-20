@@ -14,6 +14,20 @@ import { SchemaForm } from "./SchemaForm";
 import { TokenPermissionContext } from "./TokenPermissions";
 
 export type Operation = JsonRecord & { path: string; method: string };
+function requestDefaults(
+  schema: JsonRecord,
+  spec: JsonRecord,
+  includeDefaults: boolean,
+) {
+  const value = initialValue(schema, spec);
+  if (!includeDefaults || !schema.properties) return value;
+  for (const [name, child] of Object.entries(schema.properties)) {
+    const field = resolveSchema(child, spec);
+    if (field.default !== undefined && value[name] === undefined)
+      value[name] = structuredClone(field.default);
+  }
+  return value;
+}
 export function ActionDialog({
   operation,
   spec,
@@ -52,8 +66,9 @@ export function ActionDialog({
         ),
       }
     : schema;
+  const allFields = operation["x-panel-all-fields"] === true;
   const [value, setValue] = useState<JsonRecord>(
-    () => initial || initialValue(schema, spec),
+    () => initial || requestDefaults(schema, spec, allFields),
   );
   const [parameters, setParameters] = useState<Record<string, string>>(preset);
   const [result, setResult] = useState<any>();
@@ -113,7 +128,15 @@ export function ActionDialog({
     return () => controller.current?.abort();
   }, []);
   async function execute(event: React.FormEvent) {
+    const form = event.currentTarget;
     event.preventDefault();
+    const invalidDraft = Array.from(
+      form.querySelectorAll<HTMLInputElement>(".validation-proxy"),
+    ).find((input) => !input.checkValidity());
+    if (invalidDraft) {
+      invalidDraft.reportValidity();
+      return;
+    }
     setError("");
     setBusy(true);
     setResult(undefined);
@@ -179,15 +202,24 @@ export function ActionDialog({
           );
           setResult(text);
         }
-      } else
-        setResult(
-          await request(path, {
-            method: operation.method,
-            headers: extraHeaders,
-            body,
-            signal: controller.current.signal,
-          }),
-        );
+      } else {
+        const response = await request(path, {
+          method: operation.method,
+          headers: extraHeaders,
+          body,
+          signal: controller.current.signal,
+        });
+        setResult(response);
+        if (
+          response?.jsonrpc === "2.0" &&
+          response.error &&
+          typeof response.error === "object"
+        ) {
+          const code = response.error.code ?? "error";
+          const message = response.error.message || "Request failed";
+          throw new Error(`JSON-RPC ${code}: ${message}`);
+        }
+      }
       onSuccess();
     } catch (err) {
       if ((err as Error).name !== "AbortError") setError(displayError(err));
@@ -255,6 +287,13 @@ export function ActionDialog({
           }}
         >
           <div className="dialog-body">
+            {operation["x-panel-request-body-completeness"] === "opaque" && (
+              <p className="alert warning">
+                {en
+                  ? `The backend does not declare the full field list. Enter the required fields as JSON; the request is sent as ${contentType}.`
+                  : `后端未声明完整字段列表。请以 JSON 填写所需字段；实际请求格式为 ${contentType}。`}
+              </p>
+            )}
             {(operation.parameters || []).length > 0 && (
               <div className="schema-form">
                 {operation.parameters
@@ -288,6 +327,7 @@ export function ActionDialog({
                 spec={spec}
                 value={value}
                 onChange={setValue}
+                all={allFields}
               />
             )}
             {contentType === "multipart/form-data" &&

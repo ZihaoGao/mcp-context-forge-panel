@@ -54,15 +54,25 @@ const coverage = operations(spec).map((op) => {
         ? null
         : op.path.replace(/\/$/, "") === "/v1/tools" && op.method === "POST"
           ? "Tools / create or import local REST definitions (MCP tools discovered via gateways)"
-          : op.path.replace(/\/$/, "") === "/v1/gateways" &&
-              op.method === "POST"
-            ? "MCP gateways / Tools: connect MCP service and view discovered tools"
-            : domains.find(([prefix]) => op.path.startsWith(prefix))?.[1] ||
-              "API workspace",
+          : op.path.replace(/\/$/, "") === "/rpc" && op.method === "POST"
+            ? "Tools / schema-driven test call; API workspace / JSON-RPC"
+            : op.path.replace(/\/$/, "") === "/v1/gateways" &&
+                op.method === "POST"
+              ? "MCP gateways / Tools: connect MCP service and view discovered tools"
+              : domains.find(([prefix]) => op.path.startsWith(prefix))?.[1] ||
+                "API workspace",
     permission,
     dependencies: [...new Set(candidates.flatMap((r) => r.dependencies || []))],
     permissionEvidence: candidates.map((r) => `${r.source}:${r.line}`),
     feature: op["x-panel-feature"] || null,
+    requestBody: op.requestBody
+      ? {
+          required: op.requestBody.required !== false,
+          contentTypes: Object.keys(op.requestBody.content || {}),
+          completeness: op["x-panel-request-body-completeness"] || "openapi",
+          source: op["x-panel-request-body-source"] || "OpenAPI",
+        }
+      : null,
     verification:
       "Contract mapped; see docs/verification.md for executed scenarios",
   };
@@ -84,6 +94,9 @@ const columns = [
   "entry",
   "permission",
   "feature",
+  "requestBodyTypes",
+  "requestBodyCompleteness",
+  "requestBodySource",
   "reason",
   "verification",
 ];
@@ -91,7 +104,19 @@ await writeFile(
   "contracts/contextforge/coverage.csv",
   [
     columns.join(","),
-    ...coverage.map((item) => columns.map((key) => quote(item[key])).join(",")),
+    ...coverage.map((item) =>
+      columns
+        .map((key) => {
+          if (key === "requestBodyTypes")
+            return quote(item.requestBody?.contentTypes.join(" | ") || "");
+          if (key === "requestBodyCompleteness")
+            return quote(item.requestBody?.completeness || "");
+          if (key === "requestBodySource")
+            return quote(item.requestBody?.source || "");
+          return quote(item[key]);
+        })
+        .join(","),
+    ),
   ].join("\n") + "\n",
 );
 console.log(totals);

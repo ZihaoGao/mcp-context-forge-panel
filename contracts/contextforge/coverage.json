@@ -17,6 +17,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -32,6 +33,7 @@
         "mcpgateway/main.py:12438"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -47,6 +49,7 @@
         "mcpgateway/main.py:12506"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -64,6 +67,7 @@
         "mcpgateway/main.py:12572"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -81,6 +85,14 @@
         "mcpgateway/main.py:4006"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:4006 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -98,6 +110,14 @@
         "mcpgateway/main.py:4038"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:4038 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -115,6 +135,14 @@
         "mcpgateway/main.py:4066"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:4066 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -133,6 +161,14 @@
         "mcpgateway/main.py:4101"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/main.py:4101"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -151,6 +187,14 @@
         "mcpgateway/main.py:4126"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/main.py:4126"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -170,6 +214,7 @@
         "mcpgateway/main.py:5702"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -189,6 +234,14 @@
         "mcpgateway/main.py:5819"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -207,6 +260,7 @@
         "mcpgateway/main.py:5702"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -225,6 +279,14 @@
         "mcpgateway/main.py:5819"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -238,6 +300,14 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -256,6 +326,7 @@
         "mcpgateway/main.py:5971"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -274,6 +345,14 @@
         "mcpgateway/main.py:6040"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -292,6 +371,7 @@
         "mcpgateway/main.py:6105"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -310,6 +390,7 @@
         "mcpgateway/main.py:6143"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -328,6 +409,7 @@
         "mcpgateway/main.py:6185"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -346,6 +428,7 @@
         "mcpgateway/main.py:6215"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -364,6 +447,7 @@
         "mcpgateway/main.py:6263"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -382,6 +466,7 @@
         "mcpgateway/main.py:6305"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -401,6 +486,7 @@
         "mcpgateway/main.py:6332"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -420,6 +506,14 @@
         "mcpgateway/main.py:6414"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -438,6 +532,7 @@
         "mcpgateway/main.py:6332"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -456,6 +551,14 @@
         "mcpgateway/main.py:6414"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -469,6 +572,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -487,6 +591,7 @@
         "mcpgateway/main.py:6551"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -505,6 +610,14 @@
         "mcpgateway/main.py:6681"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -523,6 +636,7 @@
         "mcpgateway/main.py:6753"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -541,6 +655,7 @@
         "mcpgateway/main.py:6637"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -558,6 +673,7 @@
         "mcpgateway/main.py:6792"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -576,6 +692,7 @@
         "mcpgateway/main.py:6830"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -594,6 +711,7 @@
         "mcpgateway/main.py:6872"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -613,6 +731,7 @@
         "mcpgateway/main.py:6899"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -632,6 +751,14 @@
         "mcpgateway/main.py:6981"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -650,6 +777,7 @@
         "mcpgateway/main.py:6899"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -668,6 +796,14 @@
         "mcpgateway/main.py:6981"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -686,6 +822,7 @@
         "mcpgateway/main.py:7157"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -704,6 +841,14 @@
         "mcpgateway/main.py:7087"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -722,6 +867,14 @@
         "mcpgateway/main.py:7210"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -740,6 +893,7 @@
         "mcpgateway/main.py:7286"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -758,6 +912,7 @@
         "mcpgateway/main.py:7335"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -776,6 +931,7 @@
         "mcpgateway/main.py:7380"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -795,6 +951,7 @@
         "mcpgateway/main.py:7407"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -814,6 +971,14 @@
         "mcpgateway/main.py:7484"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -832,6 +997,7 @@
         "mcpgateway/main.py:7407"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -850,6 +1016,14 @@
         "mcpgateway/main.py:7484"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -868,6 +1042,7 @@
         "mcpgateway/main.py:7584"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -886,6 +1061,14 @@
         "mcpgateway/main.py:7647"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -904,6 +1087,7 @@
         "mcpgateway/main.py:7720"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -922,6 +1106,7 @@
         "mcpgateway/main.py:7614"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -940,6 +1125,7 @@
         "mcpgateway/main.py:7779"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -959,6 +1145,7 @@
         "mcpgateway/main.py:7853"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -978,6 +1165,14 @@
         "mcpgateway/main.py:8013"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -996,6 +1191,7 @@
         "mcpgateway/main.py:7853"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1014,6 +1210,14 @@
         "mcpgateway/main.py:8013"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1032,6 +1236,7 @@
         "mcpgateway/main.py:7876"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1050,6 +1255,7 @@
         "mcpgateway/main.py:7941"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1063,6 +1269,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1076,6 +1283,14 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1089,6 +1304,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1108,6 +1324,7 @@
         "mcpgateway/main.py:4155"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1127,6 +1344,14 @@
         "mcpgateway/main.py:4269"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1145,6 +1370,7 @@
         "mcpgateway/main.py:4155"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1163,6 +1389,14 @@
         "mcpgateway/main.py:4269"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1181,6 +1415,7 @@
         "mcpgateway/main.py:4240"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1199,6 +1434,14 @@
         "mcpgateway/main.py:4354"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1217,6 +1460,7 @@
         "mcpgateway/main.py:4548"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1235,6 +1479,7 @@
         "mcpgateway/main.py:4415"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1253,6 +1498,7 @@
         "mcpgateway/main.py:4452"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1271,6 +1517,14 @@
         "mcpgateway/main.py:4481"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1289,6 +1543,7 @@
         "mcpgateway/main.py:4593"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1307,6 +1562,14 @@
         "mcpgateway/main.py:4712"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/main.py:4712"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1325,6 +1588,7 @@
         "mcpgateway/main.py:4786"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1343,6 +1607,7 @@
         "mcpgateway/main.py:4832"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1361,6 +1626,7 @@
         "mcpgateway/main.py:4868"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1379,6 +1645,7 @@
         "mcpgateway/main.py:12358"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1397,6 +1664,7 @@
         "mcpgateway/main.py:12390"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1416,6 +1684,7 @@
         "mcpgateway/main.py:12621"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1434,6 +1703,7 @@
         "mcpgateway/main.py:12621"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1452,6 +1722,7 @@
         "mcpgateway/main.py:12671"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1470,6 +1741,7 @@
         "mcpgateway/main.py:12726"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1488,6 +1760,14 @@
         "mcpgateway/main.py:12818"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1506,6 +1786,14 @@
         "mcpgateway/main.py:12887"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1523,6 +1811,7 @@
         "mcpgateway/main.py:12964"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1540,6 +1829,7 @@
         "mcpgateway/main.py:12989"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1557,6 +1847,7 @@
         "mcpgateway/main.py:13007"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1570,6 +1861,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1588,6 +1880,7 @@
         "mcpgateway/routers/search.py:38"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1607,6 +1900,7 @@
         "mcpgateway/routers/observability.py:885"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1626,6 +1920,7 @@
         "mcpgateway/routers/observability.py:923"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1644,6 +1939,7 @@
         "mcpgateway/routers/tool_plugin_bindings.py:148"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1662,6 +1958,14 @@
         "mcpgateway/routers/tool_plugin_bindings.py:87"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1680,6 +1984,7 @@
         "mcpgateway/routers/tool_plugin_bindings.py:222"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1698,6 +2003,7 @@
         "mcpgateway/routers/tool_plugin_bindings.py:180"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1716,6 +2022,7 @@
         "mcpgateway/routers/tool_plugin_bindings.py:265"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1735,6 +2042,7 @@
         "mcpgateway/main.py:4906"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1754,6 +2062,14 @@
         "mcpgateway/main.py:5027"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1772,6 +2088,7 @@
         "mcpgateway/main.py:4906"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1790,6 +2107,14 @@
         "mcpgateway/main.py:5027"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1808,6 +2133,7 @@
         "mcpgateway/main.py:4985"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1826,6 +2152,14 @@
         "mcpgateway/main.py:5113"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1844,6 +2178,7 @@
         "mcpgateway/main.py:5235"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1862,6 +2197,7 @@
         "mcpgateway/main.py:5172"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1880,6 +2216,7 @@
         "mcpgateway/main.py:5209"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1898,6 +2235,14 @@
         "mcpgateway/main.py:5373"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1916,6 +2261,14 @@
         "mcpgateway/main.py:5421"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1934,6 +2287,14 @@
         "mcpgateway/main.py:5474"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1952,6 +2313,7 @@
         "mcpgateway/routers/observability.py:79"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1970,6 +2332,14 @@
         "mcpgateway/routers/observability.py:165"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -1988,6 +2358,7 @@
         "mcpgateway/routers/observability.py:280"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2006,6 +2377,7 @@
         "mcpgateway/routers/observability.py:330"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2024,6 +2396,7 @@
         "mcpgateway/routers/observability.py:394"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2042,6 +2415,7 @@
         "mcpgateway/routers/observability.py:433"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2060,6 +2434,14 @@
         "mcpgateway/routers/observability.py:494"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2078,6 +2460,7 @@
         "mcpgateway/routers/observability.py:680"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2095,6 +2478,7 @@
         "mcpgateway/routers/reverse_proxy.py:329"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2112,6 +2496,7 @@
         "mcpgateway/routers/reverse_proxy.py:364"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2129,6 +2514,14 @@
         "mcpgateway/routers/reverse_proxy.py:400"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2146,6 +2539,7 @@
         "mcpgateway/routers/reverse_proxy.py:503"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2163,6 +2557,14 @@
         "mcpgateway/routers/cancellation_router.py:70"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2180,6 +2582,7 @@
         "mcpgateway/routers/cancellation_router.py:112"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2195,6 +2598,14 @@
         "mcpgateway/routers/metrics_maintenance.py:105"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2210,6 +2621,14 @@
         "mcpgateway/routers/metrics_maintenance.py:186"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2229,6 +2648,7 @@
         "mcpgateway/routers/metrics_maintenance.py:239"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2248,6 +2668,7 @@
         "mcpgateway/routers/metrics_maintenance.py:272"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2266,6 +2687,14 @@
         "mcpgateway/routers/email_auth.py:205"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2283,6 +2712,14 @@
         "mcpgateway/routers/email_auth.py:341"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2301,6 +2738,14 @@
         "mcpgateway/routers/email_auth.py:411"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2318,6 +2763,14 @@
         "mcpgateway/routers/email_auth.py:458"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2335,6 +2788,7 @@
         "mcpgateway/routers/email_auth.py:487"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2352,6 +2806,14 @@
         "mcpgateway/routers/email_auth.py:519"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2369,6 +2831,7 @@
         "mcpgateway/routers/email_auth.py:554"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2387,6 +2850,7 @@
         "mcpgateway/routers/email_auth.py:574"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2405,6 +2869,7 @@
         "mcpgateway/routers/email_auth.py:608"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2423,6 +2888,14 @@
         "mcpgateway/routers/email_auth.py:694"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2441,6 +2914,7 @@
         "mcpgateway/routers/email_auth.py:660"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2459,6 +2933,7 @@
         "mcpgateway/routers/email_auth.py:761"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2477,6 +2952,14 @@
         "mcpgateway/routers/email_auth.py:793"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2495,6 +2978,7 @@
         "mcpgateway/routers/email_auth.py:842"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2513,6 +2997,7 @@
         "mcpgateway/routers/email_auth.py:890"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2530,6 +3015,7 @@
         "mcpgateway/routers/auth.py:135"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2548,6 +3034,14 @@
         "mcpgateway/routers/email_auth.py:205"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2566,6 +3060,7 @@
         "mcpgateway/routers/auth.py:264"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2583,6 +3078,7 @@
         "mcpgateway/routers/auth.py:506"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2600,6 +3096,7 @@
         "mcpgateway/routers/auth.py:539"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2617,6 +3114,7 @@
         "mcpgateway/routers/sso.py:143"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2634,6 +3132,7 @@
         "mcpgateway/routers/sso.py:254"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2651,6 +3150,7 @@
         "mcpgateway/routers/sso.py:339"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2669,6 +3169,7 @@
         "mcpgateway/routers/sso.py:562"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2687,6 +3188,14 @@
         "mcpgateway/routers/sso.py:514"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2705,6 +3214,7 @@
         "mcpgateway/routers/sso.py:608"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2723,6 +3233,14 @@
         "mcpgateway/routers/sso.py:661"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2741,6 +3259,7 @@
         "mcpgateway/routers/sso.py:714"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2759,6 +3278,7 @@
         "mcpgateway/routers/sso.py:772"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2777,6 +3297,14 @@
         "mcpgateway/routers/sso.py:825"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2795,6 +3323,7 @@
         "mcpgateway/routers/teams.py:197"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2813,6 +3342,14 @@
         "mcpgateway/routers/teams.py:87"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2831,6 +3368,7 @@
         "mcpgateway/routers/teams.py:324"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2849,6 +3387,7 @@
         "mcpgateway/routers/teams.py:382"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2867,6 +3406,14 @@
         "mcpgateway/routers/teams.py:441"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2885,6 +3432,7 @@
         "mcpgateway/routers/teams.py:518"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2903,6 +3451,7 @@
         "mcpgateway/routers/teams.py:566"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2921,6 +3470,14 @@
         "mcpgateway/routers/teams.py:644"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2939,6 +3496,14 @@
         "mcpgateway/routers/teams.py:696"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2957,6 +3522,7 @@
         "mcpgateway/routers/teams.py:746"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2975,6 +3541,7 @@
         "mcpgateway/routers/teams.py:865"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -2993,6 +3560,14 @@
         "mcpgateway/routers/teams.py:790"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3011,6 +3586,7 @@
         "mcpgateway/routers/teams.py:924"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3029,6 +3605,7 @@
         "mcpgateway/routers/teams.py:960"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3047,6 +3624,14 @@
         "mcpgateway/routers/teams.py:1007"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3065,6 +3650,7 @@
         "mcpgateway/routers/teams.py:1076"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3083,6 +3669,7 @@
         "mcpgateway/routers/teams.py:1131"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3101,6 +3688,7 @@
         "mcpgateway/routers/teams.py:1191"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3119,6 +3707,7 @@
         "mcpgateway/routers/teams.py:1255"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3137,6 +3726,7 @@
         "mcpgateway/routers/tokens.py:330"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3155,6 +3745,14 @@
         "mcpgateway/routers/tokens.py:144"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3173,6 +3771,7 @@
         "mcpgateway/routers/tokens.py:407"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3191,6 +3790,14 @@
         "mcpgateway/routers/tokens.py:461"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3209,6 +3816,14 @@
         "mcpgateway/routers/tokens.py:551"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3227,6 +3842,7 @@
         "mcpgateway/routers/tokens.py:590"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3245,6 +3861,7 @@
         "mcpgateway/routers/tokens.py:628"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3263,6 +3880,14 @@
         "mcpgateway/routers/tokens.py:730"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3281,6 +3906,7 @@
         "mcpgateway/routers/tokens.py:922"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3299,6 +3925,14 @@
         "mcpgateway/routers/tokens.py:784"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3317,6 +3951,7 @@
         "mcpgateway/routers/rbac.py:133"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3335,6 +3970,14 @@
         "mcpgateway/routers/rbac.py:82"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3353,6 +3996,7 @@
         "mcpgateway/routers/rbac.py:174"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3371,6 +4015,14 @@
         "mcpgateway/routers/rbac.py:213"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3389,6 +4041,7 @@
         "mcpgateway/routers/rbac.py:260"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3407,6 +4060,7 @@
         "mcpgateway/routers/rbac.py:358"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3425,6 +4079,14 @@
         "mcpgateway/routers/rbac.py:309"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3443,6 +4105,7 @@
         "mcpgateway/routers/rbac.py:401"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3461,6 +4124,14 @@
         "mcpgateway/routers/rbac.py:459"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3479,6 +4150,7 @@
         "mcpgateway/routers/rbac.py:501"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3496,6 +4168,7 @@
         "mcpgateway/routers/rbac.py:541"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3514,6 +4187,7 @@
         "mcpgateway/routers/rbac.py:568"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3532,6 +4206,7 @@
         "mcpgateway/routers/rbac.py:601"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3549,6 +4224,14 @@
         "mcpgateway/routers/llmchat_router.py:1013"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3566,6 +4249,14 @@
         "mcpgateway/routers/llmchat_router.py:1289"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3583,6 +4274,14 @@
         "mcpgateway/routers/llmchat_router.py:1414"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3600,6 +4299,7 @@
         "mcpgateway/routers/llmchat_router.py:1526"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3617,6 +4317,7 @@
         "mcpgateway/routers/llmchat_router.py:1577"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3637,6 +4338,7 @@
         "mcpgateway/routers/llmchat_router.py:1638"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3655,6 +4357,7 @@
         "mcpgateway/routers/llm_config_router.py:117"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3673,6 +4376,14 @@
         "mcpgateway/routers/llm_config_router.py:69"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3691,6 +4402,7 @@
         "mcpgateway/routers/llm_config_router.py:163"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3709,6 +4421,14 @@
         "mcpgateway/routers/llm_config_router.py:199"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3727,6 +4447,7 @@
         "mcpgateway/routers/llm_config_router.py:246"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3745,6 +4466,7 @@
         "mcpgateway/routers/llm_config_router.py:276"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3764,6 +4486,7 @@
         "mcpgateway/routers/llm_config_router.py:314"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3783,6 +4506,7 @@
         "mcpgateway/routers/llm_proxy_router.py:139"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3801,6 +4525,14 @@
         "mcpgateway/routers/llm_config_router.py:354"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3819,6 +4551,7 @@
         "mcpgateway/routers/llm_config_router.py:447"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3837,6 +4570,14 @@
         "mcpgateway/routers/llm_config_router.py:486"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3855,6 +4596,7 @@
         "mcpgateway/routers/llm_config_router.py:527"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3873,6 +4615,7 @@
         "mcpgateway/routers/llm_config_router.py:557"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3893,6 +4636,7 @@
         "mcpgateway/routers/llmchat_router.py:1638"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3911,6 +4655,7 @@
         "mcpgateway/routers/llm_admin_router.py:50"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3929,6 +4674,7 @@
         "mcpgateway/routers/llm_admin_router.py:127"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3948,6 +4694,7 @@
         "mcpgateway/routers/llm_config_router.py:276"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3967,6 +4714,7 @@
         "mcpgateway/routers/llm_config_router.py:314"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -3986,6 +4734,7 @@
         "mcpgateway/routers/llm_config_router.py:246"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4005,6 +4754,7 @@
         "mcpgateway/routers/llm_config_router.py:557"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4024,6 +4774,7 @@
         "mcpgateway/routers/llm_config_router.py:527"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4042,6 +4793,7 @@
         "mcpgateway/routers/llm_admin_router.py:430"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4060,6 +4812,14 @@
         "mcpgateway/routers/llm_admin_router.py:497"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/routers/llm_admin_router.py:497 (Request.body)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4077,6 +4837,7 @@
         "mcpgateway/routers/llm_admin_router.py:625"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4094,6 +4855,7 @@
         "mcpgateway/routers/llm_admin_router.py:643"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4112,6 +4874,7 @@
         "mcpgateway/routers/llm_admin_router.py:665"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4130,6 +4893,7 @@
         "mcpgateway/routers/llm_admin_router.py:799"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4147,6 +4911,7 @@
         "mcpgateway/routers/compliance_router.py:126"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4165,6 +4930,7 @@
         "mcpgateway/routers/compliance_router.py:189"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4183,6 +4949,14 @@
         "mcpgateway/routers/compliance_router.py:145"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4201,6 +4975,7 @@
         "mcpgateway/routers/compliance_router.py:230"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4219,6 +4994,7 @@
         "mcpgateway/routers/compliance_router.py:273"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4237,6 +5013,7 @@
         "mcpgateway/admin.py:2261"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4255,6 +5032,7 @@
         "mcpgateway/admin.py:2427"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4273,6 +5051,14 @@
         "mcpgateway/admin.py:2459"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4291,6 +5077,7 @@
         "mcpgateway/admin.py:2518"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4309,6 +5096,7 @@
         "mcpgateway/admin.py:2560"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4327,6 +5115,7 @@
         "mcpgateway/admin.py:2597"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4345,6 +5134,7 @@
         "mcpgateway/admin.py:2634"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4363,6 +5153,7 @@
         "mcpgateway/admin.py:2663"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4381,6 +5172,7 @@
         "mcpgateway/admin.py:2814"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4399,6 +5191,14 @@
         "mcpgateway/admin.py:3118"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:3118 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4418,6 +5218,7 @@
         "mcpgateway/admin.py:2875"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4436,6 +5237,7 @@
         "mcpgateway/admin.py:3081"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4454,6 +5256,14 @@
         "mcpgateway/admin.py:3265"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:3265 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4472,6 +5282,14 @@
         "mcpgateway/admin.py:3424"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:3424 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4490,6 +5308,14 @@
         "mcpgateway/admin.py:3480"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:3480 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4508,6 +5334,7 @@
         "mcpgateway/admin.py:3526"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4526,6 +5353,14 @@
         "mcpgateway/admin.py:13504"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:13504 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4544,6 +5379,7 @@
         "mcpgateway/admin.py:3581"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4562,6 +5398,14 @@
         "mcpgateway/admin.py:13913"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:13913 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4580,6 +5424,7 @@
         "mcpgateway/admin.py:3639"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4598,6 +5443,7 @@
         "mcpgateway/admin.py:12756"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4616,6 +5462,14 @@
         "mcpgateway/admin.py:3697"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:3697 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4629,6 +5483,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4644,6 +5499,7 @@
         "mcpgateway/admin.py:4408"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4661,6 +5517,14 @@
         "mcpgateway/admin.py:4520"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:4520 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4676,6 +5540,7 @@
         "mcpgateway/admin.py:4697"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4693,6 +5558,14 @@
         "mcpgateway/admin.py:4725"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:4725 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4710,6 +5583,7 @@
         "mcpgateway/admin.py:4759"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4727,6 +5601,14 @@
         "mcpgateway/admin.py:4804"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:4804 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4740,6 +5622,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4753,6 +5636,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4768,6 +5652,7 @@
         "mcpgateway/admin.py:5129"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4785,6 +5670,14 @@
         "mcpgateway/admin.py:5202"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:5202 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4803,6 +5696,7 @@
         "mcpgateway/admin.py:5552"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4821,6 +5715,7 @@
         "mcpgateway/admin.py:5620"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4839,6 +5734,7 @@
         "mcpgateway/admin.py:5715"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4857,6 +5753,7 @@
         "mcpgateway/admin.py:5959"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4875,6 +5772,14 @@
         "mcpgateway/admin.py:6089"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:6089 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4893,6 +5798,7 @@
         "mcpgateway/admin.py:6190"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4911,6 +5817,7 @@
         "mcpgateway/admin.py:6355"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4929,6 +5836,7 @@
         "mcpgateway/admin.py:6491"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4947,6 +5855,14 @@
         "mcpgateway/admin.py:6610"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:6610 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4965,6 +5881,7 @@
         "mcpgateway/admin.py:6767"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -4983,6 +5900,14 @@
         "mcpgateway/admin.py:6822"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:6822 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5001,6 +5926,14 @@
         "mcpgateway/admin.py:7042"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:7042 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5019,6 +5952,14 @@
         "mcpgateway/admin.py:7118"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:7118 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5037,6 +5978,7 @@
         "mcpgateway/admin.py:7195"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5055,6 +5997,14 @@
         "mcpgateway/admin.py:7268"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:7268 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5073,6 +6023,7 @@
         "mcpgateway/admin.py:7357"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5091,6 +6042,7 @@
         "mcpgateway/admin.py:7417"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5109,6 +6061,7 @@
         "mcpgateway/admin.py:7506"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5127,6 +6080,7 @@
         "mcpgateway/admin.py:7560"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5145,6 +6099,7 @@
         "mcpgateway/admin.py:7745"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5163,6 +6118,14 @@
         "mcpgateway/admin.py:8222"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:8222 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5182,6 +6145,7 @@
         "mcpgateway/admin.py:7808"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5200,6 +6164,7 @@
         "mcpgateway/admin.py:7968"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5218,6 +6183,7 @@
         "mcpgateway/admin.py:8059"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5236,6 +6202,7 @@
         "mcpgateway/admin.py:8167"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5254,6 +6221,7 @@
         "mcpgateway/admin.py:8285"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5272,6 +6240,14 @@
         "mcpgateway/admin.py:8446"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:8446 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5290,6 +6266,7 @@
         "mcpgateway/admin.py:8533"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5308,6 +6285,7 @@
         "mcpgateway/admin.py:8578"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5326,6 +6304,7 @@
         "mcpgateway/admin.py:8623"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5344,6 +6323,7 @@
         "mcpgateway/admin.py:8675"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5362,6 +6342,7 @@
         "mcpgateway/admin.py:8713"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5380,6 +6361,7 @@
         "mcpgateway/admin.py:8792"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5398,6 +6380,14 @@
         "mcpgateway/admin.py:12078"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:12078 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5417,6 +6407,7 @@
         "mcpgateway/admin.py:8850"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5436,6 +6427,7 @@
         "mcpgateway/admin.py:9101"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5455,6 +6447,7 @@
         "mcpgateway/admin.py:9219"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5474,6 +6467,7 @@
         "mcpgateway/admin.py:9321"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5493,6 +6487,7 @@
         "mcpgateway/admin.py:9456"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5512,6 +6507,7 @@
         "mcpgateway/admin.py:9694"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5531,6 +6527,7 @@
         "mcpgateway/admin.py:9892"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5550,6 +6547,7 @@
         "mcpgateway/admin.py:9957"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5569,6 +6567,7 @@
         "mcpgateway/admin.py:10070"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5588,6 +6587,7 @@
         "mcpgateway/admin.py:10132"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5607,6 +6607,7 @@
         "mcpgateway/admin.py:10239"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5626,6 +6627,7 @@
         "mcpgateway/admin.py:10479"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5645,6 +6647,7 @@
         "mcpgateway/admin.py:10577"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5664,6 +6667,7 @@
         "mcpgateway/admin.py:10675"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5683,6 +6687,7 @@
         "mcpgateway/admin.py:10800"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5702,6 +6707,7 @@
         "mcpgateway/admin.py:10934"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5721,6 +6727,7 @@
         "mcpgateway/admin.py:11102"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5739,6 +6746,7 @@
         "mcpgateway/admin.py:11180"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5758,6 +6766,7 @@
         "mcpgateway/admin.py:11204"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5777,6 +6786,7 @@
         "mcpgateway/admin.py:11418"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5796,6 +6806,7 @@
         "mcpgateway/admin.py:11478"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5815,6 +6826,7 @@
         "mcpgateway/admin.py:11902"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5833,6 +6845,7 @@
         "mcpgateway/admin.py:11960"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5851,6 +6864,14 @@
         "mcpgateway/admin.py:12078"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:12078 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5869,6 +6890,14 @@
         "mcpgateway/admin.py:12240"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:12240 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5887,6 +6916,14 @@
         "mcpgateway/admin.py:12240"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:12240 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5905,6 +6942,14 @@
         "mcpgateway/routers/openapi_schema_router.py:45"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:12400 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5923,6 +6968,14 @@
         "mcpgateway/admin.py:12515"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:12515 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5941,6 +6994,14 @@
         "mcpgateway/admin.py:12562"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:12562 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5959,6 +7020,7 @@
         "mcpgateway/admin.py:12618"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5977,6 +7039,7 @@
         "mcpgateway/admin.py:12936"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -5995,6 +7058,7 @@
         "mcpgateway/admin.py:13071"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6012,6 +7076,14 @@
         "mcpgateway/admin.py:12656"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:12656 (Request.json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6030,6 +7102,14 @@
         "mcpgateway/admin.py:13128"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6048,6 +7128,14 @@
         "mcpgateway/admin.py:13168"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:13168 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6066,6 +7154,14 @@
         "mcpgateway/admin.py:13355"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:13355 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6079,6 +7175,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6097,6 +7194,7 @@
         "mcpgateway/admin.py:13462"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6115,6 +7213,14 @@
         "mcpgateway/admin.py:13634"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:13634 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6133,6 +7239,14 @@
         "mcpgateway/admin.py:13766"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:13766 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6151,6 +7265,14 @@
         "mcpgateway/admin.py:13818"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:13818 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6169,6 +7291,7 @@
         "mcpgateway/admin.py:13871"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6187,6 +7310,14 @@
         "mcpgateway/admin.py:14029"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:14029 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6205,6 +7336,14 @@
         "mcpgateway/admin.py:14159"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:14159 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6223,6 +7362,14 @@
         "mcpgateway/admin.py:14205"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:14205 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6241,6 +7388,7 @@
         "mcpgateway/admin.py:14264"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6259,6 +7407,7 @@
         "mcpgateway/admin.py:14317"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6272,6 +7421,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6290,6 +7440,14 @@
         "mcpgateway/admin.py:14431"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:14431 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6303,6 +7461,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6316,6 +7475,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6334,6 +7494,7 @@
         "mcpgateway/admin.py:14634"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6352,6 +7513,7 @@
         "mcpgateway/admin.py:14674"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6370,6 +7532,7 @@
         "mcpgateway/admin.py:14757"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6389,6 +7552,14 @@
         "mcpgateway/admin.py:14785"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6407,6 +7578,7 @@
         "mcpgateway/admin.py:14820"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6425,6 +7597,7 @@
         "mcpgateway/admin.py:15033"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6443,6 +7616,15 @@
         "mcpgateway/admin.py:15147"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:15147 (Request.body and Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6461,6 +7643,15 @@
         "mcpgateway/admin.py:15147"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:15147 (Request.body and Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6479,6 +7670,7 @@
         "mcpgateway/admin.py:15309"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6497,6 +7689,7 @@
         "mcpgateway/admin.py:15402"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6515,6 +7708,7 @@
         "mcpgateway/admin.py:15491"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6533,6 +7727,7 @@
         "mcpgateway/admin.py:15729"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6551,6 +7746,7 @@
         "mcpgateway/admin.py:15861"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6569,6 +7765,14 @@
         "mcpgateway/admin.py:15953"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:15953 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6587,6 +7791,14 @@
         "mcpgateway/admin.py:16022"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:16022 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6605,6 +7817,14 @@
         "mcpgateway/admin.py:16081"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:16081 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6623,6 +7843,7 @@
         "mcpgateway/admin.py:16150"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6641,6 +7862,7 @@
         "mcpgateway/admin.py:16175"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6659,6 +7881,7 @@
         "mcpgateway/admin.py:16198"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6677,6 +7900,7 @@
         "mcpgateway/admin.py:16241"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6695,6 +7919,14 @@
         "mcpgateway/admin.py:16313"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:16313 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6713,6 +7945,14 @@
         "mcpgateway/admin.py:16493"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:16493 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6731,6 +7971,14 @@
         "mcpgateway/admin.py:16719"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:16719 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6749,6 +7997,14 @@
         "mcpgateway/admin.py:16773"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:16773 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6767,6 +8023,14 @@
         "mcpgateway/admin.py:16824"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:16824 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6786,6 +8050,7 @@
         "mcpgateway/admin.py:16943"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6804,6 +8069,14 @@
         "mcpgateway/admin.py:16999"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6822,6 +8095,7 @@
         "mcpgateway/admin.py:17037"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6840,6 +8114,14 @@
         "mcpgateway/admin.py:17067"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6858,6 +8140,7 @@
         "mcpgateway/admin.py:17109"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6876,6 +8159,7 @@
         "mcpgateway/admin.py:17145"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6894,6 +8178,7 @@
         "mcpgateway/admin.py:17175"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6912,6 +8197,7 @@
         "mcpgateway/admin.py:17208"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6930,6 +8216,7 @@
         "mcpgateway/admin.py:17238"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6948,6 +8235,7 @@
         "mcpgateway/admin.py:17296"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6966,6 +8254,7 @@
         "mcpgateway/admin.py:17355"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -6984,6 +8273,7 @@
         "mcpgateway/admin.py:17414"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7002,6 +8292,7 @@
         "mcpgateway/admin.py:17479"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7020,6 +8311,7 @@
         "mcpgateway/admin.py:17527"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7038,6 +8330,14 @@
         "mcpgateway/admin.py:17587"
       ],
       "feature": null,
+      "requestBody": {
+        "required": false,
+        "contentTypes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/admin.py:17587 (Request.form)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7056,6 +8356,7 @@
         "mcpgateway/admin.py:17664"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7075,6 +8376,7 @@
         "mcpgateway/routers/plugins.py:31"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7092,6 +8394,14 @@
         "mcpgateway/admin.py:17796"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7110,6 +8420,7 @@
         "mcpgateway/admin.py:17854"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7128,6 +8439,7 @@
         "mcpgateway/admin.py:17912"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7146,6 +8458,14 @@
         "mcpgateway/admin.py:17992"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7165,6 +8485,7 @@
         "mcpgateway/routers/catalog.py:29"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7184,6 +8505,14 @@
         "mcpgateway/routers/email_auth.py:341"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7202,6 +8531,7 @@
         "mcpgateway/admin.py:18232"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7220,6 +8550,14 @@
         "mcpgateway/admin.py:18259"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7238,6 +8576,7 @@
         "mcpgateway/admin.py:18298"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7256,6 +8595,7 @@
         "mcpgateway/admin.py:18396"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7274,6 +8614,7 @@
         "mcpgateway/admin.py:18468"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7292,6 +8633,7 @@
         "mcpgateway/admin.py:18549"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7310,6 +8652,7 @@
         "mcpgateway/admin.py:18599"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7328,6 +8671,7 @@
         "mcpgateway/admin.py:18616"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7346,6 +8690,7 @@
         "mcpgateway/admin.py:18633"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7364,6 +8709,7 @@
         "mcpgateway/admin.py:18678"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7382,6 +8728,7 @@
         "mcpgateway/admin.py:18781"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7400,6 +8747,7 @@
         "mcpgateway/admin.py:18868"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7418,6 +8766,14 @@
         "mcpgateway/admin.py:18815"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7436,6 +8792,7 @@
         "mcpgateway/admin.py:18917"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7454,6 +8811,14 @@
         "mcpgateway/admin.py:18965"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7472,6 +8837,7 @@
         "mcpgateway/admin.py:19040"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7490,6 +8856,7 @@
         "mcpgateway/admin.py:19074"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7508,6 +8875,7 @@
         "mcpgateway/admin.py:19125"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7526,6 +8894,7 @@
         "mcpgateway/admin.py:19287"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7544,6 +8913,7 @@
         "mcpgateway/admin.py:19608"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7562,6 +8932,7 @@
         "mcpgateway/admin.py:19677"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7580,6 +8951,7 @@
         "mcpgateway/admin.py:19744"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7598,6 +8970,7 @@
         "mcpgateway/admin.py:19814"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7616,6 +8989,7 @@
         "mcpgateway/admin.py:19863"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7634,6 +9008,7 @@
         "mcpgateway/admin.py:19936"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7652,6 +9027,7 @@
         "mcpgateway/admin.py:19988"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7670,6 +9046,7 @@
         "mcpgateway/admin.py:20060"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7688,6 +9065,7 @@
         "mcpgateway/admin.py:20140"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7706,6 +9084,7 @@
         "mcpgateway/admin.py:20173"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7724,6 +9103,7 @@
         "mcpgateway/admin.py:20246"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7742,6 +9122,7 @@
         "mcpgateway/admin.py:20298"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7760,6 +9141,7 @@
         "mcpgateway/admin.py:20362"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7778,6 +9160,7 @@
         "mcpgateway/admin.py:20395"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7796,6 +9179,7 @@
         "mcpgateway/admin.py:20468"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7814,6 +9198,7 @@
         "mcpgateway/admin.py:20520"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7832,6 +9217,7 @@
         "mcpgateway/admin.py:20584"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7850,6 +9236,7 @@
         "mcpgateway/admin.py:20617"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7868,6 +9255,7 @@
         "mcpgateway/admin.py:20680"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7886,6 +9274,7 @@
         "mcpgateway/admin.py:20706"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7904,6 +9293,7 @@
         "mcpgateway/admin.py:20732"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7922,6 +9312,7 @@
         "mcpgateway/admin.py:20758"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7940,6 +9331,7 @@
         "mcpgateway/admin.py:20784"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7957,6 +9349,7 @@
         "mcpgateway/routers/runtime_admin_router.py:377"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7975,6 +9368,14 @@
         "mcpgateway/routers/runtime_admin_router.py:398"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -7992,6 +9393,7 @@
         "mcpgateway/routers/runtime_admin_router.py:437"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8010,6 +9412,14 @@
         "mcpgateway/routers/runtime_admin_router.py:458"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8027,6 +9437,7 @@
         "mcpgateway/routers/well_known.py:339"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8045,6 +9456,7 @@
         "mcpgateway/main.py:7335"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8063,6 +9475,7 @@
         "mcpgateway/main.py:7380"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8082,6 +9495,7 @@
         "mcpgateway/main.py:7407"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8101,6 +9515,14 @@
         "mcpgateway/main.py:7484"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8119,6 +9541,7 @@
         "mcpgateway/main.py:7407"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8137,6 +9560,14 @@
         "mcpgateway/main.py:7484"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8155,6 +9586,7 @@
         "mcpgateway/main.py:7584"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8173,6 +9605,14 @@
         "mcpgateway/main.py:7647"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8191,6 +9631,7 @@
         "mcpgateway/main.py:7720"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8209,6 +9650,7 @@
         "mcpgateway/main.py:7614"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8227,6 +9669,7 @@
         "mcpgateway/main.py:7779"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8246,6 +9689,7 @@
         "mcpgateway/main.py:4155"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8265,6 +9709,14 @@
         "mcpgateway/main.py:4269"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8283,6 +9735,7 @@
         "mcpgateway/main.py:4155"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8301,6 +9754,14 @@
         "mcpgateway/main.py:4269"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8319,6 +9780,7 @@
         "mcpgateway/main.py:4240"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8337,6 +9799,14 @@
         "mcpgateway/main.py:4354"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8355,6 +9825,7 @@
         "mcpgateway/main.py:4548"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8373,6 +9844,7 @@
         "mcpgateway/main.py:4415"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8391,6 +9863,7 @@
         "mcpgateway/main.py:4452"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8409,6 +9882,14 @@
         "mcpgateway/main.py:4481"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8427,6 +9908,7 @@
         "mcpgateway/main.py:4593"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8445,6 +9927,14 @@
         "mcpgateway/main.py:4712"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/main.py:4712"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8463,6 +9953,7 @@
         "mcpgateway/main.py:4786"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8481,6 +9972,7 @@
         "mcpgateway/main.py:4832"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8499,6 +9991,7 @@
         "mcpgateway/main.py:4868"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8517,6 +10010,7 @@
         "mcpgateway/routers/catalog.py:29"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8536,6 +10030,14 @@
         "mcpgateway/routers/email_auth.py:341"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8555,6 +10057,7 @@
         "mcpgateway/routers/plugins.py:31"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8563,7 +10066,7 @@
       "operationId": "handle_rpc_rpc_post",
       "category": "protocol",
       "reason": "Protocol / 协议与连接调试",
-      "entry": "API workspace",
+      "entry": "Tools / schema-driven test call; API workspace / JSON-RPC",
       "permission": "Not statically resolved; backend enforces authorization",
       "dependencies": [
         "Depends(get_db)",
@@ -8573,6 +10076,14 @@
         "mcpgateway/main.py:8120"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:8120,11422 (Request.body; JSON-RPC validation)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8581,7 +10092,7 @@
       "operationId": "handle_rpc_rpc__post",
       "category": "protocol",
       "reason": "Protocol / 协议与连接调试",
-      "entry": "API workspace",
+      "entry": "Tools / schema-driven test call; API workspace / JSON-RPC",
       "permission": "Not statically resolved; backend enforces authorization",
       "dependencies": [
         "Depends(get_db)",
@@ -8591,6 +10102,14 @@
         "mcpgateway/main.py:8120"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:8120,11422 (Request.body; JSON-RPC validation)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8606,6 +10125,7 @@
         "mcpgateway/main.py:8136"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8621,6 +10141,7 @@
         "mcpgateway/main.py:8136"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8636,6 +10157,7 @@
         "mcpgateway/main.py:8185"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8651,6 +10173,7 @@
         "mcpgateway/main.py:8185"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8666,6 +10189,7 @@
         "mcpgateway/main.py:8219"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8681,6 +10205,7 @@
         "mcpgateway/main.py:8219"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8696,6 +10221,7 @@
         "mcpgateway/main.py:8296"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8711,6 +10237,7 @@
         "mcpgateway/main.py:8296"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8726,6 +10253,7 @@
         "mcpgateway/main.py:8340"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8741,6 +10269,7 @@
         "mcpgateway/main.py:8340"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8756,6 +10285,7 @@
         "mcpgateway/main.py:8400"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8771,6 +10301,7 @@
         "mcpgateway/main.py:8400"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8786,6 +10317,7 @@
         "mcpgateway/main.py:8467"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8801,6 +10333,7 @@
         "mcpgateway/main.py:8467"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8816,6 +10349,7 @@
         "mcpgateway/main.py:8537"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8831,6 +10365,7 @@
         "mcpgateway/main.py:8537"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8846,6 +10381,7 @@
         "mcpgateway/main.py:8597"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8861,6 +10397,7 @@
         "mcpgateway/main.py:8597"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8876,6 +10413,7 @@
         "mcpgateway/main.py:8694"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8891,6 +10429,7 @@
         "mcpgateway/main.py:8694"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8906,6 +10445,7 @@
         "mcpgateway/main.py:8819"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8921,6 +10461,7 @@
         "mcpgateway/main.py:8819"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8936,6 +10477,7 @@
         "mcpgateway/main.py:8921"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8951,6 +10493,7 @@
         "mcpgateway/main.py:8921"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8966,6 +10509,7 @@
         "mcpgateway/main.py:9007"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8981,6 +10525,7 @@
         "mcpgateway/main.py:9007"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -8996,6 +10541,7 @@
         "mcpgateway/main.py:9095"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9011,6 +10557,7 @@
         "mcpgateway/main.py:9095"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9026,6 +10573,7 @@
         "mcpgateway/main.py:9165"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9041,6 +10589,7 @@
         "mcpgateway/main.py:9165"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9056,6 +10605,7 @@
         "mcpgateway/main.py:9247"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9071,6 +10621,7 @@
         "mcpgateway/main.py:9247"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9086,6 +10637,7 @@
         "mcpgateway/main.py:9313"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9101,6 +10653,7 @@
         "mcpgateway/main.py:9313"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9116,6 +10669,7 @@
         "mcpgateway/main.py:9383"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9131,6 +10685,7 @@
         "mcpgateway/main.py:9383"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9146,6 +10701,7 @@
         "mcpgateway/main.py:9484"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9161,6 +10717,7 @@
         "mcpgateway/main.py:9484"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9176,6 +10733,7 @@
         "mcpgateway/main.py:9619"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9191,6 +10749,7 @@
         "mcpgateway/main.py:9619"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9206,6 +10765,7 @@
         "mcpgateway/main.py:9728"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9221,6 +10781,7 @@
         "mcpgateway/main.py:9728"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9236,6 +10797,7 @@
         "mcpgateway/main.py:9746"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9251,6 +10813,7 @@
         "mcpgateway/main.py:9746"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9266,6 +10829,7 @@
         "mcpgateway/main.py:9764"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9281,6 +10845,7 @@
         "mcpgateway/main.py:9764"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9296,6 +10861,7 @@
         "mcpgateway/main.py:9782"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9311,6 +10877,7 @@
         "mcpgateway/main.py:9782"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9326,6 +10893,7 @@
         "mcpgateway/main.py:9800"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9341,6 +10909,7 @@
         "mcpgateway/main.py:9800"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9356,6 +10925,7 @@
         "mcpgateway/main.py:9823"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9371,6 +10941,7 @@
         "mcpgateway/main.py:9823"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9386,6 +10957,7 @@
         "mcpgateway/main.py:9877"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9401,6 +10973,7 @@
         "mcpgateway/main.py:9877"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9416,6 +10989,7 @@
         "mcpgateway/main.py:9884"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9431,6 +11005,7 @@
         "mcpgateway/main.py:9884"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9446,6 +11021,7 @@
         "mcpgateway/main.py:9891"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9461,6 +11037,7 @@
         "mcpgateway/main.py:9891"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9476,6 +11053,7 @@
         "mcpgateway/main.py:9905"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9491,6 +11069,7 @@
         "mcpgateway/main.py:9905"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9506,6 +11085,7 @@
         "mcpgateway/main.py:9987"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9521,6 +11101,7 @@
         "mcpgateway/main.py:9987"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9536,6 +11117,7 @@
         "mcpgateway/main.py:10035"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9551,6 +11133,7 @@
         "mcpgateway/main.py:10035"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9566,6 +11149,7 @@
         "mcpgateway/main.py:10072"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9581,6 +11165,7 @@
         "mcpgateway/main.py:10072"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9596,6 +11181,7 @@
         "mcpgateway/main.py:10109"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9611,6 +11197,7 @@
         "mcpgateway/main.py:10109"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9626,6 +11213,7 @@
         "mcpgateway/main.py:10146"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9641,6 +11229,7 @@
         "mcpgateway/main.py:10146"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9656,6 +11245,7 @@
         "mcpgateway/main.py:10186"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9671,6 +11261,7 @@
         "mcpgateway/main.py:10186"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9686,6 +11277,7 @@
         "mcpgateway/main.py:10224"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9701,6 +11293,7 @@
         "mcpgateway/main.py:10224"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9716,6 +11309,7 @@
         "mcpgateway/main.py:10265"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9731,6 +11325,7 @@
         "mcpgateway/main.py:10265"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9746,6 +11341,7 @@
         "mcpgateway/main.py:10303"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9761,6 +11357,7 @@
         "mcpgateway/main.py:10303"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9776,6 +11373,7 @@
         "mcpgateway/main.py:10363"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9791,6 +11389,7 @@
         "mcpgateway/main.py:10363"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9809,6 +11408,14 @@
         "mcpgateway/main.py:10678"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:10678 (_read_request_json via Request.body)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9827,6 +11434,14 @@
         "mcpgateway/main.py:10908"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:10908 (_read_request_json via Request.body)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9842,6 +11457,7 @@
         "mcpgateway/main.py:10988"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9857,6 +11473,7 @@
         "mcpgateway/main.py:10988"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9872,6 +11489,7 @@
         "mcpgateway/main.py:11111"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9887,6 +11505,7 @@
         "mcpgateway/main.py:11111"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9902,6 +11521,7 @@
         "mcpgateway/main.py:11292"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9917,6 +11537,7 @@
         "mcpgateway/main.py:11292"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9934,6 +11555,7 @@
         "mcpgateway/main.py:12176"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9951,6 +11573,14 @@
         "mcpgateway/main.py:12283"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "opaque",
+        "source": "mcpgateway/main.py:12283"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9968,6 +11598,14 @@
         "mcpgateway/main.py:12330"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:12330 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9981,6 +11619,7 @@
       "dependencies": [],
       "permissionEvidence": [],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -9996,6 +11635,7 @@
         "mcpgateway/routers/well_known.py:205"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10013,6 +11653,7 @@
         "mcpgateway/routers/well_known.py:339"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10028,6 +11669,7 @@
         "mcpgateway/routers/server_well_known.py:38"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10043,6 +11685,7 @@
         "mcpgateway/routers/server_well_known.py:38"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10061,6 +11704,14 @@
         "mcpgateway/routers/openapi_schema_router.py:45"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/admin.py:12400 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10079,6 +11730,7 @@
         "mcpgateway/routers/oauth_router.py:653"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10096,6 +11748,7 @@
         "mcpgateway/routers/oauth_router.py:845"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10114,6 +11767,7 @@
         "mcpgateway/routers/oauth_router.py:1517"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10132,6 +11786,7 @@
         "mcpgateway/routers/oauth_router.py:1577"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10151,6 +11806,7 @@
         "mcpgateway/routers/oauth_router.py:1758"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10169,6 +11825,7 @@
         "mcpgateway/routers/oauth_router.py:1843"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10187,6 +11844,7 @@
         "mcpgateway/routers/oauth_router.py:1897"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10205,6 +11863,7 @@
         "mcpgateway/routers/oauth_router.py:1953"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10223,6 +11882,7 @@
         "mcpgateway/routers/a2a_agent_plugin_bindings.py:148"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10241,6 +11901,14 @@
         "mcpgateway/routers/a2a_agent_plugin_bindings.py:82"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10259,6 +11927,7 @@
         "mcpgateway/routers/a2a_agent_plugin_bindings.py:226"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10277,6 +11946,7 @@
         "mcpgateway/routers/a2a_agent_plugin_bindings.py:186"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10295,6 +11965,7 @@
         "mcpgateway/routers/a2a_agent_plugin_bindings.py:269"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10314,6 +11985,14 @@
         "mcpgateway/routers/mcp_servers_router.py:69"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10333,6 +12012,14 @@
         "mcpgateway/routers/mcp_servers_router.py:109"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10351,6 +12038,14 @@
         "mcpgateway/routers/log_search.py:640"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10369,6 +12064,7 @@
         "mcpgateway/routers/log_search.py:749"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10387,6 +12083,7 @@
         "mcpgateway/routers/log_search.py:862"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10405,6 +12102,7 @@
         "mcpgateway/routers/log_search.py:938"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10423,6 +12121,7 @@
         "mcpgateway/routers/log_search.py:1023"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10441,6 +12140,7 @@
         "mcpgateway/routers/log_search.py:1111"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10459,6 +12159,14 @@
         "mcpgateway/routers/llm_proxy_router.py:57"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10478,6 +12186,7 @@
         "mcpgateway/routers/llm_proxy_router.py:139"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10493,6 +12202,7 @@
         "mcpgateway/main.py:13523"
       ],
       "feature": null,
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10510,6 +12220,14 @@
         "mcpgateway/main.py:4006"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:4006 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10527,6 +12245,14 @@
         "mcpgateway/main.py:4066"
       ],
       "feature": null,
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "verified-fields",
+        "source": "mcpgateway/main.py:4066 (_read_request_json)"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10545,6 +12271,7 @@
         "mcpgateway/routers/vault_router.py:87"
       ],
       "feature": "OAUTH_TOKEN_BACKEND=vault",
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10562,6 +12289,7 @@
         "mcpgateway/routers/siem.py:58"
       ],
       "feature": "SIEM_EXPORT_ENABLED=true",
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10579,6 +12307,7 @@
         "mcpgateway/routers/siem.py:70"
       ],
       "feature": "SIEM_EXPORT_ENABLED=true",
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10596,6 +12325,14 @@
         "mcpgateway/routers/siem.py:85"
       ],
       "feature": "SIEM_EXPORT_ENABLED=true",
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10613,6 +12350,14 @@
         "mcpgateway/routers/siem.py:115"
       ],
       "feature": "SIEM_EXPORT_ENABLED=true",
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10630,6 +12375,7 @@
         "mcpgateway/routers/siem.py:145"
       ],
       "feature": "SIEM_EXPORT_ENABLED=true",
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10648,6 +12394,7 @@
         "mcpgateway/routers/toolops_router.py:68"
       ],
       "feature": "TOOLOPS_ENABLED=true",
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10666,6 +12413,14 @@
         "mcpgateway/routers/toolops_router.py:110"
       ],
       "feature": "TOOLOPS_ENABLED=true",
+      "requestBody": {
+        "required": true,
+        "contentTypes": [
+          "application/json"
+        ],
+        "completeness": "openapi",
+        "source": "OpenAPI"
+      },
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     },
     {
@@ -10684,6 +12439,7 @@
         "mcpgateway/routers/toolops_router.py:146"
       ],
       "feature": "TOOLOPS_ENABLED=true",
+      "requestBody": null,
       "verification": "Contract mapped; see docs/verification.md for executed scenarios"
     }
   ]

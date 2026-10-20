@@ -48,6 +48,7 @@ import { ConfigurationTransfer } from "./ConfigurationTransfer";
 import { ApiExplorer } from "./ApiExplorer";
 import { RowActionMenu } from "./RowActionMenu";
 import { McpConnection } from "./Connections";
+import { ToolTestDialog } from "./ToolTestDialog";
 import {
   listPath as resourceListPath,
   pagination,
@@ -124,6 +125,7 @@ export function DataPage({
   const [error, setError] = useState("");
   const [patch, setPatch] = useState("{}");
   const [connection, setConnection] = useState<JsonRecord>();
+  const [testTool, setTestTool] = useState<JsonRecord>();
   const [activeItem, setActiveItem] = useState<JsonRecord>();
   const [mode, setMode] = useState<"create" | "edit" | "action" | "detail">(
     "action",
@@ -206,6 +208,16 @@ export function DataPage({
     );
   };
   const gatewayCreate = findOperation(spec, "/v1/gateways", "POST");
+  const rpc = findOperation(spec, "/rpc", "POST");
+  const mayTest =
+    module.id === "tools" &&
+    !!rpc &&
+    rpc["x-panel-available"] !== false &&
+    !!primaryDetail &&
+    (!primaryDetail["x-panel-admin"] || session.user?.is_admin) &&
+    permitted(permissions, primaryDetail["x-panel-permission"]) &&
+    can("read") &&
+    permitted(permissions, "tools.execute");
   const mayConnect =
     !!gatewayCreate &&
     gatewayCreate["x-panel-available"] !== false &&
@@ -895,6 +907,14 @@ export function DataPage({
                           : "可用"}
                     </span>
                     <div className="card-footer">
+                      {mayTest && (
+                        <button
+                          className="text-button"
+                          onClick={() => setTestTool(item)}
+                        >
+                          {en ? "Test tool" : "测试调用"}
+                        </button>
+                      )}
                       {(primaryDetail || list) && (
                         <button
                           className="text-button"
@@ -1078,6 +1098,14 @@ export function DataPage({
                         </td>
                         <td>
                           <div className="row-actions">
+                            {mayTest && (
+                              <button
+                                className="text-button"
+                                onClick={() => setTestTool(item)}
+                              >
+                                {en ? "Test tool" : "测试调用"}
+                              </button>
+                            )}
                             {update && can("update") && (
                               <button
                                 className="text-button"
@@ -1381,6 +1409,17 @@ export function DataPage({
           detailActions={
             module.id === "tools" && activeItem
               ? [
+                  ...(mayTest
+                    ? [
+                        {
+                          label: en ? "Test tool" : "测试调用",
+                          onSelect: () => {
+                            setOperation(undefined);
+                            setTestTool(activeItem);
+                          },
+                        },
+                      ]
+                    : []),
                   ...(update && can("update")
                     ? [
                         {
@@ -1413,6 +1452,16 @@ export function DataPage({
         >
           <McpConnection key={connection.id} serverId={connection.id} />
         </WorkflowDialog>
+      )}
+      {testTool && rpc && (
+        <ToolTestDialog
+          key={recordId(testTool)}
+          item={testTool}
+          path={rpc.path}
+          detailPath={`${module.path}/${encodeURIComponent(recordId(testTool))}`}
+          en={en}
+          onClose={() => setTestTool(undefined)}
+        />
       )}
     </>
   );
