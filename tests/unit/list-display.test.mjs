@@ -5,6 +5,7 @@ import {
   loadResourcePages,
   matchesResource,
   resourceTags,
+  resourceStatus,
 } from "../../apps/web/src/list-model.mjs";
 import {
   formatDuration,
@@ -217,6 +218,13 @@ test("search combines text, state, visibility and team without treating unknown 
     ),
     true,
   );
+});
+
+test("revoked tokens are excluded from enabled state filtering", () => {
+  const revoked = { id: "fake-token", is_active: true, is_revoked: true };
+  assert.equal(resourceStatus(revoked), false);
+  assert.equal(matchesResource(revoked, { state: "enabled" }), false);
+  assert.equal(matchesResource(revoked, { state: "disabled" }), true);
 });
 
 test("duration formatting preserves zero and missing samples without floating-point noise", () => {

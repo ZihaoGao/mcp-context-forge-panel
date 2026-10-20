@@ -455,6 +455,22 @@ pre {
   color: #626c66;
   border: 1px solid #e9edea;
 }
+.badge.danger {
+  background: #fbeeed;
+  color: #a0443b;
+}
+.badge.danger .status-dot {
+  background: currentColor;
+}
+.token-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.token-scope .badge {
+  display: block;
+}
 .status-dot {
   width: 5px;
   height: 5px;

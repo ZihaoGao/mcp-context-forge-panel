@@ -20,6 +20,7 @@ export function resourceTags(tags, includeIds = false) {
 }
 
 export function resourceStatus(item) {
+  if (item.is_revoked === true) return false;
   return (
     item.is_active ??
     item.enabled ??

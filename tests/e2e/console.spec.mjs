@@ -544,6 +544,14 @@ test("ordinary user creates a key, copies the creation response and revokes it t
   await page.getByRole("button", { name: "删除 / 撤销", exact: true }).click();
   await page.getByRole("button", { name: "确认执行", exact: true }).click();
   await expect(page.locator(".batch-results")).toContainText("成功");
+  await page.getByRole("button", { name: "Close batch", exact: true }).click();
+  const revokedRow = page
+    .locator("table tbody tr")
+    .filter({ hasText: `browser-key-${run}` });
+  await expect(revokedRow.getByText("已撤销", { exact: true })).toBeVisible();
+  await expect(revokedRow.getByText("已撤销", { exact: true })).toHaveClass(
+    /danger/,
+  );
   expect(errors).toEqual([]);
 });
 test("mobile navigation, runtime prefix and English language preference survive reload", async ({

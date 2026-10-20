@@ -32,6 +32,8 @@ import { associationEndpoints } from "../association-model.mjs";
 import { restToolProblems } from "../tool-workflows.mjs";
 import { toolEditContext, toolWriteBody } from "../tool-auth.mjs";
 import { GatewayRegistrationResult } from "./GatewayRegistrationResult";
+import { TokenScope, TokenStatus } from "./TokenPresentation";
+import { mergeTokenRevocation } from "../token-display.mjs";
 export { resourceActionName } from "../resource-actions.mjs";
 
 export function RecordDetails({ value }: { value: unknown }) {
@@ -79,6 +81,47 @@ export function RecordDetails({ value }: { value: unknown }) {
             : "否"
         : String(safeDisplay(value))}
     </span>
+  );
+}
+function TokenDetails({
+  value,
+  item,
+  spec,
+  teams,
+}: {
+  value: JsonRecord;
+  item?: JsonRecord;
+  spec: JsonRecord;
+  teams: JsonRecord[];
+}) {
+  const t = useText();
+  const token = mergeTokenRevocation(item, value);
+  const fields = { ...token };
+  for (const key of [
+    "name",
+    "team_id",
+    "server_id",
+    "is_active",
+    "is_revoked",
+    "revoked_at",
+    "revoked_by",
+    "revocation_reason",
+  ])
+    delete fields[key];
+  if (token.is_revoked) {
+    fields[t("撤销时间", "Revoked at")] = token.revoked_at;
+    fields[t("撤销人", "Revoked by")] = token.revoked_by;
+    fields[t("撤销原因", "Revocation reason")] = token.revocation_reason;
+  }
+  return (
+    <div className="token-details">
+      <div className="section-heading">
+        <h3>{token.name}</h3>
+        <TokenStatus token={token} />
+      </div>
+      <TokenScope token={token} spec={spec} teams={teams} />
+      <RecordDetails value={fields} />
+    </div>
   );
 }
 function ToolDetails({ value }: { value: JsonRecord }) {
@@ -235,6 +278,7 @@ export function ResourceDialog({
   onSuccess,
   en = false,
   detailActions = [],
+  teams = [],
 }: {
   moduleId: string;
   operation: Operation;
@@ -248,6 +292,7 @@ export function ResourceDialog({
   onSuccess: () => void;
   en?: boolean;
   detailActions?: { label: string; onSelect: () => void }[];
+  teams?: JsonRecord[];
 }) {
   const session = useContext(SessionContext);
   const t = (zh: string, english: string) => (en ? english : zh);
@@ -781,6 +826,13 @@ export function ResourceDialog({
                         ? t("已复制", "Copied")
                         : t("复制 API Key", "Copy API Key")}
                     </button>
+                    {moduleId === "tokens" && result.token && (
+                      <TokenScope
+                        token={result.token}
+                        spec={spec}
+                        teams={teams}
+                      />
+                    )}
                     <RecordDetails
                       value={{
                         name: result.token?.name || value.name,
@@ -797,9 +849,6 @@ export function ResourceDialog({
                             ),
                         [t("权限范围", "Permission scope")]:
                           result.token?.resource_scopes,
-                        [t("服务器范围", "Server scope")]:
-                          result.token?.server_id ||
-                          t("未额外限制", "No additional restriction"),
                       }}
                     />
                     {!!result.warnings?.length && (
@@ -815,6 +864,16 @@ export function ResourceDialog({
                       </div>
                     )}
                   </div>
+                ) : mode === "detail" &&
+                  moduleId === "tokens" &&
+                  result &&
+                  typeof result === "object" ? (
+                  <TokenDetails
+                    value={result}
+                    item={item}
+                    spec={spec}
+                    teams={teams}
+                  />
                 ) : mode === "detail" &&
                   moduleId === "tools" &&
                   result &&

@@ -49,6 +49,7 @@ import { ApiExplorer } from "./ApiExplorer";
 import { RowActionMenu } from "./RowActionMenu";
 import { McpConnection } from "./Connections";
 import { ToolTestDialog } from "./ToolTestDialog";
+import { TokenScope, TokenStatus } from "./TokenPresentation";
 import {
   listPath as resourceListPath,
   pagination,
@@ -895,17 +896,24 @@ export function DataPage({
                     <h3>{title(item)}</h3>
                     <p>{item.description || "—"}</p>
                     <ResourceTags tags={item.tags} en={en} />
-                    <span
-                      className={`badge ${status(item) === false ? "neutral" : "success"}`}
-                    >
-                      {status(item) === false
-                        ? en
-                          ? "Disabled"
-                          : "已停用"
-                        : en
-                          ? "Available"
-                          : "可用"}
-                    </span>
+                    {module.id === "tokens" ? (
+                      <>
+                        <TokenStatus token={item} />
+                        <TokenScope token={item} spec={spec} teams={teams} />
+                      </>
+                    ) : (
+                      <span
+                        className={`badge ${status(item) === false ? "neutral" : "success"}`}
+                      >
+                        {status(item) === false
+                          ? en
+                            ? "Disabled"
+                            : "已停用"
+                          : en
+                            ? "Available"
+                            : "可用"}
+                      </span>
+                    )}
                     <div className="card-footer">
                       {mayTest && (
                         <button
@@ -1052,36 +1060,48 @@ export function DataPage({
                           </div>
                         </td>
                         <td>
-                          <span
-                            className={`badge ${status(item) === false ? "neutral" : "success"}`}
-                          >
-                            <span className="status-dot" />
-                            {status(item) === false
-                              ? en
-                                ? "Disabled"
-                                : "已停用"
-                              : en
-                                ? "Available"
-                                : "可用"}
-                          </span>
+                          {module.id === "tokens" ? (
+                            <TokenStatus token={item} />
+                          ) : (
+                            <span
+                              className={`badge ${status(item) === false ? "neutral" : "success"}`}
+                            >
+                              <span className="status-dot" />
+                              {status(item) === false
+                                ? en
+                                  ? "Disabled"
+                                  : "已停用"
+                                : en
+                                  ? "Available"
+                                  : "可用"}
+                            </span>
+                          )}
                         </td>
                         <td>
-                          <span className="badge neutral">
-                            {item.visibility ||
-                              (typeof item.scope === "string"
-                                ? item.scope
-                                : undefined) ||
-                              item.provider_type ||
-                              item.mode ||
-                              item.category ||
-                              (module.id === "users"
-                                ? item.is_admin
-                                  ? "管理员"
-                                  : "普通用户"
-                                : undefined) ||
-                              item.team_id ||
-                              (en ? "Personal" : "个人")}
-                          </span>
+                          {module.id === "tokens" ? (
+                            <TokenScope
+                              token={item}
+                              spec={spec}
+                              teams={teams}
+                            />
+                          ) : (
+                            <span className="badge neutral">
+                              {item.visibility ||
+                                (typeof item.scope === "string"
+                                  ? item.scope
+                                  : undefined) ||
+                                item.provider_type ||
+                                item.mode ||
+                                item.category ||
+                                (module.id === "users"
+                                  ? item.is_admin
+                                    ? "管理员"
+                                    : "普通用户"
+                                  : undefined) ||
+                                item.team_id ||
+                                (en ? "Personal" : "个人")}
+                            </span>
+                          )}
                         </td>
                         <td className="muted">
                           {item.updated_at ||
@@ -1400,6 +1420,7 @@ export function DataPage({
           moduleId={module.id}
           mode={mode}
           item={activeItem}
+          teams={teams}
           team={team}
           spec={spec}
           initial={initial}
