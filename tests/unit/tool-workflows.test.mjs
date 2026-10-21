@@ -34,6 +34,19 @@ const { root, schema, wrapper } = resourceBody(
 );
 const restToolTemplate = restToolExamples[1].tool;
 
+test("REST creation and import reject array root inputs without restricting array outputs or fields", () => {
+  for (const key of ["inputSchema", "input_schema"]) {
+    const row = { ...restToolTemplate };
+    delete row.inputSchema;
+    row[key] = { type: "array", items: { type: "object" } };
+    assert.ok(
+      restToolProblems(row).some((problem) => /inputSchema/.test(problem)),
+    );
+  }
+  assert.deepEqual(restToolProblems(restToolExamples[0].tool), []);
+  assert.deepEqual(restToolProblems(restToolTemplate), []);
+});
+
 test("REST examples are valid ToolCreate records with valid invocation arguments", () => {
   assert.deepEqual(
     restToolExamples.map((example) => example.id),

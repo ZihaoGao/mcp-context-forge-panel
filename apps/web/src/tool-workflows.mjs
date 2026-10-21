@@ -1,4 +1,5 @@
 import { readField } from "./resource-model.mjs";
+import { inputCompatibilityError } from "./tool-test.mjs";
 
 export const restToolExamples = [
   {
@@ -175,6 +176,8 @@ export function isLocalRestTool(row) {
 
 export function restToolProblems(row, en = false) {
   const problems = [];
+  const inputError = inputCompatibilityError(readField(row, "inputSchema"), en);
+  if (inputError) problems.push(inputError);
   if (!isLocalRestTool(row))
     problems.push(
       en

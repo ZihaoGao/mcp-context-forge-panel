@@ -5,6 +5,7 @@ import {
   inputSchema,
   inputDefaults,
   inputValidator,
+  inputCompatibilityError,
   toolCall,
   toolCallId,
   toolCallError,
@@ -32,6 +33,66 @@ const schema = {
     },
   },
 };
+
+test("tool input compatibility rejects root type conflicts including refs and alternatives", () => {
+  const array = { type: "array", items: { type: "string" } };
+  for (const input of [
+    array,
+    { type: ["array", "null"] },
+    { type: "string" },
+    { $ref: "#/$defs/args", $defs: { args: array } },
+    { allOf: [{ $ref: "#/$defs/args" }], $defs: { args: array } },
+    { anyOf: [array, { type: "null" }] },
+    { oneOf: [array, { type: "number" }] },
+    { type: "object", $ref: "#/$defs/args", $defs: { args: array } },
+  ]) {
+    assert.match(inputCompatibilityError(input), /顶层参数为对象/);
+    assert.match(inputCompatibilityError(input, true), /top-level object/);
+  }
+});
+
+test("tool input compatibility preserves object arrays, unions and unconstrained schemas", () => {
+  for (const input of [
+    undefined,
+    {},
+    schema,
+    { type: "object", properties: { items: { type: "array" } } },
+    { type: ["array", "object"] },
+    { anyOf: [{ type: "array" }, { type: "object" }] },
+    {
+      oneOf: [{ type: "array" }, { properties: { items: { type: "array" } } }],
+    },
+    { $ref: "#/$defs/args", $defs: { args: { type: "object" } } },
+    { $ref: "#/$defs/a~1b~0", $defs: { "a/b~": { type: "object" } } },
+    { $ref: "#/$defs/loop", $defs: { loop: { $ref: "#/$defs/loop" } } },
+    { $ref: "https://example.test/schema" },
+  ])
+    assert.equal(inputCompatibilityError(input), "");
+});
+
+test("input compatibility follows legacy ref sibling semantics without ignoring modern constraints", () => {
+  const referencedObject = {
+    $ref: "#/definitions/args",
+    type: "array",
+    allOf: [{ type: "string" }],
+    definitions: { args: { type: "object" } },
+  };
+  for (const draft of ["04", "06", "07"]) {
+    const input = {
+      ...referencedObject,
+      $schema: `http://json-schema.org/draft-${draft}/schema#`,
+    };
+    assert.equal(inputCompatibilityError(input), "");
+    assert.ok(
+      inputCompatibilityError({
+        ...input,
+        type: "object",
+        definitions: { args: { type: "array" } },
+      }),
+    );
+  }
+  assert.ok(inputCompatibilityError(referencedObject));
+});
 
 test("tool schemas use local definitions and defaults without resource heuristics", () => {
   assert.equal(toolSchema({ input_schema: schema }), schema);

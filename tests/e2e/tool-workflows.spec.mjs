@@ -631,6 +631,47 @@ test("tool transfer separates REST definitions from snapshots and blocks MCP/A2A
   expect(tools.writes).toEqual([]);
 });
 
+test("REST import preview blocks array root schemas and accepts array properties after correction", async ({
+  page,
+}) => {
+  const tools = await stubToolApi(page);
+  await login(page);
+  await page.goto(root + "/app/#tools");
+  await page
+    .getByRole("button", { name: "REST 工具导入 / 导出", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  const row = structuredClone(restToolExamples[1].tool);
+  row.inputSchema = { type: "array", items: { type: "object" } };
+  async function preview() {
+    await dialog.locator("input[type=file]").setInputFiles({
+      name: "array-schema.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(
+        JSON.stringify({
+          format: "contextforge-panel",
+          version: 1,
+          resource: "tools",
+          kind: "create",
+          records: [row],
+        }),
+      ),
+    });
+  }
+  await preview();
+  await expect(dialog.locator("tbody tr")).toContainText("顶层参数为对象");
+  const confirm = dialog.getByRole("button", { name: /确认.*导入|Import/ });
+  await dialog.locator(".check-label input").check();
+  await expect(confirm).toBeDisabled();
+  expect(tools.writes).toHaveLength(0);
+  row.inputSchema = restToolExamples[1].tool.inputSchema;
+  await preview();
+  await expect(dialog).not.toContainText("顶层参数为对象");
+  await dialog.locator(".check-label input").check();
+  await expect(confirm).toBeEnabled();
+  expect(tools.writes).toHaveLength(0);
+});
+
 test("REST examples stay readable in English at phone width", async ({
   page,
 }) => {

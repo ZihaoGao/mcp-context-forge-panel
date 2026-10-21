@@ -10,21 +10,64 @@ export function toolSchema(tool) {
   return schema;
 }
 
-export function inputSchema(schema, root, seen = new Set()) {
-  if (!schema || typeof schema !== "object") return {};
-  if (!schema.$ref) return schema;
-  if (!schema.$ref.startsWith("#/") || seen.has(schema.$ref)) return schema;
-  const ref = schema.$ref;
-  const target = ref
+function inputReference(ref, root) {
+  return ref
     .slice(2)
     .split("/")
     .reduce(
       (value, key) => value?.[key.replaceAll("~1", "/").replaceAll("~0", "~")],
       root,
     );
+}
+
+export function inputSchema(schema, root, seen = new Set()) {
+  if (!schema || typeof schema !== "object") return {};
+  if (!schema.$ref) return schema;
+  if (!schema.$ref.startsWith("#/") || seen.has(schema.$ref)) return schema;
+  const ref = schema.$ref;
+  const target = inputReference(ref, root);
   if (!target) return schema;
   const { $ref, ...rest } = schema;
   return { ...inputSchema(target, root, new Set([...seen, ref])), ...rest };
+}
+
+/** Reject known root-type conflicts; this is not full schema satisfiability validation. */
+export function inputCompatibilityError(root, en = false) {
+  const ignoresRefSiblings = /draft-0[467]/.test(root?.$schema || "");
+  function allowsObject(schema, seen = new Set()) {
+    if (schema === false) return false;
+    if (!schema || typeof schema !== "object" || seen.has(schema)) return true;
+    const visited = new Set([...seen, schema]);
+    if (ignoresRefSiblings && typeof schema.$ref === "string")
+      return schema.$ref.startsWith("#/")
+        ? allowsObject(inputReference(schema.$ref, root), visited)
+        : true;
+    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+    if (schema.type !== undefined && !types.includes("object")) return false;
+    if (
+      typeof schema.$ref === "string" &&
+      schema.$ref.startsWith("#/") &&
+      !allowsObject(inputReference(schema.$ref, root), visited)
+    )
+      return false;
+    if (
+      Array.isArray(schema.allOf) &&
+      schema.allOf.some((child) => !allowsObject(child, visited))
+    )
+      return false;
+    for (const key of ["anyOf", "oneOf"])
+      if (
+        Array.isArray(schema[key]) &&
+        schema[key].length &&
+        !schema[key].some((child) => allowsObject(child, visited))
+      )
+        return false;
+    return true;
+  }
+  if (allowsObject(root)) return "";
+  return en
+    ? "inputSchema: Tool calls require a top-level object. Define arrays as object properties and match the upstream tool contract."
+    : "inputSchema：工具调用要求顶层参数为对象。请将数组定义为对象字段，并与上游工具约定保持一致。";
 }
 
 export function inputDefaults(original, root = original, depth = 0) {

@@ -30,6 +30,7 @@ import {
 } from "../resource-copy.mjs";
 import { associationEndpoints } from "../association-model.mjs";
 import { restToolProblems } from "../tool-workflows.mjs";
+import { inputCompatibilityError } from "../tool-test.mjs";
 import { toolEditContext, toolWriteBody } from "../tool-auth.mjs";
 import { GatewayRegistrationResult } from "./GatewayRegistrationResult";
 import { TokenScope, TokenStatus } from "./TokenPresentation";
@@ -337,6 +338,11 @@ export function ResourceDialog({
         : {}),
     };
   });
+  const inputError =
+    moduleId === "tools" && (mode === "create" || mode === "edit")
+      ? inputCompatibilityError(readField(value, "inputSchema"), en)
+      : "";
+  const fieldErrors = { inputSchema: inputError, input_schema: inputError };
   const parameters = (operation.parameters || []).filter(
     (p: any) => p.in !== "cookie" && !(p.in === "path" && preset[p.name]),
   );
@@ -556,6 +562,7 @@ export function ResourceDialog({
           })
         : []),
       ...(restCreate ? restToolProblems(submittedValue, en) : []),
+      ...(!restCreate && inputError ? [inputError] : []),
     ];
     if (
       moduleId === "tokens" &&
@@ -736,6 +743,7 @@ export function ResourceDialog({
                     spec={spec}
                     value={value}
                     onChange={setValue}
+                    fieldErrors={fieldErrors}
                     all
                   />
                 )}
@@ -750,6 +758,7 @@ export function ResourceDialog({
                       spec={spec}
                       value={value}
                       onChange={setValue}
+                      fieldErrors={fieldErrors}
                       all
                     />
                   </details>

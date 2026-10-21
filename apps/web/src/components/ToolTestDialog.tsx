@@ -12,6 +12,7 @@ import { JsonInput, ToolInputForm } from "./ToolInputForm";
 import {
   inputDefaults,
   inputValidator,
+  inputCompatibilityError,
   toolSchema,
   toolCall,
   toolCallId,
@@ -51,6 +52,7 @@ export function ToolTestDialog({
     [schema],
   );
   const allowed = permitted(session.permissions, "tools.execute");
+  const inputError = schema ? inputCompatibilityError(schema, en) : "";
   useEffect(() => {
     if (error || result !== undefined)
       outcome.current?.scrollIntoView({ block: "nearest" });
@@ -77,7 +79,7 @@ export function ToolTestDialog({
   }, [detailPath]);
   async function execute(event: React.FormEvent) {
     event.preventDefault();
-    if (busy || !tool || !schema || !allowed) return;
+    if (busy || !tool || !schema || !allowed || inputError) return;
     setError("");
     setResult(undefined);
     setElapsed(undefined);
@@ -154,6 +156,7 @@ export function ToolTestDialog({
               loading ||
               !tool ||
               !schema ||
+              !!inputError ||
               !allowed ||
               tool.enabled === false ||
               tool.is_active === false
@@ -199,47 +202,54 @@ export function ToolTestDialog({
           {validation?.warning && (
             <p className="alert warning">{validation.warning}</p>
           )}
-          <fieldset className="tool-input-fields" disabled={busy}>
-            <div className="toolbar">
-              <button
-                type="button"
-                className="button secondary"
-                onClick={() => {
-                  const invalidJson = Array.from(
-                    form.current?.querySelectorAll("textarea") || [],
-                  ).find((input) => input.validity.customError);
-                  if (invalidJson) {
-                    invalidJson.reportValidity();
-                    return;
-                  }
-                  if (json) {
-                    try {
-                      toolCall(tool!, value, "preview");
-                    } catch (err) {
-                      setError(displayError(err));
+          {inputError && (
+            <p className="alert error" role="alert">
+              {inputError}
+            </p>
+          )}
+          {!inputError && (
+            <fieldset className="tool-input-fields" disabled={busy}>
+              <div className="toolbar">
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => {
+                    const invalidJson = Array.from(
+                      form.current?.querySelectorAll("textarea") || [],
+                    ).find((input) => input.validity.customError);
+                    if (invalidJson) {
+                      invalidJson.reportValidity();
                       return;
                     }
-                  }
-                  setJson(!json);
-                }}
-              >
-                {json
-                  ? t("使用参数表单", "Use parameter form")
-                  : t("编辑 JSON", "Edit JSON")}
-              </button>
-            </div>
-            {json ? (
-              <JsonInput value={value} onChange={setValue} />
-            ) : (
-              <ToolInputForm
-                schema={schema}
-                root={schema}
-                value={value}
-                onChange={setValue}
-                en={en}
-              />
-            )}
-          </fieldset>
+                    if (json) {
+                      try {
+                        toolCall(tool!, value, "preview");
+                      } catch (err) {
+                        setError(displayError(err));
+                        return;
+                      }
+                    }
+                    setJson(!json);
+                  }}
+                >
+                  {json
+                    ? t("使用参数表单", "Use parameter form")
+                    : t("编辑 JSON", "Edit JSON")}
+                </button>
+              </div>
+              {json ? (
+                <JsonInput value={value} onChange={setValue} />
+              ) : (
+                <ToolInputForm
+                  schema={schema}
+                  root={schema}
+                  value={value}
+                  onChange={setValue}
+                  en={en}
+                />
+              )}
+            </fieldset>
+          )}
           <details>
             <summary>{t("查看输入 Schema", "View input schema")}</summary>
             <pre tabIndex={0}>{JSON.stringify(schema, null, 2)}</pre>

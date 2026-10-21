@@ -21,12 +21,14 @@ export function SchemaForm({
   value,
   onChange,
   all = false,
+  fieldErrors = {},
 }: {
   schema: JsonRecord;
   spec: JsonRecord;
   value: JsonRecord;
   onChange: (v: JsonRecord) => void;
   all?: boolean;
+  fieldErrors?: Record<string, string>;
 }) {
   const s = resolveSchema(schema, spec);
   const session = useContext(SessionContext);
@@ -419,6 +421,7 @@ export function SchemaForm({
             ) : complex ? (
               <textarea
                 aria-label={key}
+                aria-invalid={!!(errors[key] || fieldErrors[key])}
                 rows={key === "scope" ? 6 : 3}
                 placeholder={field.type === "array" ? "[ ]" : "{ }"}
                 value={
@@ -486,15 +489,17 @@ export function SchemaForm({
                 }
               />
             )}
-            {errors[key] && (
-              <span className="error-text">
-                {t("JSON 格式错误", "Invalid JSON")}
+            {(errors[key] || fieldErrors[key]) && (
+              <span className="error-text" role="alert">
+                {errors[key]
+                  ? t("JSON 格式错误", "Invalid JSON")
+                  : fieldErrors[key]}
               </span>
             )}
             {complex && (
               <input
                 className="validation-proxy"
-                value={errors[key] || ""}
+                value={errors[key] || fieldErrors[key] || ""}
                 onChange={() => {}}
                 pattern="^$"
                 tabIndex={-1}

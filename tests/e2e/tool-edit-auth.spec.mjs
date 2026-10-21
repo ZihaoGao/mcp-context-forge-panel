@@ -56,6 +56,53 @@ async function fixture(page, overrides = {}) {
   await page.goto(root + "/app/#tools");
   return writes;
 }
+
+for (const mode of ["create", "edit"]) {
+  test(`tool ${mode} flags incompatible array input before saving and recovers after correction`, async ({
+    page,
+  }) => {
+    const writes = await fixture(page);
+    await page
+      .getByRole("button", {
+        name: mode === "create" ? "创建 REST 工具" : "编辑",
+        exact: true,
+      })
+      .click();
+    const dialog = page.getByRole("dialog");
+    if (mode === "create") {
+      await dialog.getByLabel("name", { exact: true }).fill("array-input-tool");
+      await dialog
+        .getByLabel("url", { exact: true })
+        .fill("https://example.com/lookup");
+    }
+    const input = dialog.getByLabel("inputSchema", { exact: true });
+    await input.fill(
+      JSON.stringify({ type: "array", items: { type: "string" } }),
+    );
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(dialog.getByRole("alert")).toContainText("顶层参数为对象");
+    const save = dialog.getByRole("button", {
+      name: mode === "create" ? "创建REST 工具" : "保存修改",
+      exact: true,
+    });
+    await save.click();
+    expect(writes).toHaveLength(0);
+    const corrected = {
+      type: "object",
+      properties: { names: { type: "array", items: { type: "string" } } },
+    };
+    await input.fill(JSON.stringify(corrected));
+    await expect(input).toHaveAttribute("aria-invalid", "false");
+    await expect(dialog.getByRole("alert")).toHaveCount(0);
+    await save.click();
+    await expect(dialog).toContainText("操作成功");
+    expect(writes).toHaveLength(1);
+    expect((writes[0].body.tool || writes[0].body).inputSchema).toEqual(
+      corrected,
+    );
+  });
+}
+
 for (const width of [1440, 390]) {
   test(`team-visible tool edits retain immutable team and omit stored credentials at ${width}px`, async ({
     page,

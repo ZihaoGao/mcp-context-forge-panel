@@ -78,6 +78,95 @@ async function fixture(
   await page.goto(root + "/app/#tools");
   return calls;
 }
+
+for (const width of [1440, 390]) {
+  test(`incompatible root array schema blocks tool calls before input at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const calls = await fixture(page, {
+      detail: {
+        ...tool,
+        inputSchema: { type: "array", items: { type: "string" } },
+      },
+    });
+    await page.getByRole("button", { name: "测试调用", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("alert")).toContainText("顶层参数为对象");
+    await expect(
+      dialog.getByRole("button", { name: "调用工具", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      dialog.getByRole("button", { name: "添加一项", exact: true }),
+    ).toHaveCount(0);
+    await dialog.getByText("查看输入 Schema", { exact: true }).click();
+    await expect(dialog.locator("details pre")).toContainText(
+      '"type": "array"',
+    );
+    expect(calls).toHaveLength(0);
+    const footer = await dialog.locator(".dialog-footer").boundingBox();
+    expect(footer.y + footer.height).toBeLessThanOrEqual(844);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    ).toBe(true);
+    await mkdir(".cache/reports", { recursive: true });
+    await page.screenshot({
+      path: `.cache/reports/tool-array-root-${width}.png`,
+    });
+  });
+}
+
+test("object array inputs with nested arrays still submit exact types", async ({
+  page,
+}) => {
+  const calls = await fixture(page, {
+    detail: {
+      ...tool,
+      inputSchema: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            minItems: 1,
+            items: {
+              type: "object",
+              properties: {
+                quantity: { type: "integer", minimum: 1 },
+                tags: { type: "array", items: { type: "string" } },
+              },
+              required: ["quantity", "tags"],
+            },
+          },
+        },
+        required: ["items"],
+      },
+    },
+  });
+  await page.getByRole("button", { name: "测试调用", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "添加一项", exact: true }).click();
+  await dialog
+    .getByLabel("arguments.items[1].quantity", { exact: true })
+    .fill("2");
+  await dialog
+    .getByRole("group", { name: "tags * arguments.items[1].tags", exact: true })
+    .getByRole("button", { name: "添加一项", exact: true })
+    .click();
+  await dialog
+    .getByLabel("arguments.items[1].tags[1]", { exact: true })
+    .fill("coffee");
+  await dialog.getByRole("button", { name: "调用工具", exact: true }).click();
+  await expect(dialog.locator(".result")).toContainText(
+    "fixture invocation result",
+  );
+  expect(calls).toHaveLength(1);
+  expect(calls[0].params.arguments).toEqual({
+    items: [{ quantity: 2, tags: ["coffee"] }],
+  });
+});
+
 for (const width of [1440, 390]) {
   test(`tool test renders schema controls, submits typed arguments and fits at ${width}px`, async ({
     page,
