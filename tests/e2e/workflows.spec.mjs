@@ -16,6 +16,107 @@ async function login(page) {
 }
 
 for (const width of [1440, 390]) {
+  test(`resource export progress, failure and retry at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const rows = Array.from({ length: 101 }, (_, i) => ({
+      id: `export-${i}`,
+      name: `Export ${i}`,
+      visibility: "private",
+    }));
+    let scanning = false,
+      fail = true,
+      releaseScan,
+      releaseDetail;
+    const scanBarrier = new Promise((resolve) => {
+      releaseScan = resolve;
+    });
+    let detailBarrier = new Promise((resolve) => {
+      releaseDetail = resolve;
+    });
+    await page.route("**/v1/servers?*", async (route) => {
+      const q = new URL(route.request().url()).searchParams;
+      const offset = Number(q.get("cursor") || 0),
+        limit = Number(q.get("limit") || 25);
+      if (scanning && offset === 100) await scanBarrier;
+      await route.fulfill({
+        json: {
+          data: rows.slice(offset, offset + limit),
+          total: rows.length,
+          nextCursor:
+            offset + limit < rows.length ? String(offset + limit) : null,
+        },
+      });
+    });
+    await page.route("**/v1/servers/export-*", async (route) => {
+      const row = rows.find((r) => route.request().url().endsWith(`/${r.id}`));
+      if (row.id === "export-1") {
+        await detailBarrier;
+        if (fail)
+          return route.fulfill({
+            status: 403,
+            json: { detail: "fixture export denied" },
+          });
+      }
+      await route.fulfill({ json: row });
+    });
+    await login(page);
+    await page.goto(root + "/app/#servers");
+    await page
+      .getByRole("button", { name: "导入 / 导出", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog");
+    let downloads = 0;
+    page.on("download", () => downloads++);
+    await dialog.getByRole("button", { name: /^导出已选/ }).click();
+    const progress = dialog.getByRole("progressbar", { name: "资源导出进度" });
+    await expect(progress).toHaveAttribute("value", "1");
+    await expect(progress).toHaveAttribute("max", "25");
+    await expect(
+      dialog.getByRole("button", { name: "关闭", exact: true }),
+    ).toBeDisabled();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+    releaseDetail();
+    await expect(dialog.getByRole("alert")).toContainText(
+      "fixture export denied",
+    );
+    await expect(dialog.locator(".export-progress")).toContainText(
+      "导出失败 · 已完成 1 / 25",
+    );
+    expect(downloads).toBe(0);
+    fail = false;
+    scanning = true;
+    detailBarrier = new Promise((resolve) => {
+      releaseDetail = resolve;
+    });
+    await dialog
+      .getByRole("button", { name: "导出全部匹配项", exact: true })
+      .click();
+    await expect(dialog.locator(".export-progress")).toContainText(
+      "已扫描 100 项",
+    );
+    await expect(progress).not.toHaveAttribute("value");
+    releaseScan();
+    await expect(progress).toHaveAttribute("value", "1");
+    await expect(progress).toHaveAttribute("max", "101");
+    const download = page.waitForEvent("download");
+    releaseDetail();
+    await download;
+    await expect(dialog.locator(".export-progress")).toContainText("导出完成");
+    await expect(progress).toHaveAttribute("value", "101");
+    await expect(dialog).toContainText("已生成导出文件，包含 101 项");
+    await expect(
+      dialog.getByRole("button", { name: "关闭", exact: true }),
+    ).toBeEnabled();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  });
+
   test(`resource workflow dialogs and cross-page tags at ${width}px`, async ({
     page,
   }) => {

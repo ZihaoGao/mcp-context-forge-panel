@@ -71,7 +71,9 @@ export function TransferPanel({
   create?: Operation;
   detail?: Operation;
   records: JsonRecord[];
-  loadAll: () => Promise<JsonRecord[] | undefined>;
+  loadAll: (
+    onProgress?: (count: number) => void,
+  ) => Promise<JsonRecord[] | undefined>;
   onSuccess: () => void;
   en: boolean;
   onClose: () => void;
@@ -101,6 +103,11 @@ export function TransferPanel({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{
+    phase: "scan" | "read" | "file" | "done" | "error";
+    completed: number;
+    total?: number;
+  } | null>(null);
   const [approved, setApproved] = useState(false);
   const [issued, setIssued] = useState<{ name: string; key: string }[]>([]);
   const writable =
@@ -156,11 +163,21 @@ export function TransferPanel({
     return errors;
   });
   async function exportRecords(all = false, snapshot = false) {
+    if (busy) return;
     setError("");
     setNotice("");
     setBusy(true);
+    setExportProgress({
+      phase: all ? "scan" : "read",
+      completed: 0,
+      total: all ? undefined : records.length,
+    });
     try {
-      const source = all ? await loadAll() : records;
+      const source = all
+        ? await loadAll((count) =>
+            setExportProgress({ phase: "scan", completed: count }),
+          )
+        : records;
       if (!source)
         throw new Error(
           en
@@ -169,6 +186,8 @@ export function TransferPanel({
         );
       const out: JsonRecord[] = [];
       let skipped = 0;
+      let completed = 0;
+      setExportProgress({ phase: "read", completed, total: source.length });
       for (const row of source) {
         let full = row;
         if (detail) {
@@ -182,15 +201,20 @@ export function TransferPanel({
         }
         if (tools && writable && !snapshot && !isLocalRestTool(full)) {
           skipped++;
-          continue;
+        } else {
+          const clean =
+            writable && !snapshot
+              ? portableRecord(full, schema, spec)
+              : redactSnapshot(full);
+          if (updateExisting) clean.name = full.name;
+          if (register) clean.catalog_id = full.id;
+          out.push(clean);
         }
-        const clean =
-          writable && !snapshot
-            ? portableRecord(full, schema, spec)
-            : redactSnapshot(full);
-        if (updateExisting) clean.name = full.name;
-        if (register) clean.catalog_id = full.id;
-        out.push(clean);
+        completed++;
+        setExportProgress({ phase: "read", completed, total: source.length });
+        // Let the browser paint even when this resource has no detail endpoint.
+        if (completed % 50 === 0)
+          await new Promise((resolve) => setTimeout(resolve, 0));
       }
       if (tools && writable && !snapshot && !out.length)
         throw new Error(
@@ -200,9 +224,18 @@ export function TransferPanel({
           ),
         );
       const kind = writable && !snapshot ? "create" : "snapshot";
+      setExportProgress({ phase: "file", completed, total: source.length });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       downloadJson(
         `${moduleId}-${kind === "create" ? (tools ? "rest-definitions" : "definitions") : "snapshot"}.json`,
         envelope(out, kind),
+      );
+      setExportProgress({ phase: "done", completed, total: source.length });
+      setNotice(
+        t(
+          `已生成导出文件，包含 ${out.length} 项。`,
+          `Export file generated with ${out.length} records.`,
+        ),
       );
       if (skipped)
         setNotice(
@@ -212,6 +245,7 @@ export function TransferPanel({
           ),
         );
     } catch (err) {
+      setExportProgress((prev) => prev && { ...prev, phase: "error" });
       setError(displayError(err));
     } finally {
       setBusy(false);
@@ -220,6 +254,7 @@ export function TransferPanel({
   async function readFile(file?: File) {
     if (!file) return;
     setBusy(true);
+    setExportProgress(null);
     setError("");
     setNotice("");
     setRows([]);
@@ -252,6 +287,7 @@ export function TransferPanel({
     if (busy || !writable || !approved || problems.some((v) => v.length))
       return;
     setBusy(true);
+    setExportProgress(null);
     setResults([]);
     setError("");
     try {
@@ -310,7 +346,7 @@ export function TransferPanel({
             }
             onClick={importRows}
           >
-            {busy ? "正在导入…" : "确认导入"}
+            {busy && !exportProgress ? "正在导入…" : "确认导入"}
           </button>
         ) : undefined
       }
@@ -439,6 +475,45 @@ export function TransferPanel({
             : "下载模板"}
         </button>
       </div>
+      {exportProgress && (
+        <div
+          className="export-progress"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span>
+            {exportProgress.phase === "scan"
+              ? t(
+                  `正在收集资源列表 · 已扫描 ${exportProgress.completed} 项`,
+                  `Collecting resources · ${exportProgress.completed} scanned`,
+                )
+              : exportProgress.phase === "read"
+                ? t(
+                    `正在读取并处理资源 · ${exportProgress.completed} / ${exportProgress.total}`,
+                    `Reading and processing resources · ${exportProgress.completed} / ${exportProgress.total}`,
+                  )
+                : exportProgress.phase === "file"
+                  ? t("正在生成导出文件…", "Generating export file…")
+                  : exportProgress.phase === "done"
+                    ? t("导出完成", "Export complete")
+                    : t(
+                        `导出失败 · 已完成 ${exportProgress.completed}${exportProgress.total === undefined ? " 项扫描" : ` / ${exportProgress.total} 项处理`}`,
+                        `Export failed · ${exportProgress.completed}${exportProgress.total === undefined ? " scanned" : ` / ${exportProgress.total} processed`}`,
+                      )}
+          </span>
+          <progress
+            aria-label={t("资源导出进度", "Resource export progress")}
+            max={exportProgress.total || 1}
+            value={
+              exportProgress.total === undefined ||
+              exportProgress.phase === "file"
+                ? undefined
+                : exportProgress.completed
+            }
+          />
+        </div>
+      )}
       {tools && writable && (
         <details>
           <summary>

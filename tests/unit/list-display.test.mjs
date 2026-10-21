@@ -47,6 +47,7 @@ test("list query follows declared pagination and filter capabilities", () => {
 
 test("cross-page search follows cursors and deduplicates overlapping records", async () => {
   const paths = [];
+  const progress = [];
   const all = await loadResourcePages(
     operation("limit", "cursor"),
     async (path) => {
@@ -64,7 +65,9 @@ test("cross-page search follows cursors and deduplicates overlapping records", a
             ],
           };
     },
+    { onProgress: (count) => progress.push(count) },
   );
+  assert.deepEqual(progress, [2, 3]);
   assert.deepEqual(
     all.map((item) => item.id),
     ["a", "b", "c"],

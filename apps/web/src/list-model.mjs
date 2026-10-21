@@ -115,7 +115,7 @@ export function pagination(data, operation, page, size = 25) {
 }
 
 // Never present a truncated scan as a complete search or batch selection.
-/** @param {{team?: string, visibility?: string, gateway?: string, signal?: AbortSignal, maxItems?: number}} [options] */
+/** @param {{team?: string, visibility?: string, gateway?: string, signal?: AbortSignal, maxItems?: number, onProgress?: (count: number) => void}} [options] */
 export async function loadResourcePages(operation, fetchPage, options = {}) {
   const {
     team = "",
@@ -123,6 +123,7 @@ export async function loadResourcePages(operation, fetchPage, options = {}) {
     gateway = "",
     signal,
     maxItems = 10000,
+    onProgress,
   } = options;
   const size = 100;
   const out = new Map();
@@ -148,6 +149,7 @@ export async function loadResourcePages(operation, fetchPage, options = {}) {
       throw new Error(
         `资源超过跨页查找上限（${maxItems} 项），请先选择团队或可见性缩小范围 / Search limit exceeded; narrow team or visibility`,
       );
+    onProgress?.(out.size);
     const { nextCursor, total, hasNext } = pagination(
       data,
       operation,

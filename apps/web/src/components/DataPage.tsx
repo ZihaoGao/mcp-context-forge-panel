@@ -400,7 +400,7 @@ export function DataPage({
         team_id: team,
       });
   }
-  async function selectAll() {
+  async function selectAll(onProgress?: (count: number) => void) {
     setBusy(true);
     setError("");
     const scope = filterKey;
@@ -420,6 +420,7 @@ export function DataPage({
             visibility: visibilityFilter,
             gateway: gatewayFilter,
             signal,
+            onProgress,
           }),
         staleTime: 0,
       });
@@ -1244,7 +1245,7 @@ export function DataPage({
               <button
                 className="text-button"
                 disabled={busy}
-                onClick={selectAll}
+                onClick={() => void selectAll()}
               >
                 {en ? "Select all matching pages" : "选择跨页全部匹配项"}
               </button>

@@ -2104,6 +2104,15 @@ tbody tr:hover {
 .transfer-panel .field {
   margin: 18px 0;
 }
+.export-progress {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.export-progress progress {
+  width: 100%;
+  accent-color: var(--brand);
+}
 .alert.success {
   background: #e8f5ee;
   border: 1px solid #97bea9;
